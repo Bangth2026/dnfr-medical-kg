@@ -77,6 +77,8 @@ def main(task, seed=0, max_q=400):
     for qi in qs:
         s, t = te[qi]; pid = kmap[int(s) * n_t + int(t)]
         c = cc[bounds[pid]:bounds[pid + 1]]; m = mm[bounds[pid]:bounds[pid + 1]]
+        if len(c) == 0:   # every path of this pair used a held-out dyad
+            continue
         o = np.argsort(-c); cs = c[o]
         mp_tot = np.bincount(m, weights=c); mp_sorted = np.sort(mp_tot[mp_tot > 0])[::-1]
         r = dict(rank=float(base_rank[qi]), n_paths=int(len(c)), k50=k_for(cs, .5), k80=k_for(cs, .8),
