@@ -64,9 +64,16 @@ def edge_weight_matrix(kg, tr):
 def ss_log_tnorm(logmu, p):
     """log of the Schweizer-Sklar t-norm of L memberships (list of log tensors), parameter p."""
     p = torch.where(p.abs() < 1e-4, p + 2e-4, p)  # keeps the gradient
-    s = sum(torch.expm1(p * lm) for lm in logmu)
+    xs = [p * lm for lm in logmu]                  # p log mu_i; large positive when p < 0 and mu_i is small
+    over = sum((x > 85.0).float() for x in xs) > 0  # exp would overflow float32 in the direct formula
+    s = sum(torch.expm1(torch.clamp(x, max=85.0)) for x in xs)
     s = torch.clamp(s, min=-1 + 1e-7)
-    return torch.log1p(s) / p
+    direct = torch.log1p(s) / p
+    # overflow branch (p < 0): log(sum mu^p - (L-1)) = A + log1p(-(L-1) e^-A), A = logsumexp(p log mu)
+    A = torch.logsumexp(torch.stack(xs), 0)
+    A = torch.where(over, A, torch.full_like(A, 100.0))
+    stable = (A + torch.log1p(-(len(xs) - 1) * torch.exp(-A))) / p
+    return torch.where(over, stable, direct)
 
 
 def log_tnorm(kind, logmu, p=None):
@@ -196,6 +203,8 @@ class Ranker:
     def ranks(self, z_pairs, z0, queries, known):
         """queries: array (src_local, tgt). known: dict src_local -> set of true tails (all splits).
         Returns realistic (average) filtered rank of each query tail."""
+        if not np.all(np.isfinite(z_pairs)) or not np.isfinite(z0):
+            raise FloatingPointError("non-finite scores")
         out = np.empty(len(queries))
         for qi, (s, t) in enumerate(queries):
             idx = self.order[self.bounds[s]:self.bounds[s + 1]]
