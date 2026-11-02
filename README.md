@@ -1,5 +1,7 @@
 # Differentiable neuro-fuzzy reasoning on medical knowledge graphs (DNFR)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23879353.svg)](https://doi.org/10.5281/zenodo.23879353)
+
 Code, derived data and result files for the manuscript
 
 > Truong Hai Bang, Van An Phan Thi. *Learning edge memberships matters more than learning t-norms: differentiable neuro-fuzzy reasoning on sparse medical knowledge graphs.* Submitted to *Artificial Intelligence in Medicine*.
