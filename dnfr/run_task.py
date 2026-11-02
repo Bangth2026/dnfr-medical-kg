@@ -25,7 +25,20 @@ VARIANTS = {
     "dnfr_nodeg":  dict(tnorm="ss", p_mode="per_mp", degree=False, agg="noisyor"),
     "dnfr_max":    dict(tnorm="ss", p_mode="per_mp", degree=True, agg="max"),
     "dnfr_binary": dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", use_weight=False),
+    # revision: identifiability of the learned t-norm (initialisation and penalty)
+    "dnfr_l2_0":   dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=0.0),
+    "dnfr_pm2":    dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=0.0, p_init=-2.0),
+    "dnfr_pm1":    dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=0.0, p_init=-1.0),
+    "dnfr_pp05":   dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=0.0, p_init=0.5),
+    "dnfr_l2_1e-2": dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=1e-2),
+    "dnfr_l2_1e-1": dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=1e-1),
+    # revision: fixed (DWPC-like) degree discount, and frozen memberships
+    "dnfr_fixdeg": dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", fixed_deg=0.4),
+    "product_fixdeg": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", fixed_deg=0.4),
+    "dnfr_frozen": dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", freeze_mem=True),
+    "product_frozen": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", freeze_mem=True),
 }
+L2_DEFAULT = 1e-3
 
 
 
@@ -38,6 +51,16 @@ def positives(kg, spec):
     h, t = (d["t"], d["h"]) if spec["rev"] else (d["h"], d["t"])
     k = np.unique(h.astype(np.int64) * 10**7 + t)
     return np.stack([k // 10**7, k % 10**7], 1)
+
+
+def split_by_tail(pos, seed, frac=(0.8, 0.1, 0.1)):
+    """Tail-centric split: every positive of a held-out tail (e.g. a disease) is held out together."""
+    rng = np.random.default_rng(seed)
+    tails = rng.permutation(np.unique(pos[:, 1]))
+    a, b = int(frac[0] * len(tails)), int((frac[0] + frac[1]) * len(tails))
+    grp = {int(t): (0 if i < a else 1 if i < b else 2) for i, t in enumerate(tails)}
+    g = np.array([grp[int(t)] for t in pos[:, 1]])
+    return pos[g == 0], pos[g == 1], pos[g == 2]
 
 
 def split(pos, seed, frac=(0.8, 0.1, 0.1)):
@@ -74,7 +97,8 @@ def dwpc_features(P, sd_mask, kg_split, n_pairs, pair_id, damp=0.4):
     return X
 
 
-def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, tag=""):
+def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, tag="", split_mode="random",
+        which=("dwpc_lr", "svd", "softimpute", "popularity")):
     spec = TASKS[task]
     kg = load_kg(spec["kg"])
     if sparsity < 1.0:
@@ -115,7 +139,7 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
     else:
         PREV_SEED = {}
     for seed in seeds:
-        tr_q, va_q, te_q = split(posl, seed)
+        tr_q, va_q, te_q = (split_by_tail if split_mode == "tail" else split)(posl, seed)
         if sparsity < 1.0:
             # training positives must exist in the thinned graph
             present = set(map(tuple, np.stack([[src_loc[s] for s in positives(kg, spec)[:, 0]], positives(kg, spec)[:, 1]], 1).tolist()))
@@ -129,23 +153,26 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
         run_res = dict(seed=seed, n_train=len(tr_q), n_valid=len(va_q), n_test=len(te_q),
                        paths_kept=int(mask.sum()), methods={})
         if seed in PREV_SEED:  # keep methods already computed for this split
-            for k in ("methods", "ranks", "dnfr_params", "dnfr_test_ranks"):
+            for k in ("methods", "ranks", "dnfr_params", "dnfr_test_ranks", "p_learned", "w_learned"):
                 if k in PREV_SEED[seed]:
                     run_res[k] = PREV_SEED[seed][k]
         test_tq = te_q
         for v in variants:
             torch.manual_seed(seed)
-            cfg = VARIANTS[v]
+            cfg = dict(VARIANTS[v]); l2 = cfg.pop("l2", L2_DEFAULT)
             model = DNFR(len(trav), len(P["mps"]), **cfg)
             t0 = time.time()
             print(f"[{task}{tag} seed {seed}] {v}", flush=True)
-            bestv, hist = train(model, sd, tr_q, None, ranker, va_q, known, len(sources), epochs=epochs)
+            bestv, hist = train(model, sd, tr_q, None, ranker, va_q, known, len(sources), epochs=epochs, l2=l2)
             z, z0 = score_pairs(model, sd)
             r = ranker.ranks(z, z0, test_tq, known)
             m = metrics(r); m["valid_MRR"] = bestv; m["time_s"] = time.time() - t0; m["epochs"] = hist[-1][0]
             print(f"   test {m}", flush=True)
             run_res["methods"][v] = m
             run_res.setdefault("ranks", {})[v] = r.tolist()
+            if cfg.get("tnorm") == "ss":
+                run_res.setdefault("p_learned", {})[v] = model.p().detach().numpy().tolist()
+                run_res.setdefault("w_learned", {})[v] = torch.sigmoid(model.w_raw).detach().numpy().tolist()
             if v == "dnfr":
                 st = {k: v_.detach().numpy().tolist() for k, v_ in model.state_dict().items()}
                 st["p"] = model.p().detach().numpy().tolist()
@@ -160,7 +187,7 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
             import gc; gc.collect()
             RANKS.clear()
             run_res["methods"].update(baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt,
-                                                ranker, tr_q, va_q, te_q, known, len(sources), n_t, seed))
+                                                ranker, tr_q, va_q, te_q, known, len(sources), n_t, seed, set(which)))
             run_res.setdefault("ranks", {}).update(dict(RANKS))
         run_res["test_queries"] = te_q.tolist()
         results["runs"].append(run_res)
@@ -171,9 +198,17 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
 RANKS = {}
 
 
-def baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt, ranker, tr_q, va_q, te_q, known, n_src, n_t, seed):
+def baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt, ranker, tr_q, va_q, te_q, known, n_src, n_t, seed,
+              which=("dwpc_lr", "svd", "softimpute", "popularity")):
     out = {}
     rng = np.random.default_rng(seed)
+    if "popularity" in which:  # rank tails by their number of training positives
+        cnt = np.bincount(tr_q[:, 1], minlength=n_t).astype(np.float64)
+        Z = np.broadcast_to(cnt, (n_src, n_t))
+        rr = _dense_ranks(Z, te_q, known); RANKS["popularity"] = rr.tolist()
+        out["popularity"] = metrics(rr); print("   popularity", out["popularity"], flush=True)
+    if "dwpc_lr" not in which and "svd" not in which and "softimpute" not in which:
+        return out
     # --- DWPC + logistic regression (Rephetio) ---
     t0 = time.time()
     X = dwpc_features(P, mask, kg_split, n_pairs, pair_id)
@@ -262,6 +297,8 @@ if __name__ == "__main__":
     ap.add_argument("--variants", default=",".join(VARIANTS)); ap.add_argument("--budget", type=float, default=5e6)
     ap.add_argument("--epochs", type=int, default=400); ap.add_argument("--no_baselines", action="store_true")
     ap.add_argument("--sparsity", type=float, default=1.0); ap.add_argument("--tag", default="")
+    ap.add_argument("--split", default="random", choices=["random", "tail"])
+    ap.add_argument("--baselines", default="dwpc_lr,svd,softimpute,popularity")
     a = ap.parse_args()
     run(a.task, [int(s) for s in a.seeds.split(",")], [v for v in a.variants.split(",") if v], a.budget, a.epochs,
-        not a.no_baselines, a.sparsity, a.tag)
+        not a.no_baselines, a.sparsity, a.tag, a.split, tuple(a.baselines.split(",")))

@@ -95,15 +95,22 @@ P_RAW0 = math.log(4.9 / 1.1)  # p0 = 6*4.9/6 - 5 = -0.1
 
 
 class DNFR(torch.nn.Module):
-    def __init__(self, n_trav, n_mp, tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", use_weight=True):
+    def __init__(self, n_trav, n_mp, tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", use_weight=True,
+                 p_init=-0.1, fixed_deg=None, freeze_mem=False):
+        """p_init: initial t-norm parameter. fixed_deg: if a number, b_r = c_r = fixed_deg for every relation
+        (not learned; DWPC-style damping). freeze_mem: keep a, b, c, g at their initial values."""
         super().__init__()
-        self.g = torch.nn.Parameter(torch.full((n_trav,), 1.0 if use_weight else 0.0), requires_grad=use_weight)
-        self.a = torch.nn.Parameter(torch.full((n_trav,), 1.0))
-        self.b = torch.nn.Parameter(torch.full((n_trav,), 0.3 if degree else 0.0), requires_grad=degree)
-        self.c = torch.nn.Parameter(torch.full((n_trav,), 0.3 if degree else 0.0), requires_grad=degree)
+        learn_deg = degree and fixed_deg is None and not freeze_mem
+        b0 = 0.0 if not degree else (0.3 if fixed_deg is None else float(fixed_deg))
+        self.g = torch.nn.Parameter(torch.full((n_trav,), 1.0 if use_weight else 0.0), requires_grad=use_weight and not freeze_mem)
+        self.a = torch.nn.Parameter(torch.full((n_trav,), 1.0), requires_grad=not freeze_mem)
+        self.b = torch.nn.Parameter(torch.full((n_trav,), b0), requires_grad=learn_deg)
+        self.c = torch.nn.Parameter(torch.full((n_trav,), b0), requires_grad=learn_deg)
         self.w_raw = torch.nn.Parameter(torch.full((n_mp,), -3.0))
         n_p = n_mp if p_mode == "per_mp" else 1
-        self.p_raw = torch.nn.Parameter(torch.full((n_p,), P_RAW0))  # p = 6 sigmoid - 5, starts just below 0 (near product)
+        p_raw0 = math.log((p_init + 5) / (1 - p_init))  # inverse of p = 6 sigmoid(theta) - 5
+        self.register_buffer("p_raw0", torch.tensor(p_raw0), persistent=False)
+        self.p_raw = torch.nn.Parameter(torch.full((n_p,), p_raw0), requires_grad=(tnorm == "ss"))
         self.leak_raw = torch.nn.Parameter(torch.tensor(-6.0))
         self.tnorm, self.p_mode, self.agg = tnorm, p_mode, agg
 
@@ -250,8 +257,7 @@ def train(model, sd, train_q, train_pos_by_src, ranker, valid_q, known, n_src, e
         A = torch.zeros(n_src).index_add(0, pair_src, ez) + n0 * torch.exp(z0)
         zp = torch.where(pos_pair >= 0, z[pos_pair.clamp(min=0)], z0)
         loss = (-zp + torch.log(A[pos_src] + torch.exp(zp))).mean()
-        from dnfr import P_RAW0 as _P0
-        reg = l2 * ((model.p_raw - _P0) ** 2).sum() + l2 * (model.w_raw ** 2).sum() * 0.01
+        reg = l2 * ((model.p_raw - model.p_raw0) ** 2).sum() + l2 * (model.w_raw ** 2).sum() * 0.01
         opt.zero_grad()
         (loss + reg).backward()            # grads for S (leaf) and for leak, p_raw (reg)
         gS = Sp.grad.detach()
