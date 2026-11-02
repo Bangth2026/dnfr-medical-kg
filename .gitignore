@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+data/*.pkl
+data/*.tsv
+data/*.gz
+data/*.csv
+data/primekg_cache.npz

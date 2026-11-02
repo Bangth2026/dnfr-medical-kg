@@ -1,0 +1,383 @@
+{
+ "nhanes": {
+  "product": {
+   "rho_hold": 0.8779855812744116,
+   "rho_dev": 0.8907148404870716,
+   "mae_hold": 0.07002937044107027,
+   "p": null
+  },
+  "hamacher": {
+   "rho_hold": 0.8537898559838168,
+   "rho_dev": 0.8664051999756194,
+   "mae_hold": 0.05531606846112442,
+   "p": null
+  },
+  "min": {
+   "rho_hold": 0.7297861226426839,
+   "rho_dev": 0.7501148578973523,
+   "mae_hold": 0.07697262552200046,
+   "p": null
+  },
+  "luk": {
+   "rho_hold": 0.3211221811118526,
+   "rho_dev": 0.3254723931590786,
+   "mae_hold": 0.11575602626798086,
+   "p": null
+  },
+  "ss_shared": {
+   "rho_hold": 0.879425125014601,
+   "rho_dev": 0.8923233121784239,
+   "mae_hold": 0.056235893885480746,
+   "p": [
+    -0.3840000033378601
+   ]
+  },
+  "ss_permp": {
+   "rho_hold": 0.8666898322155889,
+   "rho_dev": 0.8801870125067998,
+   "mae_hold": 0.04325639643558619,
+   "p_summary": [
+    -3.5329999923706055,
+    -0.10000000149011612,
+    0.004999999888241291
+   ]
+  },
+  "dnfr_max": {
+   "rho_hold": 0.9054860373792881,
+   "rho_dev": 0.9220907083232525,
+   "mae_hold": 0.03244292875644438,
+   "p_summary": [
+    -0.5740000009536743,
+    -0.10000000149011612,
+    0.2070000022649765
+   ]
+  },
+  "dnfr": {
+   "rho_hold": 0.9096122940850111,
+   "rho_dev": 0.9214351724273893,
+   "mae_hold": 0.029457113678519827,
+   "p_summary": [
+    -0.4399999976158142,
+    -0.0820000022649765,
+    0.24300000071525574
+   ]
+  },
+  "calib_product": {
+   "rho_hold": 0.9016536058924919,
+   "rho_dev": 0.9122483203804193,
+   "mae_hold": 0.030295329639739018,
+   "p": null
+  }
+ },
+ "nhanes_info": {
+  "n_pairs": 552,
+  "n_paths": 267168,
+  "n_metapaths": 320
+ },
+ "jack": {
+  "dnfr_minus_product": {
+   "min": 0.028037674533026746,
+   "max": 0.04959679726132771,
+   "jack_se": 0.023941619654838514,
+   "all_positive": true
+  },
+  "dnfr_minus_calibproduct": {
+   "min": 0.0028624286090905837,
+   "max": 0.011529800302801818,
+   "jack_se": 0.010048847681218593,
+   "n_positive": 24
+  }
+ },
+ "explanations": [
+  {
+   "n_paths": 22225,
+   "prob": 0.5284150083212789,
+   "paths": [
+    {
+     "metapath": "PCiC^-1-PCiC-CtD",
+     "nodes": [
+      "Doxorubicin",
+      "Topoisomerase Inhibitors",
+      "Mitoxantrone",
+      "breast cancer"
+     ],
+     "mu": [
+      0.98,
+      0.975,
+      0.462
+     ],
+     "p": -0.968,
+     "w": 0.1201,
+     "share": 0.074
+    },
+    {
+     "metapath": "PCiC^-1-PCiC-CtD",
+     "nodes": [
+      "Doxorubicin",
+      "Topoisomerase Inhibitors",
+      "Irinotecan",
+      "breast cancer"
+     ],
+     "mu": [
+      0.98,
+      0.975,
+      0.462
+     ],
+     "p": -0.968,
+     "w": 0.1201,
+     "share": 0.074
+    },
+    {
+     "metapath": "PCiC^-1-PCiC-CtD",
+     "nodes": [
+      "Doxorubicin",
+      "Topoisomerase Inhibitors",
+      "Epirubicin",
+      "breast cancer"
+     ],
+     "mu": [
+      0.98,
+      0.98,
+      0.423
+     ],
+     "p": -0.968,
+     "w": 0.1201,
+     "share": 0.068
+    },
+    {
+     "metapath": "PCiC^-1-PCiC-CtD",
+     "nodes": [
+      "Doxorubicin",
+      "Anthracyclines",
+      "Epirubicin",
+      "breast cancer"
+     ],
+     "mu": [
+      0.971,
+      0.971,
+      0.423
+     ],
+     "p": -0.968,
+     "w": 0.1201,
+     "share": 0.068
+    },
+    {
+     "metapath": "CrC-CtD",
+     "nodes": [
+      "Doxorubicin",
+      "Epirubicin",
+      "breast cancer"
+     ],
+     "mu": [
+      0.736,
+      0.423
+     ],
+     "p": -0.83,
+     "w": 0.1158,
+     "share": 0.057
+    }
+   ],
+   "query": [
+    "Doxorubicin",
+    "breast cancer"
+   ],
+   "rank": 1.0,
+   "task": "het_CtD",
+   "top3_share": 0.216
+  },
+  {
+   "n_paths": 637,
+   "prob": 0.7515768454951018,
+   "paths": [
+    {
+     "metapath": "DrD-DpS",
+     "nodes": [
+      "multiple sclerosis",
+      "amyotrophic lateral sclerosis",
+      "Muscle Weakness"
+     ],
+     "mu": [
+      0.692,
+      0.852
+     ],
+     "p": -2.777,
+     "w": 0.5354,
+     "share": 0.31
+    },
+    {
+     "metapath": "CpD^-1-CpD-DpS",
+     "nodes": [
+      "multiple sclerosis",
+      "Sildenafil",
+      "systemic scleroderma",
+      "Muscle Weakness"
+     ],
+     "mu": [
+      0.995,
+      0.992,
+      0.852
+     ],
+     "p": -0.113,
+     "w": 0.0234,
+     "share": 0.014
+    },
+    {
+     "metapath": "CpD^-1-CpD-DpS",
+     "nodes": [
+      "multiple sclerosis",
+      "Dextromethorphan",
+      "amyotrophic lateral sclerosis",
+      "Muscle Weakness"
+     ],
+     "mu": [
+      0.994,
+      0.961,
+      0.852
+     ],
+     "p": -0.113,
+     "w": 0.0234,
+     "share": 0.014
+    },
+    {
+     "metapath": "CpD^-1-CpD-DpS",
+     "nodes": [
+      "multiple sclerosis",
+      "Tizanidine",
+      "migraine",
+      "Muscle Weakness"
+     ],
+     "mu": [
+      0.994,
+      0.993,
+      0.825
+     ],
+     "p": -0.113,
+     "w": 0.0234,
+     "share": 0.014
+    },
+    {
+     "metapath": "DlA-DlA^-1-DpS",
+     "nodes": [
+      "multiple sclerosis",
+      "spinal cord",
+      "Creutzfeldt-Jakob disease",
+      "Muscle Weakness"
+     ],
+     "mu": [
+      0.947,
+      0.101,
+      0.848
+     ],
+     "p": -0.221,
+     "w": 0.123,
+     "share": 0.008
+    }
+   ],
+   "query": [
+    "multiple sclerosis",
+    "Muscle Weakness"
+   ],
+   "rank": 1.0,
+   "task": "het_DpS",
+   "top3_share": 0.338
+  },
+  {
+   "n_paths": 255,
+   "prob": 0.1465678190997599,
+   "paths": [
+    {
+     "metapath": "DpS-DpS^-1-DpS",
+     "nodes": [
+      "bronchitis",
+      "persistent cough",
+      "pneumonia",
+      "fatigue"
+     ],
+     "mu": [
+      0.097,
+      0.232,
+      0.592
+     ],
+     "p": -0.56,
+     "w": 0.2478,
+     "share": 0.081
+    },
+    {
+     "metapath": "DpS-DpS^-1-DpS",
+     "nodes": [
+      "bronchitis",
+      "sore throat",
+      "strep throat",
+      "fatigue"
+     ],
+     "mu": [
+      0.672,
+      0.053,
+      0.579
+     ],
+     "p": -0.56,
+     "w": 0.2478,
+     "share": 0.068
+    },
+    {
+     "metapath": "DpS-DpS^-1-DpS",
+     "nodes": [
+      "bronchitis",
+      "sore throat",
+      "mono",
+      "fatigue"
+     ],
+     "mu": [
+      0.672,
+      0.032,
+      0.937
+     ],
+     "p": -0.56,
+     "w": 0.2478,
+     "share": 0.047
+    },
+    {
+     "metapath": "DpS-DpS^-1-DpS",
+     "nodes": [
+      "bronchitis",
+      "nasal congestion",
+      "sinusitis",
+      "fatigue"
+     ],
+     "mu": [
+      0.378,
+      0.032,
+      0.398
+     ],
+     "p": -0.56,
+     "w": 0.2478,
+     "share": 0.036
+    },
+    {
+     "metapath": "DpS-DpS^-1-DpS",
+     "nodes": [
+      "bronchitis",
+      "chest pain worsened by breathing",
+      "pneumonia",
+      "fatigue"
+     ],
+     "mu": [
+      0.089,
+      0.047,
+      0.592
+     ],
+     "p": -0.56,
+     "w": 0.2478,
+     "share": 0.033
+    }
+   ],
+   "query": [
+    "bronchitis",
+    "fatigue"
+   ],
+   "rank": 1.0,
+   "task": "hkg_DpS",
+   "top3_share": 0.196
+  }
+ ]
+}

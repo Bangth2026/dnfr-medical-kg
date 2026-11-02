@@ -1,0 +1,17 @@
+{
+  "title": "Code and derived results for: Learning edge memberships matters more than learning t-norms: differentiable neuro-fuzzy reasoning on sparse medical knowledge graphs",
+  "upload_type": "software",
+  "description": "Code, derived data and result files for Differentiable Neuro-Fuzzy Reasoning (DNFR), a path-based link predictor that learns degree-aware edge memberships, a Schweizer–Sklar t-norm per metapath and metapath reliabilities, and aggregates paths by noisy-OR. Experiments: drug repurposing in Hetionet v1.0 and PrimeKG, disease–symptom prediction in Hetionet and in the graded health knowledge graph of Rotmensch et al. (2017), and a secondary test on a NHANES fuzzy relation, under leave-dyad-out splits, with fixed t-norms, ablations, DWPC with logistic regression, truncated and soft-thresholded SVD and knowledge graph embeddings (RotatE, TransE, ComplEx) as comparators. Includes per-query ranks for every method and split, trained models, exact path explanations, and the statistics files from which every number in the manuscript is read. Hetionet and PrimeKG are downloaded by download_data.py with MD5 checks.",
+  "creators": [
+    {"name": "Truong, Hai Bang", "orcid": "0000-0001-5094-3128", "affiliation": "Saigon International University"},
+    {"name": "Phan Thi, Van An", "orcid": "0009-0005-4135-5689", "affiliation": "VNU University of Education, Vietnam National University, Hanoi"}
+  ],
+  "license": "MIT",
+  "keywords": ["knowledge graph", "neuro-fuzzy reasoning", "t-norm", "explainable AI", "drug repurposing", "link prediction", "Hetionet", "PrimeKG"],
+  "related_identifiers": [
+    {"identifier": "10.5281/zenodo.23790456", "relation": "isDerivedFrom", "resource_type": "software"},
+    {"identifier": "10.1038/s41598-017-05778-z", "relation": "isDerivedFrom", "resource_type": "publication-article"}
+  ],
+  "version": "1.0.0",
+  "access_right": "open"
+}

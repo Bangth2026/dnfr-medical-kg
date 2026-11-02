@@ -1,0 +1,92 @@
+{
+ "het": {
+  "nodes": 47031,
+  "edges": 2250197,
+  "rel_types": 24,
+  "node_types": 11
+ },
+ "pkg": {
+  "nodes": 129375,
+  "edges": 2511974,
+  "rel_types": 28,
+  "node_types": 10,
+  "raw_rows": 8100498,
+  "dropped_rows_anatomy_protein": 3076180,
+  "dropped_edges": 1538090
+ },
+ "hkg": {
+  "nodes": 486,
+  "edges": 3704,
+  "rel_types": 1,
+  "node_types": 2,
+  "w_median": 0.021,
+  "w_q25": 0.011,
+  "w_q75": 0.044,
+  "w_max": 0.881
+ },
+ "het_CtD": {
+  "metapaths_all": 134,
+  "metapaths_kept": 130,
+  "skipped": [
+   "CcSE-CcSE^-1-CpD",
+   "CcSE-CcSE^-1-CtD",
+   "CdG-AeG^-1-DlA^-1",
+   "CuG-AeG^-1-DlA^-1"
+  ],
+  "paths": 29242427,
+  "paths_len2": 94764
+ },
+ "het_DpS": {
+  "metapaths_all": 17,
+  "metapaths_kept": 17,
+  "skipped": [],
+  "paths": 6968819,
+  "paths_len2": 29743
+ },
+ "pkg_ind": {
+  "metapaths_all": 82,
+  "metapaths_kept": 51,
+  "skipped": [
+   "contraindication^-1-contraindication-contraindication^-1",
+   "contraindication^-1-contraindication-indication^-1",
+   "contraindication^-1-contraindication-off_label_use^-1",
+   "contraindication^-1-disease_disease-disease_disease",
+   "contraindication^-1-disease_phenotype_positive-disease_phenotype_positive^-1",
+   "contraindication^-1-disease_protein-disease_protein^-1",
+   "contraindication^-1-indication-contraindication^-1",
+   "drug_drug-contraindication^-1",
+   "drug_drug-contraindication^-1-disease_disease",
+   "drug_drug-drug_drug-contraindication^-1",
+   "drug_drug-drug_drug-indication^-1",
+   "drug_drug-drug_drug-off_label_use^-1",
+   "drug_drug-drug_effect-disease_phenotype_negative^-1",
+   "drug_drug-drug_effect-disease_phenotype_positive^-1",
+   "drug_drug-drug_protein-disease_protein^-1",
+   "drug_drug-indication^-1-disease_disease",
+   "drug_drug-off_label_use^-1-disease_disease",
+   "drug_effect-disease_phenotype_positive^-1",
+   "drug_effect-disease_phenotype_positive^-1-disease_disease",
+   "drug_effect-drug_effect^-1-contraindication^-1",
+   "drug_effect-drug_effect^-1-indication^-1",
+   "drug_effect-drug_effect^-1-off_label_use^-1",
+   "drug_effect-phenotype_phenotype-disease_phenotype_positive^-1",
+   "drug_effect-phenotype_protein^-1-disease_protein^-1",
+   "drug_protein-drug_protein^-1-contraindication^-1",
+   "drug_protein-drug_protein^-1-indication^-1",
+   "drug_protein-protein_protein-disease_protein^-1",
+   "indication^-1-contraindication-contraindication^-1",
+   "indication^-1-disease_phenotype_positive-disease_phenotype_positive^-1",
+   "indication^-1-disease_protein-disease_protein^-1",
+   "indication^-1-indication-contraindication^-1"
+  ],
+  "paths": 45836887,
+  "paths_len2": 6650500
+ },
+ "hkg_DpS": {
+  "metapaths_all": 1,
+  "metapaths_kept": 1,
+  "skipped": [],
+  "paths": 3082789,
+  "paths_len2": 0
+ }
+}

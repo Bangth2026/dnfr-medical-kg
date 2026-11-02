@@ -1,0 +1,23 @@
+cff-version: 1.3.0
+message: "If you use this code or the derived results, please cite them as below."
+title: "Code and derived results for: Learning edge memberships matters more than learning t-norms: differentiable neuro-fuzzy reasoning on sparse medical knowledge graphs"
+version: 1.0.0
+repository-code: "https://github.com/Bangth2026/dnfr-medical-kg"
+date-released: 2026-11-02
+license: MIT
+authors:
+  - family-names: Truong
+    given-names: Hai Bang
+    orcid: "https://orcid.org/0000-0001-5094-3128"
+    affiliation: "Faculty of Engineering and Computer Science, Saigon International University, Ho Chi Minh City, Vietnam"
+  - family-names: Phan Thi
+    given-names: Van An
+    orcid: "https://orcid.org/0009-0005-4135-5689"
+    affiliation: "VNU University of Education, Vietnam National University, Hanoi, Vietnam"
+keywords:
+  - knowledge graph
+  - neuro-fuzzy reasoning
+  - t-norm
+  - explainable AI
+  - drug repurposing
+  - link prediction

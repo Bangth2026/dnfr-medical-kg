@@ -1,0 +1,290 @@
+[
+ {
+  "n_paths": 255,
+  "prob": 0.1465678190997599,
+  "paths": [
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "bronchitis",
+     "persistent cough",
+     "pneumonia",
+     "fatigue"
+    ],
+    "mu": [
+     0.097,
+     0.232,
+     0.592
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.081
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "bronchitis",
+     "sore throat",
+     "strep throat",
+     "fatigue"
+    ],
+    "mu": [
+     0.672,
+     0.053,
+     0.579
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.068
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "bronchitis",
+     "sore throat",
+     "mono",
+     "fatigue"
+    ],
+    "mu": [
+     0.672,
+     0.032,
+     0.937
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.047
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "bronchitis",
+     "nasal congestion",
+     "sinusitis",
+     "fatigue"
+    ],
+    "mu": [
+     0.378,
+     0.032,
+     0.398
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.036
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "bronchitis",
+     "chest pain worsened by breathing",
+     "pneumonia",
+     "fatigue"
+    ],
+    "mu": [
+     0.089,
+     0.047,
+     0.592
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.033
+   }
+  ],
+  "query": [
+   "bronchitis",
+   "fatigue"
+  ],
+  "rank": 1.0
+ },
+ {
+  "n_paths": 278,
+  "prob": 0.05169917209994712,
+  "paths": [
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "respiratory distress",
+     "pneumonia",
+     "chills"
+    ],
+    "mu": [
+     0.098,
+     0.024,
+     0.859
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.066
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "fluid in the abdomen",
+     "cirrhosis of the liver",
+     "chills"
+    ],
+    "mu": [
+     0.025,
+     0.068,
+     0.513
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.058
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "low body temperature",
+     "common cold",
+     "chills"
+    ],
+    "mu": [
+     0.021,
+     0.081,
+     0.853
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.056
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "kidney failure",
+     "chronic kidney disease",
+     "chills"
+    ],
+    "mu": [
+     0.195,
+     0.018,
+     0.196
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.052
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "fast breathing",
+     "pneumonia",
+     "chills"
+    ],
+    "mu": [
+     0.074,
+     0.015,
+     0.859
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.044
+   }
+  ],
+  "query": [
+   "sepsis",
+   "chills"
+  ],
+  "rank": 1.0
+ },
+ {
+  "n_paths": 184,
+  "prob": 0.044715070091086107,
+  "paths": [
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "low body temperature",
+     "hypoglycemia",
+     "low blood pressure"
+    ],
+    "mu": [
+     0.021,
+     0.171,
+     0.336
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.072
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "kidney failure",
+     "chronic kidney disease",
+     "low blood pressure"
+    ],
+    "mu": [
+     0.195,
+     0.018,
+     0.459
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.069
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "respiratory distress",
+     "pneumonia",
+     "low blood pressure"
+    ],
+    "mu": [
+     0.098,
+     0.024,
+     0.253
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.065
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "fluid in the abdomen",
+     "cirrhosis of the liver",
+     "low blood pressure"
+    ],
+    "mu": [
+     0.025,
+     0.068,
+     0.276
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.061
+   },
+   {
+    "metapath": "DpS-DpS^-1-DpS",
+    "nodes": [
+     "sepsis",
+     "respiratory distress",
+     "anaphylaxis",
+     "low blood pressure"
+    ],
+    "mu": [
+     0.098,
+     0.021,
+     0.195
+    ],
+    "p": -0.56,
+    "w": 0.2478,
+    "share": 0.058
+   }
+  ],
+  "query": [
+   "sepsis",
+   "low blood pressure"
+  ],
+  "rank": 1.0
+ }
+]

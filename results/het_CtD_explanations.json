@@ -1,0 +1,286 @@
+[
+ {
+  "n_paths": 636,
+  "prob": 0.7387067993619996,
+  "paths": [
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Glipizide",
+     "Sulfonylurea Compounds",
+     "Tolbutamide",
+     "type 2 diabetes mellitus"
+    ],
+    "mu": [
+     0.97,
+     0.969,
+     0.544
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.049
+   },
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Glipizide",
+     "Sulfonylurea Compounds",
+     "Glyburide",
+     "type 2 diabetes mellitus"
+    ],
+    "mu": [
+     0.97,
+     0.969,
+     0.544
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.049
+   },
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Glipizide",
+     "Sulfonylurea Compounds",
+     "Tolazamide",
+     "type 2 diabetes mellitus"
+    ],
+    "mu": [
+     0.97,
+     0.969,
+     0.544
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.049
+   },
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Glipizide",
+     "Sulfonylurea Compounds",
+     "Chlorpropamide",
+     "type 2 diabetes mellitus"
+    ],
+    "mu": [
+     0.97,
+     0.969,
+     0.544
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.049
+   },
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Glipizide",
+     "Sulfonylurea Compounds",
+     "Glimepiride",
+     "type 2 diabetes mellitus"
+    ],
+    "mu": [
+     0.97,
+     0.969,
+     0.544
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.049
+   }
+  ],
+  "query": [
+   "Glipizide",
+   "type 2 diabetes mellitus"
+  ],
+  "rank": 1.0
+ },
+ {
+  "n_paths": 30,
+  "prob": 0.26311753743085897,
+  "paths": [
+   {
+    "metapath": "CrC-CtD",
+    "nodes": [
+     "Fludarabine",
+     "Cytarabine",
+     "lymphatic system cancer"
+    ],
+    "mu": [
+     0.689,
+     0.593
+    ],
+    "p": -0.83,
+    "w": 0.1158,
+    "share": 0.18
+   },
+   {
+    "metapath": "CrC-CrC-CtD",
+    "nodes": [
+     "Fludarabine",
+     "Ribavirin",
+     "Cytarabine",
+     "lymphatic system cancer"
+    ],
+    "mu": [
+     0.695,
+     0.693,
+     0.593
+    ],
+    "p": -0.619,
+    "w": 0.0511,
+    "share": 0.061
+   },
+   {
+    "metapath": "CrC-CrC-CtD",
+    "nodes": [
+     "Fludarabine",
+     "Regadenoson",
+     "Cytarabine",
+     "lymphatic system cancer"
+    ],
+    "mu": [
+     0.694,
+     0.691,
+     0.593
+    ],
+    "p": -0.619,
+    "w": 0.0511,
+    "share": 0.06
+   },
+   {
+    "metapath": "CrC-CrC-CtD",
+    "nodes": [
+     "Fludarabine",
+     "Clofarabine",
+     "Cytarabine",
+     "lymphatic system cancer"
+    ],
+    "mu": [
+     0.694,
+     0.691,
+     0.593
+    ],
+    "p": -0.619,
+    "w": 0.0511,
+    "share": 0.06
+   },
+   {
+    "metapath": "CrC-CrC-CtD",
+    "nodes": [
+     "Fludarabine",
+     "S-Adenosylmethionine",
+     "Cytarabine",
+     "lymphatic system cancer"
+    ],
+    "mu": [
+     0.694,
+     0.691,
+     0.593
+    ],
+    "p": -0.619,
+    "w": 0.0511,
+    "share": 0.06
+   }
+  ],
+  "query": [
+   "Fludarabine",
+   "lymphatic system cancer"
+  ],
+  "rank": 1.0
+ },
+ {
+  "n_paths": 22225,
+  "prob": 0.5284150083212789,
+  "paths": [
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Doxorubicin",
+     "Topoisomerase Inhibitors",
+     "Mitoxantrone",
+     "breast cancer"
+    ],
+    "mu": [
+     0.98,
+     0.975,
+     0.462
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.074
+   },
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Doxorubicin",
+     "Topoisomerase Inhibitors",
+     "Irinotecan",
+     "breast cancer"
+    ],
+    "mu": [
+     0.98,
+     0.975,
+     0.462
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.074
+   },
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Doxorubicin",
+     "Topoisomerase Inhibitors",
+     "Epirubicin",
+     "breast cancer"
+    ],
+    "mu": [
+     0.98,
+     0.98,
+     0.423
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.068
+   },
+   {
+    "metapath": "PCiC^-1-PCiC-CtD",
+    "nodes": [
+     "Doxorubicin",
+     "Anthracyclines",
+     "Epirubicin",
+     "breast cancer"
+    ],
+    "mu": [
+     0.971,
+     0.971,
+     0.423
+    ],
+    "p": -0.968,
+    "w": 0.1201,
+    "share": 0.068
+   },
+   {
+    "metapath": "CrC-CtD",
+    "nodes": [
+     "Doxorubicin",
+     "Epirubicin",
+     "breast cancer"
+    ],
+    "mu": [
+     0.736,
+     0.423
+    ],
+    "p": -0.83,
+    "w": 0.1158,
+    "share": 0.057
+   }
+  ],
+  "query": [
+   "Doxorubicin",
+   "breast cancer"
+  ],
+  "rank": 1.0
+ }
+]

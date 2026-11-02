@@ -1,0 +1,268 @@
+[
+ {
+  "n_paths": 431,
+  "prob": 0.9381458190713731,
+  "paths": [
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "ocular cancer",
+     "Graves' disease",
+     "Edema"
+    ],
+    "mu": [
+     0.563,
+     0.888
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.125
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "ocular cancer",
+     "glaucoma",
+     "Edema"
+    ],
+    "mu": [
+     0.563,
+     0.885
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.125
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "ocular cancer",
+     "skin cancer",
+     "Edema"
+    ],
+    "mu": [
+     0.392,
+     0.878
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.084
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "ocular cancer",
+     "bone cancer",
+     "Edema"
+    ],
+    "mu": [
+     0.329,
+     0.851
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.069
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "ocular cancer",
+     "muscle cancer",
+     "Edema"
+    ],
+    "mu": [
+     0.313,
+     0.888
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.066
+   }
+  ],
+  "query": [
+   "ocular cancer",
+   "Edema"
+  ],
+  "rank": 1.0
+ },
+ {
+  "n_paths": 637,
+  "prob": 0.7515768454951018,
+  "paths": [
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "multiple sclerosis",
+     "amyotrophic lateral sclerosis",
+     "Muscle Weakness"
+    ],
+    "mu": [
+     0.692,
+     0.852
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.31
+   },
+   {
+    "metapath": "CpD^-1-CpD-DpS",
+    "nodes": [
+     "multiple sclerosis",
+     "Sildenafil",
+     "systemic scleroderma",
+     "Muscle Weakness"
+    ],
+    "mu": [
+     0.995,
+     0.992,
+     0.852
+    ],
+    "p": -0.113,
+    "w": 0.0234,
+    "share": 0.014
+   },
+   {
+    "metapath": "CpD^-1-CpD-DpS",
+    "nodes": [
+     "multiple sclerosis",
+     "Dextromethorphan",
+     "amyotrophic lateral sclerosis",
+     "Muscle Weakness"
+    ],
+    "mu": [
+     0.994,
+     0.961,
+     0.852
+    ],
+    "p": -0.113,
+    "w": 0.0234,
+    "share": 0.014
+   },
+   {
+    "metapath": "CpD^-1-CpD-DpS",
+    "nodes": [
+     "multiple sclerosis",
+     "Tizanidine",
+     "migraine",
+     "Muscle Weakness"
+    ],
+    "mu": [
+     0.994,
+     0.993,
+     0.825
+    ],
+    "p": -0.113,
+    "w": 0.0234,
+    "share": 0.014
+   },
+   {
+    "metapath": "DlA-DlA^-1-DpS",
+    "nodes": [
+     "multiple sclerosis",
+     "spinal cord",
+     "Creutzfeldt-Jakob disease",
+     "Muscle Weakness"
+    ],
+    "mu": [
+     0.947,
+     0.101,
+     0.848
+    ],
+    "p": -0.221,
+    "w": 0.123,
+    "share": 0.008
+   }
+  ],
+  "query": [
+   "multiple sclerosis",
+   "Muscle Weakness"
+  ],
+  "rank": 1.0
+ },
+ {
+  "n_paths": 848,
+  "prob": 0.9292973578427091,
+  "paths": [
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "systemic lupus erythematosus",
+     "systemic scleroderma",
+     "Fatigue"
+    ],
+    "mu": [
+     0.513,
+     0.854
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.118
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "systemic lupus erythematosus",
+     "primary biliary cirrhosis",
+     "Fatigue"
+    ],
+    "mu": [
+     0.495,
+     0.907
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.115
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "systemic lupus erythematosus",
+     "rheumatoid arthritis",
+     "Fatigue"
+    ],
+    "mu": [
+     0.478,
+     0.834
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.109
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "systemic lupus erythematosus",
+     "psoriasis",
+     "Fatigue"
+    ],
+    "mu": [
+     0.463,
+     0.86
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.106
+   },
+   {
+    "metapath": "DrD-DpS",
+    "nodes": [
+     "systemic lupus erythematosus",
+     "ankylosing spondylitis",
+     "Fatigue"
+    ],
+    "mu": [
+     0.425,
+     0.868
+    ],
+    "p": -2.777,
+    "w": 0.5354,
+    "share": 0.096
+   }
+  ],
+  "query": [
+   "systemic lupus erythematosus",
+   "Fatigue"
+  ],
+  "rank": 1.0
+ }
+]
