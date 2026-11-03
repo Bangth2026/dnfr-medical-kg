@@ -173,6 +173,18 @@ def profile_summary(pl):
             if r["dLdp"] is not None:
                 b["dLdp"].append(r["dLdp"])
     out["by_p"] = {f"{p:g}": {k: float(np.mean(v)) if v else None for k, v in b.items()} for p, b in sorted(by_p.items())}
+    # profile-likelihood style interval per split: p values whose excess loss is below chi2(0.95, 1) / (2 N),
+    # treating N times the mean softmax loss as a negative log-likelihood (Raue et al. 2009); the filtered softmax
+    # is not a proper likelihood of independent observations, so these intervals are descriptive only
+    out["intervals"] = []
+    for d in rows:
+        L = np.array([r["loss"] for r in d["rows"]]); ps = np.array([r["p"] for r in d["rows"]])
+        thr = 3.841 / (2 * d["n_train"]); inside = ps[L - L.min() < thr]
+        te = np.array([r["test_MRR"] for r in d["rows"]]); va = np.array([r["valid_MRR"] for r in d["rows"]])
+        out["intervals"].append(dict(seed=d["seed"], threshold=float(thr), p_lo=float(inside.min()), p_hi=float(inside.max()),
+                                     p_argmin=float(ps[np.argmin(L)]), p_best_valid=float(ps[np.argmax(va)]),
+                                     p_best_test=float(ps[np.argmax(te)]), test_range=float(te.max() - te.min()),
+                                     test_at_valid_choice=float(te[np.argmax(va)]), test_product=float(te[ps == 0][0])))
     out["max_abs_dLdp"] = float(max(abs(x) for b in by_p.values() for x in b["dLdp"]))
     out["max_excess_nonpos"] = float(max(x for p, b in by_p.items() if p <= 0 for x in b["excess"]))
     return out
