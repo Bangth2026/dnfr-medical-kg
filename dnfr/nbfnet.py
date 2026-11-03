@@ -116,7 +116,7 @@ def mrr_of(r):
     return dict(MRR=float(np.mean(1 / r)), H1=float(np.mean(r <= 1)), H3=float(np.mean(r <= 3)), H10=float(np.mean(r <= 10)))
 
 
-def run(task, seed, L=3, d=32, epochs=300, lr=5e-3, batch=16):
+def run(task, seed, L=3, d=32, epochs=int(os.environ.get("NBF_EPOCHS", "300")), lr=5e-3, batch=int(os.environ.get("NBF_BATCH", "16"))):
     torch.manual_seed(seed); rng = np.random.default_rng(seed)
     G = build(task, seed)
     model = NBF(G["n_rel"], d, L)
