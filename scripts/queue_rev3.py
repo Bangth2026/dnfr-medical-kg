@@ -10,15 +10,17 @@ FREE = "dnfr_free_pm2,dnfr_free,dnfr_free_pp05"
 BASE = "dwpc_lr,svd,softimpute,popularity,prior,dwpc_lr_full"
 J = {"A": [], "B": []}
 # worker A: Hetionet CtD (memory-heavy, one process)
-for s in range(3, 10):
-    J["A"].append((f"ctd_v1_s{s}", "het_CtD", s, "dnfr,dnfr_nodeg,dnfr_max,product,hamacher", BASE))
+J["A"].append(("ctd_v1_s3", "het_CtD", 3, "dnfr,dnfr_nodeg,dnfr_max,product,hamacher", BASE))
+# splits 4-9: headline comparison only (the operator/degree ablations stay at splits 0-3 for CPU reasons)
+for s in range(4, 10):
+    J["A"].append((f"ctd_v1_s{s}", "het_CtD", s, "dnfr,product", BASE))
 for s in range(0, 10):
     J["A"].append((f"ctd_v2_s{s}", "het_CtD", s, "dnfr2", ""))
-for s in range(0, 10):
+for s in range(0, 5):
     J["A"].append((f"ctd_add_s{s}", "het_CtD", s, "dnfr_overlap", ""))
 for s in range(0, 5):
     J["A"].append((f"ctd_grid_s{s}", "het_CtD", s, "fixp_m2,fixp_m1,fixp_m05", ""))
-for s in range(0, 5):
+for s in range(0, 3):
     J["A"].append((f"ctd_add2_s{s}", "het_CtD", s, "dnfr_gumbel,dnfr_ic", ""))
 # worker B: graded graph and Hetionet DpS
 for s in range(0, 10):

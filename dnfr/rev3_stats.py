@@ -1,0 +1,184 @@
+"""Statistics for the third revision (DNFR 2.0 components). Merges the second-revision result files (results/)
+with the third-revision jobs (results2/jobs/*, completed jobs only) by split, then computes paired comparisons.
+
+Decision rule (margin 0.01 MRR, fixed before the third-revision runs were analysed):
+  equivalent   both 90% intervals (Nadeau-Bengio corrected t, stratified query bootstrap) lie inside (-0.01, 0.01);
+  different    Holm-adjusted corrected-t p < 0.05 within the task's comparison family AND the 95% bootstrap
+               interval excludes zero on the same side;
+  inconclusive otherwise.
+Output: results2/rev3_stats.json"""
+import os, sys, glob, json, collections
+import numpy as np
+from scipy.stats import t as student_t
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from aggregate import holm
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EQ = 0.01
+TASKS = ["het_CtD", "het_DpS", "hkg_DpS"]
+GRID = {"fixp_m4": -4.0, "fixp_m2": -2.0, "fixp_m1": -1.0, "fixp_m05": -0.5, "product": 0.0, "fixp_05": 0.5}
+FAMILY = [  # (a, b): the comparisons that enter the Holm family of a task
+    ("dnfr2", "dnfr"), ("dnfr2", "product"), ("dnfr2", "dwpc_lr"),
+    ("dnfr_overlap", "dnfr"), ("dnfr_gumbel", "dnfr"), ("dnfr_ic", "dnfr"), ("dnfr_anneal", "dnfr"),
+    ("product_overlap", "product"),
+    ("dnfr2", "dnfr2_no_overlap"), ("dnfr2", "dnfr2_no_gumbel"), ("dnfr2", "dnfr2_no_ic"), ("dnfr2", "dnfr2_no_anneal"),
+    ("fixp_val", "dnfr"), ("fixp_val", "product"),
+    ("dnfr", "product"), ("dnfr", "dwpc_lr"), ("product", "dwpc_lr"), ("dnfr", "popularity"),
+]
+RESTARTS = {"dnfr2": ["dnfr2", "dnfr2_r1", "dnfr2_r2"], "dnfr_gumbel": ["dnfr_gumbel", "dnfr_gumbel_r1", "dnfr_gumbel_r2"]}
+FREE = ["dnfr_free_pm2", "dnfr_free", "dnfr_free_pp05"]
+FREE_INIT = {"dnfr_free_pm2": -2.0, "dnfr_free": -0.1, "dnfr_free_pp05": 0.5}
+
+
+def merge(task):
+    runs = {}
+    files = [f"{ROOT}/results/{task}.json"] + sorted(glob.glob(f"{ROOT}/results2/jobs/*/{task}.json"))
+    meta = None
+    for f in files:
+        if "/jobs/" in f and not os.path.exists(os.path.join(os.path.dirname(f), "DONE")):
+            continue
+        if not os.path.exists(f):
+            continue
+        d = json.load(open(f)); meta = meta or {k: v for k, v in d.items() if k != "runs"}
+        for r in d["runs"]:
+            R = runs.setdefault(r["seed"], dict(seed=r["seed"], n_train=r["n_train"], n_test=r["n_test"],
+                                                methods={}, ranks={}, extra=collections.defaultdict(dict)))
+            for m, v in r["methods"].items():
+                R["methods"][m] = v
+                if m in r.get("ranks", {}):
+                    R["ranks"][m] = r["ranks"][m]
+            for k in ("ops_chosen", "op_probs", "beta", "tau_best", "p_learned"):
+                for m, v in r.get(k, {}).items():
+                    R["extra"][k][m] = v
+    # validation-selected fixed t-norm (shared p chosen per split on validation MRR among the grid values run)
+    for R in runs.values():
+        cand = [m for m in GRID if m in R["methods"] and m in R["ranks"]]
+        if len([m for m in cand if m != "product"]) >= 2:
+            best = max(cand, key=lambda m: R["methods"][m]["valid_MRR"])
+            R["methods"]["fixp_val"] = dict(R["methods"][best], chosen=best)
+            R["ranks"]["fixp_val"] = R["ranks"][best]
+    return meta, [runs[s] for s in sorted(runs)]
+
+
+def paired(runs, a, b, n_boot=4000, seed=0):
+    per, diffs, ntr, nte = [], [], [], []
+    for r in runs:
+        if a in r["ranks"] and b in r["ranks"]:
+            dq = 1 / np.array(r["ranks"][a]) - 1 / np.array(r["ranks"][b])
+            diffs.append(dq); per.append(dq.mean()); ntr.append(r["n_train"]); nte.append(r["n_test"])
+    if not per:
+        return None
+    J = len(per); per = np.array(per); delta = float(per.mean())
+    rng = np.random.default_rng(seed)
+    boots = np.zeros(n_boot)
+    for dq in diffs:
+        boots += dq[rng.integers(0, len(dq), (n_boot, len(dq)))].mean(1)
+    boots /= J
+    out = dict(delta=delta, J=J, wins=int((per > 0).sum()), per_split=per.tolist(),
+               bs90=[float(np.quantile(boots, .05)), float(np.quantile(boots, .95))],
+               bs95=[float(np.quantile(boots, .025)), float(np.quantile(boots, .975))])
+    if J > 1 and per.var(ddof=1) > 0:
+        se = float(np.sqrt((1 / J + np.mean(nte) / np.mean(ntr)) * per.var(ddof=1)))
+        out["p"] = float(2 * student_t.sf(abs(delta / se), J - 1))
+        out["nb90"] = [delta - float(student_t.ppf(.95, J - 1)) * se, delta + float(student_t.ppf(.95, J - 1)) * se]
+        out["nb95"] = [delta - float(student_t.ppf(.975, J - 1)) * se, delta + float(student_t.ppf(.975, J - 1)) * se]
+    else:
+        out["p"] = None
+    return out
+
+
+def verdict(v):
+    if v is None or v.get("p") is None:
+        return "untested"
+    if v["nb90"][0] > -EQ and v["nb90"][1] < EQ and v["bs90"][0] > -EQ and v["bs90"][1] < EQ:
+        return "equivalent"
+    ph = v.get("p_holm")
+    if ph is not None and ph < 0.05 and (v["bs95"][0] > 0 or v["bs95"][1] < 0) and np.sign(v["bs95"][0]) == np.sign(v["delta"]):
+        return "different"
+    return "inconclusive"
+
+
+def summary(runs):
+    out = {}
+    for m in sorted({m for r in runs for m in r["methods"]}):
+        x = [r["methods"][m]["MRR"] for r in runs if m in r["methods"]]
+        out[m] = dict(mean=float(np.mean(x)), sd=float(np.std(x, ddof=1)) if len(x) > 1 else 0.0, n=len(x),
+                      seeds=[r["seed"] for r in runs if m in r["methods"]])
+        t = [r["methods"][m].get("time_s") for r in runs if m in r["methods"] and r["methods"][m].get("time_s")]
+        if t:
+            out[m]["time_s"] = float(np.mean(t))
+    return out
+
+
+def restart_agreement(runs, names):
+    """Share of metapaths whose arg-max operator is the same in all restarts of one split; operator counts."""
+    agree, counts, n = [], collections.Counter(), 0
+    for r in runs:
+        oc = r["extra"].get("ops_chosen", {})
+        if not all(v in oc for v in names):
+            continue
+        M = np.array([oc[v] for v in names])
+        agree.append(float(np.mean(np.all(M == M[0], 0)))); n += 1
+        counts.update(M.flatten().tolist())
+    if not n:
+        return None
+    return dict(n_splits=n, all_same_mean=float(np.mean(agree)), all_same_per_split=agree, op_counts=dict(counts))
+
+
+def free_p(runs):
+    rows = []
+    for r in runs:
+        pl = r["extra"].get("p_learned", {})
+        if not all(v in pl for v in FREE):
+            continue
+        M = np.array([pl[v] for v in FREE])  # restarts x metapaths
+        rows.append(dict(seed=r["seed"], median_by_init={v: float(np.median(pl[v])) for v in FREE},
+                         min=float(M.min()), max=float(M.max()), spread_median=float(np.median(M.max(0) - M.min(0))),
+                         share_hit_upper=float(np.mean(M >= 0.95 - 1e-6)), share_below_m5=float(np.mean(M < -5)),
+                         mrr={v: r["methods"][v]["MRR"] for v in FREE}))
+    return rows or None
+
+
+def main():
+    out = {}
+    for task in TASKS:
+        meta, runs = merge(task)
+        if not runs:
+            continue
+        S = dict(n_splits=len(runs), summary=summary(runs), paired={})
+        for a, b in FAMILY:
+            v = paired(runs, a, b)
+            if v:
+                S["paired"][f"{a}__{b}"] = v
+        hp = holm({k: v["p"] for k, v in S["paired"].items()})
+        for k, v in S["paired"].items():
+            v["p_holm"] = hp.get(k); v["verdict"] = verdict(v)
+        S["fixp_val_choice"] = collections.Counter(r["methods"]["fixp_val"]["chosen"] for r in runs if "fixp_val" in r["methods"])
+        S["restarts"] = {k: restart_agreement(runs, v) for k, v in RESTARTS.items()}
+        S["ops_single"] = collections.Counter(o for r in runs for o in r["extra"].get("ops_chosen", {}).get("dnfr2", []))
+        S["beta"] = {m: [r["extra"]["beta"][m] for r in runs if m in r["extra"].get("beta", {})]
+                     for m in ("dnfr2", "dnfr_overlap", "product_overlap")}
+        S["tau_best"] = {m: [r["extra"]["tau_best"][m] for r in runs if m in r["extra"].get("tau_best", {})]
+                         for m in ("dnfr2", "dnfr_anneal")}
+        S["free_p"] = free_p(runs)
+        out[task] = S
+    for f, k in (("results2/prior_check.json", "prior_check"), ("results/saturation.json", "saturation")):
+        if os.path.exists(f"{ROOT}/{f}"):
+            out[k] = json.load(open(f"{ROOT}/{f}"))
+    out["profile_lbfgs"] = {os.path.basename(f): json.load(open(f)) for f in sorted(glob.glob(f"{ROOT}/results2/profile_lbfgs_*.json"))}
+    json.dump(out, open(f"{ROOT}/results2/rev3_stats.json", "w"), indent=1, default=lambda o: dict(o))
+    return out
+
+
+if __name__ == "__main__":
+    o = main()
+    for task in TASKS:
+        if task not in o:
+            continue
+        S = o[task]; print(f"\n== {task} ({S['n_splits']} splits)")
+        for m in ("dnfr", "product", "dwpc_lr", "dnfr2", "fixp_val"):
+            if m in S["summary"]:
+                s = S["summary"][m]; print(f"  {m:16s} {s['mean']:.3f} ± {s['sd']:.3f} (n={s['n']})")
+        for k, v in S["paired"].items():
+            print(f"  {k:32s} Δ={v['delta']:+.4f} J={v['J']} wins={v['wins']} p_holm={v['p_holm']} -> {v['verdict']}")
+        print("  restarts", {k: (v and v['all_same_mean']) for k, v in S["restarts"].items()}, "fixp_val", dict(S["fixp_val_choice"]))
