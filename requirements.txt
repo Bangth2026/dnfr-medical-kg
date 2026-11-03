@@ -5,3 +5,4 @@ pykeen==1.11.1
 scikit-learn==1.9.1
 scipy==1.18.1
 torch==2.15.0
+python-docx==1.2.0

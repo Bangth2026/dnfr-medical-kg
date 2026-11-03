@@ -5,3 +5,5 @@ data/*.tsv
 data/*.gz
 data/*.csv
 data/primekg_cache.npz
+manuscript/*.docx
+manuscript/*.pdf

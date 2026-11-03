@@ -7,6 +7,7 @@ import numpy as np
 from scipy.stats import wilcoxon, t as student_t
 
 R = OUT
+EQ_MARGIN = 0.01
 TASKS = ["het_CtD", "het_DpS", "pkg_ind", "hkg_DpS"]
 KG_OF = {"het_CtD": "het", "het_DpS": "het", "pkg_ind": "pkg", "hkg_DpS": "hkg"}
 
@@ -77,6 +78,19 @@ def paired(d, a, b, n_boot=2000, seed=0):
         if var > 0:
             t = delta / np.sqrt(corr * var)
             out["t_nb"] = float(t); out["p"] = float(2 * student_t.sf(abs(t), J - 1))
+            se = float(np.sqrt(corr * var))
+            for lvl, q in (("90", 0.95), ("95", 0.975)):
+                h = float(student_t.ppf(q, J - 1)) * se
+                out[f"nb_ci{lvl}_lo"], out[f"nb_ci{lvl}_hi"] = delta - h, delta + h
+            # decision rule fixed before the second-revision analyses (margin 0.01 MRR):
+            # equivalent if the 90% corrected-t interval lies inside (-0.01, 0.01) (two one-sided tests at 5%);
+            # different if the 95% corrected-t interval excludes zero; inconclusive otherwise.
+            if out["nb_ci90_lo"] > -EQ_MARGIN and out["nb_ci90_hi"] < EQ_MARGIN:
+                out["verdict"] = "equivalent"
+            elif out["nb_ci95_lo"] > 0 or out["nb_ci95_hi"] < 0:
+                out["verdict"] = "different"
+            else:
+                out["verdict"] = "inconclusive"
         else:   # identical per-split differences (e.g. identical rankings): no test
             out["t_nb"] = None; out["p"] = 1.0 if delta == 0 else None
     else:
@@ -108,7 +122,11 @@ P_INIT = {"dnfr": -0.1, "dnfr_shared": -0.1, "dnfr_nodeg": -0.1, "dnfr_max": -0.
           "dnfr_fixdeg": -0.1, "dnfr_frozen": -0.1}
 EXTRA_PAIRS = [("dnfr_pm1", "hamacher"), ("dnfr_pm1", "dnfr"), ("dnfr_pm2", "dnfr"), ("dnfr_pp05", "dnfr"),
                ("dnfr_l2_0", "dnfr"), ("dnfr", "dnfr_fixdeg"), ("product", "product_fixdeg"), ("dnfr_fixdeg", "dnfr_nodeg"),
-               ("dnfr_frozen", "product_frozen"), ("product", "product_frozen"), ("hamacher", "product"), ("dnfr", "popularity")]
+               ("dnfr_frozen", "product_frozen"), ("product", "product_frozen"), ("hamacher", "product"), ("dnfr", "popularity"),
+               ("dnfr_pm1", "product"), ("dnfr_pm2", "product"), ("dnfr_pp05", "product"), ("dnfr_l2_0", "product"),
+               ("dnfr_pm2", "hamacher"), ("dnfr_pp05", "hamacher"), ("dnfr_l2_0", "hamacher"),
+               ("product_fixdeg", "product_fixdeg02"), ("product_fixdeg", "product_fixdeg06"),
+               ("dwpc_lr_full", "dwpc_lr"), ("prior", "popularity"), ("dnfr_shared", "product")]
 
 
 if __name__ == "__main__":
@@ -144,6 +162,22 @@ if __name__ == "__main__":
                     arrs = [np.array(r["dnfr_params"]["p"]) for r in d["runs"] if "dnfr_params" in r]
                 if arrs:
                     s["p_by_variant"][v] = p_stats(np.concatenate(arrs), P_INIT[v])
+            # agreement of the per-metapath parameters learned from different initial values (same split)
+            from scipy.stats import spearmanr
+            RV = ["dnfr_pm2", "dnfr_pm1", "dnfr_l2_0", "dnfr_pp05"]
+            rhos, signs, rng_small = [], [], []
+            for r in d["runs"]:
+                pl = r.get("p_learned", {}); have = [v for v in RV if v in pl]
+                if len(have) < 2 or len(pl[have[0]]) < 3:
+                    continue
+                M = np.array([pl[v] for v in have])
+                rhos += [float(spearmanr(M[i], M[j]).statistic) for i in range(len(have)) for j in range(i + 1, len(have))]
+                signs.append(float(np.mean(np.all(M < 0, 0) | np.all(M > 0, 0))))
+                rng_small.append(float(np.mean(M.max(0) - M.min(0) < 0.25)))
+            if rhos:
+                s["p_agreement"] = dict(spearman_median=float(np.median(rhos)), spearman_min=float(np.min(rhos)),
+                                        spearman_max=float(np.max(rhos)), sign_agree_mean=float(np.mean(signs)),
+                                        range_lt025_mean=float(np.mean(rng_small)), n_splits=len(signs))
             # timing (seconds per training run)
             s["time_s"] = {m: float(np.mean([r["methods"][m]["time_s"] for r in d["runs"] if m in r["methods"] and "time_s" in r["methods"][m]]))
                            for m in s["summary"] if any("time_s" in r["methods"].get(m, {}) for r in d["runs"])}

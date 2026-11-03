@@ -37,6 +37,9 @@ VARIANTS = {
     "product_fixdeg": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", fixed_deg=0.4),
     "dnfr_frozen": dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", freeze_mem=True),
     "product_frozen": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", freeze_mem=True),
+    # second revision: sensitivity of the fixed degree discount to its value
+    "product_fixdeg02": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", fixed_deg=0.2),
+    "product_fixdeg06": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", fixed_deg=0.6),
 }
 L2_DEFAULT = 1e-3
 
@@ -98,7 +101,7 @@ def dwpc_features(P, sd_mask, kg_split, n_pairs, pair_id, damp=0.4):
 
 
 def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, tag="", split_mode="random",
-        which=("dwpc_lr", "svd", "softimpute", "popularity")):
+        which=("dwpc_lr", "svd", "softimpute", "popularity", "prior", "dwpc_lr_full")):
     spec = TASKS[task]
     kg = load_kg(spec["kg"])
     if sparsity < 1.0:
@@ -167,6 +170,10 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
             z, z0 = score_pairs(model, sd)
             r = ranker.ranks(z, z0, test_tq, known)
             m = metrics(r); m["valid_MRR"] = bestv; m["time_s"] = time.time() - t0; m["epochs"] = hist[-1][0]
+            m["best_epoch"] = int(max(hist, key=lambda x: x[2])[0])
+            used_tr = sorted({t for ch in sd.chunks for (t, _, _, _) in ch["hops"]})
+            m["n_params"] = int(sum(int(p_.requires_grad) * (len(used_tr) if p_.dim() and p_.shape[0] == len(trav) else p_.numel())
+                                    for p_ in model.parameters()))
             print(f"   test {m}", flush=True)
             run_res["methods"][v] = m
             run_res.setdefault("ranks", {})[v] = r.tolist()
@@ -207,7 +214,13 @@ def baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt, ranker, t
         Z = np.broadcast_to(cnt, (n_src, n_t))
         rr = _dense_ranks(Z, te_q, known); RANKS["popularity"] = rr.tolist()
         out["popularity"] = metrics(rr); print("   popularity", out["popularity"], flush=True)
-    if "dwpc_lr" not in which and "svd" not in which and "softimpute" not in which:
+    if "prior" in which or "dwpc_lr_full" in which:  # degree-preserving permutation prior (Zietz et al., 2024)
+        t0 = time.time()
+        prior = edge_prior(tr_q, n_src, n_t, seed)
+        rr = _dense_ranks(prior, te_q, known); RANKS["prior"] = rr.tolist()
+        out["prior"] = metrics(rr); out["prior"]["time_s"] = time.time() - t0
+        print("   prior", out["prior"], flush=True)
+    if "dwpc_lr" not in which and "dwpc_lr_full" not in which and "svd" not in which and "softimpute" not in which:
         return out
     # --- DWPC + logistic regression (Rephetio) ---
     t0 = time.time()
@@ -221,7 +234,7 @@ def baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt, ranker, t
         for t in rng.integers(0, n_t, 20):
             if (int(s), int(t)) not in tr_set:
                 neg_rows.append(key.get((int(s), int(t)), -1))
-    from scipy.sparse import vstack, csr_matrix
+    from scipy.sparse import vstack, hstack, csr_matrix
     def rows(lst):
         lst = np.array(lst); Z = csr_matrix((len(lst), X.shape[1]))
         ok = lst >= 0
@@ -240,7 +253,49 @@ def baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt, ranker, t
     m = metrics(ranker.ranks(best[2], best[3], te_q, known)); m["valid_MRR"] = best[0]; m["C"] = best[1]
     m["time_s"] = time.time() - t0
     out["dwpc_lr"] = m; RANKS["dwpc_lr"] = ranker.ranks(best[2], best[3], te_q, known).tolist()
+    m["n_params"] = int(X.shape[1] + 1)
     print("   dwpc_lr", m, flush=True)
+    if "dwpc_lr_full" in which:
+        # Rephetio-style model: DWPC features plus the degrees of source and target in the training target
+        # relation and the logit of the permutation prior; scored densely over all (source, tail) pairs.
+        t0 = time.time()
+        dsrc = np.log1p(np.bincount(tr_q[:, 0], minlength=n_src).astype(np.float64))
+        dtgt = np.log1p(np.bincount(tr_q[:, 1], minlength=n_t).astype(np.float64))
+        lp = np.log(np.clip(prior, 1e-3, 1 - 1e-3) / (1 - np.clip(prior, 1e-3, 1 - 1e-3)))
+        def extra(ss, tt):
+            return np.stack([dsrc[ss], dtgt[tt], lp[ss, tt]], 1)
+        def full_rows(pairs_st, rowidx):
+            M = rows(rowidx)
+            return hstack([M, csr_matrix(extra(pairs_st[:, 0], pairs_st[:, 1]))]).tocsr()
+        neg_st = []
+        lrng = np.random.default_rng(seed)
+        for s in srcs:
+            for t in lrng.integers(0, n_t, 20):
+                if (int(s), int(t)) not in tr_set:
+                    neg_st.append((int(s), int(t)))
+        neg_st = np.array(neg_st)
+        neg_rows2 = [key.get((int(s), int(t)), -1) for s, t in neg_st]
+        Xtr2 = vstack([full_rows(tr_q, pos_rows), full_rows(neg_st, neg_rows2)]).tocsr()
+        ytr2 = np.r_[np.ones(len(tr_q)), np.zeros(len(neg_st))]
+        Xd = X.toarray() if X.shape[0] * X.shape[1] < 2e8 else None
+        def dense_scores(lr):
+            Z = np.zeros((n_src, n_t))
+            Z += lr.intercept_[0] + lr.coef_[0][-3] * dsrc[:, None] + lr.coef_[0][-2] * dtgt[None, :] + lr.coef_[0][-1] * lp
+            Z[pair_src, pair_tgt] += X @ lr.coef_[0][:-3]
+            return Z
+        best2 = None
+        for C in [0.01, 0.1, 1.0, 10.0]:
+            lr2 = LogisticRegression(C=C, max_iter=3000, class_weight="balanced").fit(Xtr2, ytr2)
+            Z = dense_scores(lr2)
+            mv = metrics(_dense_ranks(Z, va_q, known))["MRR"]
+            if best2 is None or mv > best2[0]:
+                best2 = (mv, C, Z)
+        rr = _dense_ranks(best2[2], te_q, known); RANKS["dwpc_lr_full"] = rr.tolist()
+        m2 = metrics(rr); m2["valid_MRR"] = best2[0]; m2["C"] = best2[1]; m2["time_s"] = time.time() - t0
+        m2["n_params"] = int(X.shape[1] + 4)
+        out["dwpc_lr_full"] = m2; print("   dwpc_lr_full", m2, flush=True)
+    if "svd" not in which and "softimpute" not in which:
+        return out
     # --- matrix completion on the training relation only ---
     R = np.zeros((n_src, n_t), np.float32)
     R[tr_q[:, 0], tr_q[:, 1]] = 1.0
@@ -273,6 +328,33 @@ def baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt, ranker, t
     return out
 
 
+def edge_prior(tr_q, n_src, n_t, seed, n_perm=100, mult=10):
+    """Degree-preserving permutation prior of the training target relation (XSwap; Hanhijarvi et al. 2009,
+    as used by Himmelstein et al. 2017 and Zietz et al. 2024): the share of n_perm permuted networks in which a
+    (source, tail) pair is an edge. Each permutation applies mult * n_edges attempted swaps to the original."""
+    rng = np.random.default_rng(1000 + seed)
+    E0 = tr_q[:, :2].astype(np.int64)
+    m = len(E0)
+    count = np.zeros((n_src, n_t))
+    S0, T0 = E0[:, 0].tolist(), E0[:, 1].tolist()
+    for _ in range(n_perm):
+        Sx, Tx = list(S0), list(T0)
+        present = set(s_ * n_t + t_ for s_, t_ in zip(Sx, Tx))
+        ii = rng.integers(0, m, (mult * m, 2)).tolist()
+        for a, b in ii:
+            s1, t1, s2, t2 = Sx[a], Tx[a], Sx[b], Tx[b]
+            if s1 == s2 or t1 == t2:
+                continue
+            k1, k2 = s1 * n_t + t2, s2 * n_t + t1
+            if k1 in present or k2 in present:
+                continue
+            present.discard(s1 * n_t + t1); present.discard(s2 * n_t + t2)
+            present.add(k1); present.add(k2)
+            Tx[a], Tx[b] = t2, t1
+        count[Sx, Tx] += 1
+    return count / n_perm
+
+
 def _rsvd(R, k, seed):
     from sklearn.utils.extmath import randomized_svd
     U, s, Vt = randomized_svd(R, k, random_state=seed)
@@ -298,7 +380,7 @@ if __name__ == "__main__":
     ap.add_argument("--epochs", type=int, default=400); ap.add_argument("--no_baselines", action="store_true")
     ap.add_argument("--sparsity", type=float, default=1.0); ap.add_argument("--tag", default="")
     ap.add_argument("--split", default="random", choices=["random", "tail"])
-    ap.add_argument("--baselines", default="dwpc_lr,svd,softimpute,popularity")
+    ap.add_argument("--baselines", default="dwpc_lr,svd,softimpute,popularity,prior,dwpc_lr_full")
     a = ap.parse_args()
     run(a.task, [int(s) for s in a.seeds.split(",")], [v for v in a.variants.split(",") if v], a.budget, a.epochs,
         not a.no_baselines, a.sparsity, a.tag, a.split, tuple(a.baselines.split(",")))
