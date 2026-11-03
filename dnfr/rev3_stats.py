@@ -24,6 +24,7 @@ FAMILY = [  # (a, b): the comparisons that enter the Holm family of a task
     ("dnfr2", "dnfr2_no_overlap"), ("dnfr2", "dnfr2_no_gumbel"), ("dnfr2", "dnfr2_no_ic"), ("dnfr2", "dnfr2_no_anneal"),
     ("fixp_val", "dnfr"), ("fixp_val", "product"),
     ("dnfr", "product"), ("dnfr", "dwpc_lr"), ("product", "dwpc_lr"), ("dnfr", "popularity"),
+    ("nbfnet", "dnfr"), ("nbfnet", "dwpc_lr"), ("nbfnet", "softimpute"),
 ]
 RESTARTS = {"dnfr2": ["dnfr2", "dnfr2_r1", "dnfr2_r2"], "dnfr_gumbel": ["dnfr_gumbel", "dnfr_gumbel_r1", "dnfr_gumbel_r2"]}
 FREE = ["dnfr_free_pm2", "dnfr_free", "dnfr_free_pp05"]
@@ -50,6 +51,10 @@ def merge(task):
             for k in ("ops_chosen", "op_probs", "beta", "tau_best", "p_learned"):
                 for m, v in r.get(k, {}).items():
                     R["extra"][k][m] = v
+    for f in sorted(glob.glob(f"{ROOT}/results2/nbf/nbfnet_{task}_seed*.json") + glob.glob(f"{ROOT}/results/nbfnet_{task}_seed*.json")):
+        a = json.load(open(f))
+        if a["seed"] in runs:
+            runs[a["seed"]]["methods"]["nbfnet"] = a["metrics"]; runs[a["seed"]]["ranks"]["nbfnet"] = a["ranks"]
     # validation-selected fixed t-norm (shared p chosen per split on validation MRR among the grid values run)
     for R in runs.values():
         cand = [m for m in GRID if m in R["methods"] and m in R["ranks"]]
@@ -139,6 +144,62 @@ def free_p(runs):
     return rows or None
 
 
+def prior_summary(pc):
+    out = {}
+    for t, rows in pc.items():
+        if not isinstance(rows, list):
+            continue
+        g = lambda k, f: float(np.mean([r[k][f] for r in rows if k in r and f in r[k]]))
+        out[t] = dict(n=len(rows), **{f"{k}_MRR": g(k, "MRR") for k in ("popularity", "prior100", "prior1000", "analytic")},
+                      tie_any_prior100=g("prior100", "tie_any"), tie_share_prior100=g("prior100", "tie_share"),
+                      tie_any_popularity=g("popularity", "tie_any"), tie_share_popularity=g("popularity", "tie_share"),
+                      share_zero_true=g("prior100", "share_zero_true"),
+                      rho_analytic_pop_min=float(np.min([r.get("rho_analytic_pop", np.nan) for r in rows])))
+    return out
+
+
+def profile_summary(pl):
+    rows = [d for k, d in pl.items() if "hkg_DpS" in k]
+    if not rows:
+        return None
+    out = dict(seeds=[d["seed"] for d in rows], p_min=[d["p_min"] for d in rows], curvature=[d["d2L_dp2"] for d in rows],
+               loss_range=[d["loss_range"] for d in rows])
+    by_p = {}
+    for d in rows:
+        L = np.array([r["loss"] for r in d["rows"]])
+        for r in d["rows"]:
+            b = by_p.setdefault(r["p"], dict(excess=[], dLdp=[], test=[], valid=[]))
+            b["excess"].append(r["loss"] - L.min()); b["test"].append(r["test_MRR"]); b["valid"].append(r["valid_MRR"])
+            if r["dLdp"] is not None:
+                b["dLdp"].append(r["dLdp"])
+    out["by_p"] = {f"{p:g}": {k: float(np.mean(v)) if v else None for k, v in b.items()} for p, b in sorted(by_p.items())}
+    out["max_abs_dLdp"] = float(max(abs(x) for b in by_p.values() for x in b["dLdp"]))
+    out["max_excess_nonpos"] = float(max(x for p, b in by_p.items() if p <= 0 for x in b["excess"]))
+    return out
+
+
+def valid_spread():
+    """Spread of validation MRR across the checkpoints of the default DNFR runs on CtD (from the job logs)."""
+    import re
+    out = []
+    for f in sorted(glob.glob(f"{ROOT}/results2/jobs/ctd_v1_s*/log.txt")):
+        if not os.path.exists(os.path.join(os.path.dirname(f), "DONE")):
+            continue
+        cur, vals = None, []
+        for line in open(f):
+            if line.startswith("[het_CtD"):
+                cur = line.strip().split()[-1]
+            m = re.search(r"valid MRR ([0-9.]+)", line)
+            if m and cur == "dnfr":
+                vals.append(float(m.group(1)))
+        if len(vals) >= 3:
+            v = np.array(vals); top = np.sort(v)[-5:]
+            out.append(dict(job=os.path.basename(os.path.dirname(f)), n_ckpt=len(v), best=float(v.max()),
+                            sd_all=float(v.std(ddof=1)), sd_after_10=float(v[2:].std(ddof=1)) if len(v) > 3 else None,
+                            range_top5=float(top.max() - top.min())))
+    return out
+
+
 def main():
     out = {}
     for task in TASKS:
@@ -162,11 +223,18 @@ def main():
                          for m in ("dnfr2", "dnfr_anneal")}
         S["free_p"] = free_p(runs)
         out[task] = S
-    for f, k in (("results2/prior_check.json", "prior_check"), ("results/saturation.json", "saturation")):
+    for f, k in (("results/prior_check.json", "prior_check"), ("results/saturation.json", "saturation")):
         if os.path.exists(f"{ROOT}/{f}"):
             out[k] = json.load(open(f"{ROOT}/{f}"))
-    out["profile_lbfgs"] = {os.path.basename(f): json.load(open(f)) for f in sorted(glob.glob(f"{ROOT}/results2/profile_lbfgs_*.json"))}
-    json.dump(out, open(f"{ROOT}/results2/rev3_stats.json", "w"), indent=1, default=lambda o: dict(o))
+    out["prior_summary"] = prior_summary(out.get("prior_check", {}))
+    out["profile_lbfgs"] = {os.path.basename(f): json.load(open(f)) for f in
+                            sorted(set(glob.glob(f"{ROOT}/results2/profile_lbfgs_*.json")) | set(glob.glob(f"{ROOT}/results/profile_lbfgs_*.json")))}
+    out["profile_summary"] = profile_summary(out["profile_lbfgs"])
+    out["explain3"] = {os.path.basename(f).split("_explain")[0]: json.load(open(f))["summary"]
+                       for f in glob.glob(f"{ROOT}/results/*_explain_eval3.json")}
+    out["ctd_valid_spread"] = valid_spread()
+    for d in ("results2", "results"):
+        json.dump(out, open(f"{ROOT}/{d}/rev3_stats.json", "w"), indent=1, default=lambda o: dict(o))
     return out
 
 
