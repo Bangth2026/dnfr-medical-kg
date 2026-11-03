@@ -226,7 +226,8 @@ def results(dc):
            f"low-rank description should work well. AnyBURL, given 100 s of rule learning, reached {m('het_CtD','anyburl')}, "
            f"{m('het_DpS','anyburl')} and {m('hkg_DpS','anyburl')} on the three tasks on which it ran, below DNFR and DWPC-LR on "
            "each. The untuned embeddings were far below every path method; since their training was not tuned, we do not "
-           "interpret that gap. PrimeKG accuracies of all path methods are lower bounds, because the metapaths with more than five "
+           "interpret that gap. We did not train embeddings on the graded graph: with a single bipartite relation an embedding "
+           "reduces to a low-rank factorisation of that relation, which Soft-Impute provides. PrimeKG accuracies of all path methods are lower bounds, because the metapaths with more than five "
            "million paths, the most hub-dominated ones, were excluded (Section 3.5).")
     R.table2(dc)
     nb = {t: r3p(t, "nbfnet", "dnfr") for t in R3T}
@@ -466,7 +467,12 @@ def results(dc):
            f"against {m('het_CtD','softimpute','_sp0.25')} for Soft-Impute. This comparison favours path methods by construction, "
            "because completion loses the very edges it is fitted to. The advantage of the degree terms vanished on the thinnest "
            f"graphs ({m('het_CtD','dnfr_nodeg','_sp0.25')} without them at 25% of the edges), consistent with their role: once most "
-           "edges are gone, few nodes remain hubs.")
+           "edges are gone, few nodes remain hubs."
+           + (" To separate the robustness of path evidence from the loss of training edges, we also thinned every relation of "
+              "Hetionet disease–symptom except the target relation to 25%: DNFR reached "
+              f"{m('het_DpS','dnfr','_spt0.25')}, the product {m('het_DpS','product','_spt0.25')}, DWPC-LR "
+              f"{m('het_DpS','dwpc_lr','_spt0.25')} and Soft-Impute, which now keeps all its training edges, "
+              f"{m('het_DpS','softimpute','_spt0.25')} (Supplementary Table S5)." if summ("het_DpS", "dnfr", "_spt0.25") else ""))
     figure(dc, f"{ROOT}/figures/fig4_sparsity.png", 6.0,
            "**Figure 4.** MRR with all edges and with 50% and 25% of the edges of every relation kept after random removal. Points are "
            "means and error bars standard deviations over splits (three splits on the thinned graphs; the all-edges points use the "

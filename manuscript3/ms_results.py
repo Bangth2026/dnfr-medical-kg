@@ -337,10 +337,13 @@ def supp_sparsity(d, num):
     for t, lab in (("het_CtD", "Compound–treats–disease"), ("het_DpS", "Disease–presents–symptom")):
         rows.append([f"§{lab}"])
         for m in ("dnfr", "product", "dnfr_nodeg", "dwpc_lr", "softimpute"):
-            rows.append([NAMES[m]] + [mrr(t, m, tag, mark_n=False) for tag in ("", "_sp0.50", "_sp0.25")])
+            rows.append([NAMES[m]] + [mrr(t, m, tag, mark_n=False) for tag in ("", "_sp0.50", "_sp0.25", "_spt0.25")])
     T(d, f"**Table S{num}.** MRR with all edges, and with 50% and 25% of the edges of every relation kept after random removal (three "
-         "splits on the thinned graphs; same test pairs). The all-edges column repeats Tables S1 and S2.",
-      ["Method", "All edges", "50% of edges kept", "25% of edges kept"], rows, widths=[2.4, 1.3, 1.3, 1.27], size=8)
+         "splits on the thinned graphs; same test pairs). Last column: 25% of the edges of every relation except the target relation "
+         "kept, so that completion keeps its training edges (Hetionet disease–symptom only). The all-edges column repeats Tables S1 "
+         "and S2.",
+      ["Method", "All edges", "50% of edges kept", "25% of edges kept", "25% kept, target intact"], rows,
+      widths=[2.0, 1.05, 1.05, 1.05, 1.12], size=8)
 
 
 def supp_long(d, num):
