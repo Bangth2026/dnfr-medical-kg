@@ -44,9 +44,14 @@ for s in range(0, 3):
 for s in range(0, 2):
     J["B"].append((f"dps_rst_s{s}", "het_DpS", s, RST + "," + FREE, ""))
 
+# run order: what answers the reviewer directly comes first (refinements, M3 ablations, minor 9), then the rest
+PRIORITY = ["dps_main", "ctd_v2", "ctd_add_", "ctd_abl", "dps_spt", "dps_loo", "ctd_add2", "dps_abl", "hkg_abl", "ctd_grid", "dps_rst"]
+def prio(job):
+    return next((i for i, p in enumerate(PRIORITY) if job[0].startswith(p)), len(PRIORITY))
+
 if __name__ == "__main__":
     w = sys.argv[1]
-    for job in J[w]:
+    for job in sorted(J[w], key=prio):
         jid, task, seed, variants, base = job[:5]; extra = job[5].split() if len(job) > 5 else []
         d = f"{ROOT}/results2/jobs/{jid}"
         if os.path.exists(f"{d}/DONE"):
