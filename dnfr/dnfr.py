@@ -258,10 +258,10 @@ def forward_all(model, sd, grad_S=None):
                         gmax.scatter_reduce_(0, g.long(), lv, reduce="amax")
             model._gmax = gmax
         gmax = model._gmax
-        beta = model.beta()
         for ch in sd.chunks:
             pair = ch["pair32"].long()
             def contrib_of(lv):
+                beta = model.beta()                                    # rebuilt per chunk: each chunk backpropagates separately
                 lw = sum(lv - gmax[g.long()] for g in ch["g"])        # log of prod (v / v_max)
                 return torch.exp(beta * lw) * torch.log1p(-torch.exp(torch.clamp(lv, max=-1e-6)))
             if grad_S is None:
