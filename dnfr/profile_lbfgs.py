@@ -100,11 +100,24 @@ def fit(p, warm=None, max_outer=60):
                    valid_MRR=evaluate(m, va), test_MRR=evaluate(m, te), converged=bool(done))
 
 
-rows, warm = [], None
-for p in grid:
-    m, r = fit(p, warm)
-    warm = {k: v.detach().clone() for k, v in m.state_dict().items()}
-    print(r, flush=True); rows.append(r)
+# two sweeps with warm starts, upward and then downward through the grid; the profile keeps, for each p, the fit
+# with the lower loss (a profile is a minimum over the other parameters, and the loss is not convex in them)
+best, warm = {}, None
+for sweep, order in (("up", grid), ("down", grid[::-1])):
+    for p in order:
+        m, r = fit(p, warm)
+        r["sweep"] = sweep
+        warm = {k: v.detach().clone() for k, v in m.state_dict().items()}
+        print(r, flush=True)
+        if p not in best or r["loss"] < best[p]["loss"]:
+            if p in best:
+                r["loss_other_sweep"] = best[p]["loss"]
+            elif sweep == "down":
+                pass
+            best[p] = r
+        else:
+            best[p]["loss_other_sweep"] = r["loss"]
+rows = [best[p] for p in grid]
 # curvature at the profile minimum from central differences of the loss and of dL/dp
 L = np.array([r["loss"] for r in rows]); i = int(np.argmin(L)); ps = np.array(grid)
 curv = None

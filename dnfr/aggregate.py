@@ -71,6 +71,7 @@ def paired(d, a, b, n_boot=2000, seed=0):
         boots += dq[idx].mean(1)
     boots /= J
     out = dict(delta_MRR=delta, ci_lo=float(np.quantile(boots, .025)), ci_hi=float(np.quantile(boots, .975)),
+               ci90_lo=float(np.quantile(boots, .05)), ci90_hi=float(np.quantile(boots, .95)),
                seeds=J, seed_wins=int((per > 0).sum()), per_split=per.tolist(), n_queries=int(sum(len(x) for x in diffs)))
     if J > 1:
         var = per.var(ddof=1)
@@ -82,15 +83,7 @@ def paired(d, a, b, n_boot=2000, seed=0):
             for lvl, q in (("90", 0.95), ("95", 0.975)):
                 h = float(student_t.ppf(q, J - 1)) * se
                 out[f"nb_ci{lvl}_lo"], out[f"nb_ci{lvl}_hi"] = delta - h, delta + h
-            # decision rule fixed before the second-revision analyses (margin 0.01 MRR):
-            # equivalent if the 90% corrected-t interval lies inside (-0.01, 0.01) (two one-sided tests at 5%);
-            # different if the 95% corrected-t interval excludes zero; inconclusive otherwise.
-            if out["nb_ci90_lo"] > -EQ_MARGIN and out["nb_ci90_hi"] < EQ_MARGIN:
-                out["verdict"] = "equivalent"
-            elif out["nb_ci95_lo"] > 0 or out["nb_ci95_hi"] < 0:
-                out["verdict"] = "different"
-            else:
-                out["verdict"] = "inconclusive"
+            out["verdict"] = None   # set by set_verdicts() once the Holm adjustment of the family is known
         else:   # identical per-split differences (e.g. identical rankings): no test
             out["t_nb"] = None; out["p"] = 1.0 if delta == 0 else None
     else:
@@ -98,6 +91,29 @@ def paired(d, a, b, n_boot=2000, seed=0):
     pooled = np.concatenate(diffs)
     out["p_wilcoxon"] = float(wilcoxon(pooled).pvalue) if np.any(pooled != 0) else 1.0
     return out
+
+
+def set_verdicts(family):
+    """Third-revision decision rule (margin 0.01 MRR), applied to every comparison of a family (dict name -> paired()):
+    equivalent  both 90% intervals, corrected t and stratified bootstrap, lie inside (-0.01, 0.01);
+    different   Holm-adjusted corrected-t p < 0.05 and the 95% bootstrap interval excludes zero on the same side;
+    inconclusive otherwise (also when no corrected test is possible)."""
+    hp = holm({k: v.get("p") for k, v in family.items() if v})
+    for k, v in family.items():
+        if not v:
+            continue
+        v["p_holm"] = hp.get(k)
+        if v.get("nb_ci90_lo") is None:
+            v["verdict"] = "inconclusive" if v.get("p") is not None or v["seeds"] > 1 else None
+            continue
+        inside = lambda lo, hi: lo > -EQ_MARGIN and hi < EQ_MARGIN
+        if inside(v["nb_ci90_lo"], v["nb_ci90_hi"]) and inside(v["ci90_lo"], v["ci90_hi"]):
+            v["verdict"] = "equivalent"
+        elif v["p_holm"] is not None and v["p_holm"] < 0.05 and (
+                (v["ci_lo"] > 0 and v["delta_MRR"] > 0) or (v["ci_hi"] < 0 and v["delta_MRR"] < 0)):
+            v["verdict"] = "different"
+        else:
+            v["verdict"] = "inconclusive"
 
 
 def holm(pvals):
@@ -147,13 +163,12 @@ if __name__ == "__main__":
                     pr = paired(d, "dnfr", m)
                     if pr:
                         s["paired"][m] = pr
-            hp = holm({m: v["p"] for m, v in s["paired"].items()})
-            for m, v in s["paired"].items():
-                v["p_holm"] = hp.get(m)
+            set_verdicts(s["paired"])
             s["paired_extra"] = {}
             for a_, b_ in EXTRA_PAIRS:
                 if a_ in s["summary"] and b_ in s["summary"]:
                     s["paired_extra"][f"{a_}__vs__{b_}"] = paired(d, a_, b_)
+            set_verdicts(s["paired_extra"])
             # learned t-norm parameters of every variant with a learned p
             s["p_by_variant"] = {}
             for v in P_INIT:

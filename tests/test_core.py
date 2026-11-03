@@ -68,6 +68,50 @@ def test_filtered_ranking():
         assert abs(g - (1 + gt + eq / 2)) < 1e-9
 
 
+def test_overlap_groups():
+    """R1: two paths of one pair have node-set Jaccard > 0.5 exactly when they share an interior-node group, and the
+    discount kappa computed from the group maxima equals a direct pairwise computation."""
+    from run_task import TASKS, positives, split
+    from paths import drop_paths_using
+    from dnfr import SplitData, DNFR, forward_all
+    kg = pickle.load(open(f"{DATA}/hkg.pkl", "rb")); spec = TASKS["hkg_DpS"]
+    P = pickle.load(open(f"{DATA}/paths_hkg_DpS.pkl", "rb"))
+    keep = np.ones(len(P["src"]), bool)
+    n_t = kg.n(spec["t"]); key = P["src"].astype(np.int64) * n_t + P["tgt"]
+    ukey, pair_id = np.unique(key, return_inverse=True)
+    trav = kg.traversals(); ti = {t: i for i, t in enumerate(trav)}
+    sd = SplitData(P, kg, keep, pair_id, len(ukey), ti, overlap=True)
+    ch = sd.chunks[0]; idx = ch["path_index"]
+    nodes = np.stack([P["sources"][P["src"][idx]], P["k1"][idx], P["k2"][idx], P["tgt"][idx]], 1)
+    g1, g2 = ch["g"][0].numpy(), ch["g"][1].numpy(); pr = ch["pair32"].numpy()
+    rng = np.random.default_rng(0)
+    for pid in rng.choice(np.unique(pr), 30, replace=False):
+        sel = np.where(pr == pid)[0][:60]
+        for a in range(len(sel)):
+            for b in range(a + 1, len(sel)):
+                i, j = sel[a], sel[b]
+                # typed node sets: position 1 and 3 are symptoms, 0 and 2 diseases on this metapath (D-S-D-S)
+                A = {("D", nodes[i, 0]), ("S", nodes[i, 1]), ("D", nodes[i, 2]), ("S", nodes[i, 3])}
+                B = {("D", nodes[j, 0]), ("S", nodes[j, 1]), ("D", nodes[j, 2]), ("S", nodes[j, 3])}
+                jac = len(A & B) / len(A | B)
+                share = len({g1[i], g2[i]} & {g1[j], g2[j]}) > 0
+                assert (jac > 0.5) == share, (jac, share)
+    model = DNFR(len(trav), len(P["mps"]), tnorm="ss", agg="overlap")
+    with torch.no_grad():
+        lv = model.path_logvalue(ch).numpy()
+    forward_all(model, sd)
+    gmax = model._gmax.numpy()
+    beta = float(model.beta())
+    for i in rng.choice(len(lv), 200, replace=False):
+        same = (pr == pr[i])
+        direct = 1.0
+        for g in (g1, g2):
+            members = same & ((g1 == g[i]) | (g2 == g[i]))
+            direct *= np.exp(beta * (lv[i] - lv[members].max()))
+        via_groups = np.exp(beta * ((lv[i] - gmax[g1[i]]) + (lv[i] - gmax[g2[i]])))
+        assert abs(direct - via_groups) < 1e-5
+
+
 if __name__ == "__main__":
-    for f in (test_tnorm_limits, test_leave_dyad_out, test_filtered_ranking):
+    for f in (test_tnorm_limits, test_leave_dyad_out, test_filtered_ranking, test_overlap_groups):
         f(); print(f.__name__, "ok")
