@@ -132,14 +132,15 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
         which=("dwpc_lr", "svd", "softimpute", "popularity", "prior", "dwpc_lr_full")):
     spec = TASKS[task]
     kg = load_kg(spec["kg"])
+    protect_target = sparsity < 1.0 and bool(os.environ.get("DNFR_PROTECT_TARGET"))  # thin only non-target relations (minor 9)
     if sparsity < 1.0:
-        kg = kg.subsample(sparsity, np.random.default_rng(12345), protect=())
+        kg = kg.subsample(sparsity, np.random.default_rng(12345), protect=(spec["rel"],) if protect_target else ())
     pos_full = positives(kg if sparsity == 1.0 else load_kg(spec["kg"]), spec)
     # with sparsity < 1 the target relation is also thinned; held-out positives come from the full graph
     sources = np.unique(pos_full[:, 0])
     src_loc = {s: i for i, s in enumerate(sources)}
     n_t = kg.n(spec["t"])
-    cache = f"{DATA}/paths_{task}{'_sp%.2f' % sparsity if sparsity < 1 else ''}.pkl"
+    cache = f"{DATA}/paths_{task}{'_sp%.2f' % sparsity if sparsity < 1 else ''}{'_pt' if protect_target else ''}.pkl"
     if os.path.exists(cache):
         P = pickle.load(open(cache, "rb"))
     else:

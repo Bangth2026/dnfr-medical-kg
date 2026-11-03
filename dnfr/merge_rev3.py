@@ -6,8 +6,13 @@ import os, glob, json, shutil
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DICT_FIELDS = ("methods", "ranks", "ops_chosen", "op_probs", "ops_trace", "beta", "tau_best", "p_learned", "w_learned")
 
-for task in ("het_CtD", "het_DpS", "hkg_DpS"):
+for task in ("het_CtD", "het_DpS", "hkg_DpS", "het_DpS_spt0.25"):
     f0 = f"{ROOT}/results/{task}.json"
+    if not os.path.exists(f0):
+        src = [g for g in sorted(glob.glob(f"{ROOT}/results2/jobs/*/{task}.json")) if os.path.exists(os.path.join(os.path.dirname(g), "DONE"))]
+        if not src:
+            continue
+        b0 = json.load(open(src[0])); b0["runs"] = []; json.dump(b0, open(f0, "w"))
     base = json.load(open(f0))
     runs = {r["seed"]: r for r in base["runs"]}
     added = 0

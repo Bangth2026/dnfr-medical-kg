@@ -38,19 +38,23 @@ for s in range(5, 10):
     J["B"].append((f"dps_abl_s{s}", "het_DpS", s, ABL, ""))
 for s in range(0, 3):
     J["B"].append((f"dps_loo_s{s}", "het_DpS", s, "dnfr2_no_overlap,dnfr2_no_gumbel,dnfr2_no_ic,dnfr2_no_anneal,dnfr_ic,dnfr_anneal,product_overlap", ""))
+# reviewer minor 9: thin only the non-target relations (target relation kept), Hetionet DpS, 25% of edges kept
+for s in range(0, 3):
+    J["B"].append((f"dps_spt_s{s}", "het_DpS", s, "dnfr,product,dnfr_nodeg", "dwpc_lr,softimpute", "--sparsity 0.25 --tag _spt0.25"))
 for s in range(0, 2):
     J["B"].append((f"dps_rst_s{s}", "het_DpS", s, RST + "," + FREE, ""))
 
 if __name__ == "__main__":
     w = sys.argv[1]
-    for jid, task, seed, variants, base in J[w]:
+    for job in J[w]:
+        jid, task, seed, variants, base = job[:5]; extra = job[5].split() if len(job) > 5 else []
         d = f"{ROOT}/results2/jobs/{jid}"
         if os.path.exists(f"{d}/DONE"):
             continue
         os.makedirs(d, exist_ok=True)
         cmd = ["python3", f"{ROOT}/dnfr/run_task.py", task, "--seeds", str(seed), "--variants", variants]
-        cmd += ["--baselines", base] if base else ["--no_baselines"]
-        env = dict(os.environ, DNFR_RESULTS=d, NT="1")
+        cmd += (["--baselines", base] if base else ["--no_baselines"]) + extra
+        env = dict(os.environ, DNFR_RESULTS=d, NT="1", **({"DNFR_PROTECT_TARGET": "1"} if "_spt" in " ".join(extra) else {}))
         t0 = time.time()
         print(f"[{time.strftime('%H:%M:%S')}] start {jid}", flush=True)
         with open(f"{d}/log.txt", "w") as f:

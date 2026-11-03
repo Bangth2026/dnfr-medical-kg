@@ -153,7 +153,7 @@ EXTRA_PAIRS = [("dnfr_pm1", "hamacher"), ("dnfr_pm1", "dnfr"), ("dnfr_pm2", "dnf
 if __name__ == "__main__":
     stats = {}
     for task in TASKS:
-        for tag in ["", "_sp0.50", "_sp0.25", "_tail"]:
+        for tag in ["", "_sp0.50", "_sp0.25", "_spt0.25", "_tail"]:
             d = load_task(task, tag)
             if d is None:
                 continue
