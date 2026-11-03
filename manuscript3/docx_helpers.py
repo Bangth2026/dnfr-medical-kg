@@ -88,9 +88,15 @@ def heading(d, text, level=1):
     return h
 
 
-def bullets(d, items, numbered=False):
-    for it in items:
-        p = d.add_paragraph(style="List Number" if numbered else "List Bullet")
+def bullets(d, items, numbered=False, start=1):
+    """Bulleted list, or a numbered list whose numbers are written out (so that every list restarts at `start`)."""
+    for i, it in enumerate(items):
+        if numbered:
+            p = d.add_paragraph()
+            p.paragraph_format.left_indent = Inches(0.3); p.paragraph_format.first_line_indent = Inches(-0.3)
+            it = f"{start + i}.\t" + it
+        else:
+            p = d.add_paragraph(style="List Bullet")
         p.paragraph_format.line_spacing = 1.5; p.paragraph_format.space_after = Pt(3)
         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         add_runs(p, it)

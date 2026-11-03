@@ -225,7 +225,8 @@ def methods(d):
          "Annealing starts with soft memberships and sharpens them: τ in Equation 1 decreases as τ = max(0.5, 2 · 0.25^epoch/100^), "
          "from 2 at the start to 0.5 from epoch 100. Because the loss uses log μ, the gradient vanishes only as μ → 1; we therefore also "
          "report how many memberships of the trained default model are close to 1 (Section 4.3).")
-    P(d, "Overlap-aware aggregation costs about 1.4 times the default per epoch; the other three add no measurable cost.")
+    P(d, "Overlap-aware aggregation needs an extra pass over the paths of each pair and two to three times the time per run on the "
+         "graded graph (Section 4.8); the other three add little cost.")
 
     heading(d, "3.4 Variants, ablations and baselines", 2)
     np_ = RS["n_params"]
@@ -262,9 +263,15 @@ def methods(d):
          "per positive, with balanced class weights and a penalty chosen from {0.01, 0.1, 1, 10} by validation MRR. Two completions use "
          "the target relation alone: a rank-k truncated SVD and a soft-thresholded SVD in the spirit of Soft-Impute [@mazumder2010], "
          "with k and the threshold chosen on validation data. TransE and RotatE [@bordes2013;sun2019], trained with PyKEEN [@ali2021] "
-         "for 25 epochs without tuning on the Hetionet and PrimeKG tasks, are untuned reference points only. NBFNet [@zhu2021], "
-         "BioPathNet [@hu2026] and TxGNN [@huang2024] learn path operators and are the natural competitors of DNFR; we did not run them "
-         "(Section 5.5).")
+         "for 25 epochs without tuning on the Hetionet and PrimeKG tasks, are untuned reference points only. **NBFNet** [@zhu2021] "
+         "learns how a path is extended and how paths are aggregated. We implemented a compact CPU version: three layers of "
+         "generalised Bellman–Ford iteration with DistMult messages, sum aggregation, layer normalisation, residual connections and "
+         "dimension 32, on the training graph of each split restricted to the relations on the task's metapaths, with the head "
+         "query vector as boundary condition and an MLP on the final node state; in each epoch the target edges of a random half of "
+         "each head's training tails are masked and serve as positives of the same filtered softmax loss, with the other half kept as "
+         "context, and training uses Adam (learning rate 5 × 10^−3^) with the early stopping of DNFR and at most 300 epochs (150 on Hetionet disease–symptom, for cost). It was run on the two "
+         "disease–symptom graphs; BioPathNet [@hu2026] and TxGNN [@huang2024], and NBFNet on the drug-repurposing graphs, need GPU "
+         "training and were not run (Section 5.5).")
     P(d, "**Model size.** DNFR learns three membership coefficients per relation and direction (four on the graded graph), a reliability "
          "and a t-norm parameter per metapath, and the leak: "
          f"{np_['het_CtD']['dnfr']}, {np_['het_DpS']['dnfr']}, {np_['pkg_ind']['dnfr']} and {np_['hkg_DpS']['dnfr']} trainable parameters "

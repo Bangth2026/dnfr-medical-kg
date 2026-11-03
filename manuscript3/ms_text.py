@@ -1,67 +1,105 @@
-"""Front matter, results text, discussion, conclusion, appendix B and declarations (second revision)."""
+"""Front matter, results, discussion, conclusion and declarations (third revision, DNFR 2.0)."""
 import numpy as np
 from ms_common import *
 from docx_helpers import para, heading, bullets, figure
 import ms_results as R
+from ms_results import r3p, r3sum, mean_any, R3T
 
 P_ = lambda d, t, **k: para(d, C(t), **k)
-E = XS["explain_eval"]; E2 = RS["explain2"]; L = RS.get("long", {}); PF = RS.get("profile", {})
+E = XS["explain_eval"]; E2 = RS["explain2"]; L = RS.get("long", {})
+E3 = R3.get("explain3", {}); PS = R3.get("profile_summary") or {}
+ADD = [("dnfr_overlap", "R1"), ("dnfr_gumbel", "R2"), ("dnfr_ic", "R3"), ("dnfr_anneal", "R4")]
+LOO = [("dnfr2_no_overlap", "R1"), ("dnfr2_no_gumbel", "R2"), ("dnfr2_no_ic", "R3"), ("dnfr2_no_anneal", "R4")]
+SHORT = {"het_CtD": "compound–treats–disease", "het_DpS": "Hetionet disease–symptom", "pkg_ind": "PrimeKG",
+         "hkg_DpS": "graded graph"}
+
+
+def SH(t):
+    return ("the " if t == "hkg_DpS" else "") + SHORT[t]
 
 
 def m(t, v, tag=""):
-    s = summ(t, v, tag)
-    return f3(s["MRR"]["mean"]) if s else "[NA]"
+    if tag:
+        s = summ(t, v, tag)
+        return f3(s["MRR"]["mean"]) if s else "—"
+    x = mean_any(t, v)
+    return f3(x) if x is not None else "—"
 
 
-def d(t, a, b, tag=""):
-    return pr(t, a, b, tag)
-
-
-def dd(t, a, b, tag="", ci=True):
-    p = pr(t, a, b, tag)
-    return dci(p) if ci else sg(p["delta_MRR"])
+def dci3(p):
+    return "—" if p is None else f"{sg(p['delta'])} [{sg(p['bs95'][0])}, {sg(p['bs95'][1])}]"
 
 
 def nbci(p):
     return f"[{sg(p['nb_ci95_lo'])}, {sg(p['nb_ci95_hi'])}]"
 
 
-def nb90(p):
-    return f"[{sg(p['nb_ci90_lo'])}, {sg(p['nb_ci90_hi'])}]"
+def num(k):
+    return ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"][k] if k < 13 else str(k)
 
 
-def verdict_count(pairs):
-    out = {"equivalent": 0, "different": 0, "inconclusive": 0}
-    for t, a, b in pairs:
-        p = pr(t, a, b)
-        if p and p.get("verdict"):
-            out[p["verdict"]] += 1
+def Num(k):
+    s = num(k)
+    return s[0].upper() + s[1:]
+
+
+def joinand(xs):
+    xs = list(xs)
+    return xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]
+
+
+def tasks_with(f):
+    return [t for t in TASKS if f(t)]
+
+
+def verdict_of(p):
+    return None if p is None else p.get("verdict")
+
+
+def comp_support(a, b):
+    """Tasks on which a minus b is positive, and on which it is 'different' under the rule."""
+    run = [t for t in TASKS if pr(t, a, b)]
+    pos = [t for t in run if pr(t, a, b)["delta_MRR"] > 0 and pr(t, a, b)["seed_wins"] == pr(t, a, b)["seeds"]]
+    dif = [t for t in run if verdict_of(pr(t, a, b)) == "different" and pr(t, a, b)["delta_MRR"] > 0]
+    return run, pos, dif
+
+
+def refine_counts():
+    """Verdicts of the add-one comparisons over the three tasks."""
+    out = dict(pos_diff=[], neg_diff=[], equivalent=[], inconclusive=[], n=0, deltas=[])
+    for t in R3T:
+        for v, lab in ADD + [("product_overlap", "R1 on product")]:
+            b = "product" if v == "product_overlap" else "dnfr"
+            p = r3p(t, v, b)
+            if p is None:
+                continue
+            out["n"] += 1; out["deltas"].append(p["delta"])
+            vd = p.get("verdict")
+            if vd == "different":
+                out["pos_diff" if p["delta"] > 0 else "neg_diff"].append((t, lab))
+            elif vd == "equivalent":
+                out["equivalent"].append((t, lab))
+            else:
+                out["inconclusive"].append((t, lab))
     return out
 
 
-TN_PAIRS = [(t, "dnfr", b) for t in TASKS for b in ("product", "hamacher")]
+def best_tail():
+    return max(summ("het_CtD", x, "_tail")["MRR"]["mean"] for x in ("dnfr", "product", "hamacher", "dnfr_nodeg", "dwpc_lr")
+               if summ("het_CtD", x, "_tail"))
 
 
-def prof_row(t, p):
-    for r in PF[t]["rows"]:
-        if abs(r["p"] - p) < 1e-9:
-            return r
-    return None
-
-
-def prof_summary(t):
-    rows = PF[t]["rows"]; nonpos = [r for r in rows if r["p"] <= 0]; pos = [r for r in rows if r["p"] > 0]
-    lo = min(nonpos, key=lambda r: r["final_loss"]); hi = max(nonpos, key=lambda r: r["final_loss"])
-    return dict(nonpos_loss_range=hi["final_loss"] - lo["final_loss"], best_p=lo["p"],
-                nonpos_test=(min(r["test_best"] for r in nonpos), max(r["test_best"] for r in nonpos)),
-                pos=pos, rows=rows, argmin=PF[t].get("argmin_final_loss_by_seed"), seeds=PF[t]["seeds"])
+def ps_by(p, k):
+    return PS["by_p"][f"{p:g}"][k]
 
 
 # ------------------------------------------------------------------ front matter
+TITLE = ("Which parts of a neuro-fuzzy path reasoner should be learned? A controlled component analysis on medical knowledge "
+         "graphs, with four refinements (DNFR 2.0)")
+
+
 def title_block(dc):
-    from docx_helpers import heading as H
-    para(dc, "**Path aggregation and hub discounting, not the learned t-norm: a controlled component analysis of differentiable "
-             "neuro-fuzzy reasoning on medical knowledge graphs**", align="left", size=14, line=1.3, space_after=10)
+    para(dc, f"**{TITLE}**", align="left", size=14, line=1.3, space_after=10)
     para(dc, "**Article type:** Research Paper", align="left")
     para(dc, "**Running title:** Neuro-fuzzy path reasoning on medical knowledge graphs", align="left")
     para(dc, "**Authors**", align="left", space_after=2)
@@ -74,39 +112,55 @@ def title_block(dc):
     para(dc, "* Corresponding author: Truong Hai Bang, truonghaibang@siu.edu.vn", align="left", size=11)
 
 
+def highlights_list():
+    rc = refine_counts()
+    run, pos, dif = comp_support("dnfr", "dnfr_max")
+    h = [f"Noisy-OR over all paths beat the strongest path on all {num(len(run))} tasks tested."
+         if len(pos) == len(run) else "Noisy-OR over all paths beat the strongest single path on most tasks.",
+         "Hub discounting raised accuracy on every task and every split." if len(comp_support("dnfr", "dnfr_nodeg")[1]) == len(comp_support("dnfr", "dnfr_nodeg")[0])
+         else "Hub discounting helped on most tasks tested.",
+         ("None of four refinements (DNFR 2.0) improved accuracy detectably." if not rc["pos_diff"]
+          else f"{Num(len(rc['pos_diff']))} of {rc['n']} refinement tests showed a detectable gain."),
+         "The t-norm parameter is practically non-identified by the training loss.",
+         "Degree-weighted path counts and NBFNet matched or beat the learned operator."]
+    for x in h:
+        assert len(x) <= 85, (len(x), x)
+    return h
+
+
 def highlights(dc, H):
     para(dc, "**Highlights**", align="left", space_after=2)
-    for h in H:
-        assert len(h) <= 85, (len(h), h)
     bullets(dc, H)
 
 
-# ------------------------------------------------------------------ abstract etc.
 def abstract(dc):
-    pt = {t: prof_summary(t) for t in ("hkg_DpS", "het_DpS") if t in PF}
-    lh = L["hkg_DpS"]["by_init"]
+    rc = refine_counts()
+    lr = PS.get("loss_range") or [float("nan")]
+    fv = r3p("hkg_DpS", "fixp_val", "product")
     para(dc, "**Abstract**", align="left", space_after=2)
-    P_(dc, "**Objective:** Path-based reasoning over medical knowledge graphs is explainable but composes evidence with an "
-           "operator fixed in advance. We asked which parts of a neuro-fuzzy path reasoner are worth learning: t-norm, edge memberships or path aggregation.")
-    P_(dc, "**Methods:** Differentiable Neuro-Fuzzy Reasoning (DNFR) aggregates paths by noisy-OR, composes each "
-           "path with a Schweizer–Sklar t-norm learned per metapath, and learns degree-discounting edge memberships. On drug repurposing "
-           "(Hetionet, PrimeKG) and disease–symptom prediction (Hetionet; a graph learned from emergency-department records) we "
-           "compared ablations, fixed t-norms, restarts, a profile over fixed t-norm parameters and path, rule, completion and "
-           "degree-only baselines under leave-dyad-out splits.")
-    P_(dc, "**Results:** Keeping only the strongest path lowered mean reciprocal rank (MRR) by "
-           f"{dd('het_CtD','dnfr','dnfr_max',ci=False)[1:]}–{dd('het_DpS','dnfr','dnfr_max',ci=False)[1:]}, and removing the degree "
-           f"discount by {dd('het_DpS','dnfr','dnfr_nodeg',ci=False)[1:]}–{dd('het_CtD','dnfr','dnfr_nodeg',ci=False)[1:]}. On the "
-           f"record-derived graph, training loss varied on average by {prof_row('hkg_DpS',-4)['final_loss_minus_seed_min']:.3f} or "
-           f"less over fixed parameters from −4 to 0, and learned parameters did not converge, even without early stopping (median {f3(lh['-2']['p_final']['median'],1)} from −2, {f3(lh['-0.1']['p_final']['median'],2)} from −0.1). "
-           f"Learned t-norms were not "
-           f"consistently better "
-f"than fixed product or Hamacher t-norms (differences ≤ {maxabs_tn():.3f}), though equivalence within ±0.01 was not shown. "
-           f"Degree-weighted path counts did not differ detectably from DNFR on Hetionet drug repurposing ({m('het_CtD','dwpc_lr')} vs {m('het_CtD','dnfr')}), "
-           f"trailed it on PrimeKG ({m('pkg_ind','dwpc_lr')} vs {m('pkg_ind','dnfr')}) and led on disease–symptom prediction. With all "
-           f"indications of test diseases held out, MRR fell to about {f3(max(summ('het_CtD',x,'_tail')['MRR']['mean'] for x in ('dnfr','product','hamacher','dnfr_nodeg','dwpc_lr')),2)} "
-           "or less.")
-    P_(dc, "**Conclusion:** Path aggregation and hub discounting carry the gains. The loss is too shallow in the t-norm parameter for "
-           "end-to-end learning to settle it; a learned value reflects initialisation and stopping, not the domain.")
+    P_(dc, "**Objective:** Path-based reasoning over medical knowledge graphs can explain its predictions, but it composes evidence "
+           "with operators fixed in advance. We asked which parts of a differentiable neuro-fuzzy path reasoner are worth learning, "
+           "and whether four plausible refinements improve it.")
+    P_(dc, "**Methods:** Differentiable Neuro-Fuzzy Reasoning (DNFR) learns degree-discounting edge memberships, a Schweizer–Sklar "
+           "t-norm per metapath and a noisy-OR over paths. DNFR 2.0 adds overlap-aware aggregation, a discrete operator choice, an "
+           "information-content hub discount and membership annealing. On drug repurposing (Hetionet, PrimeKG) and disease–symptom "
+           "prediction (Hetionet; a graph learned from emergency-department records) we compared ablations, fixed and "
+           "validation-selected t-norms, the refinements, NBFNet and path, rule, completion and degree-only baselines under "
+           "leave-dyad-out splits, and profiled the t-norm parameter to convergence.")
+    r_max = [pr(t, "dnfr", "dnfr_max")["delta_MRR"] for t in TASKS if pr(t, "dnfr", "dnfr_max")]
+    txt = (f"**Results:** Aggregating all paths instead of the strongest one raised mean reciprocal rank (MRR) by "
+           f"{min(r_max):.2f}–{max(r_max):.2f}, and hub discounting also helped on every task. "
+           + ("No refinement improved MRR detectably" if not rc["pos_diff"] else
+              f"{Num(len(rc['pos_diff']))} of {rc['n']} refinement tests showed a gain")
+           + (", and two lowered it on the graded graph. " if sum(1 for t, l in rc["neg_diff"] if t == "hkg_DpS") >= 2 else ". ")
+           + f"With all other parameters fitted to convergence, the training loss changed by at most {max(lr):.3f} nats over "
+           "t-norm parameters from −5 to 0, and its minimiser differed between splits; a t-norm selected on validation data beat the "
+           f"fixed product by {fv['delta']:.3f} on the graded graph. Degree-weighted path counts were as accurate as DNFR on three "
+           "of four tasks, and a compact NBFNet matched it on the graded graph.")
+    P_(dc, txt)
+    P_(dc, "**Conclusion:** Path aggregation and hub discounting carry the accuracy. The training loss barely constrains the "
+           "composition operator, so a learned operator should not be read as a property of the domain; it is better chosen on "
+           "validation data.")
 
 
 def keywords(dc):
@@ -122,493 +176,487 @@ def significance(dc):
                                   "the composition operator, usually a product; neuro-fuzzy systems and differentiable fuzzy logic allow "
                                   "the operator to be learned, but whether a learned operator is determined by medical graph data has not "
                                   "been tested."],
-        ["What this paper adds", "A controlled component analysis of a differentiable neuro-fuzzy path reasoner on four link-prediction "
-                                 "tasks from three medical knowledge graphs. Aggregating all paths by noisy-OR and discounting hub nodes carried the gains. The training loss "
-                                 "is so shallow in the t-norm parameter that its learned value depends on where it starts and when training "
-                                 "stops, not on the data; degree-weighted path counts were better on two of four tasks and not detectably worse on a third."],
+        ["What this paper adds", "A controlled component analysis of a differentiable neuro-fuzzy path reasoner, and of four "
+                                 "refinements of it, on four link-prediction tasks from three medical knowledge graphs. Aggregating all "
+                                 "paths and discounting hub nodes carried the gains; none of the refinements helped detectably. The "
+                                 "training loss barely depends on the t-norm parameter once memberships are learned, so a learned "
+                                 "operator is not a property of the domain, while selecting it on validation data does help. "
+                                 "Degree-weighted path counts were as accurate on three of four tasks."],
         ["Who would benefit", "Developers and evaluators of explainable clinical decision support built on knowledge graphs, and "
                               "researchers who learn or report fuzzy operators for medical reasoning."]],
         widths=[1.5, 4.77], size=9)
 
 
-def long_minutes(t):
-    import json
-    d = json.load(open(f"{RES}/long_{t}.json"))
-    return float(np.mean([r["time_s"] for r in d.values()])) / 60
-
-
-SHORT = {"het_CtD": "compound–treats–disease", "het_DpS": "Hetionet disease–symptom", "hkg_DpS": "graded graph"}
-
-
-def by_task(f):
-    """'x on compound–treats–disease, y on Hetionet disease–symptom and z on the graded graph' for the explanation tasks."""
-    ts = [t for t in ("het_CtD", "het_DpS", "hkg_DpS") if t in E2]
-    parts = [f"{f(t)} on {'the ' if t == 'hkg_DpS' else ''}{SHORT[t]}" for t in ts]
-    return ", ".join(parts[:-1]) + (" and " if len(parts) > 1 else "") + parts[-1]
-
-
-def long_vs_default():
-    import json
-    var = {-2.0: "dnfr_pm2", -0.1: "dnfr_l2_0", 0.5: "dnfr_pp05"}; diffs = []
-    for t in ("hkg_DpS", "het_DpS"):
-        runs = {r["seed"]: r for r in json.load(open(f"{RES}/{t}.json"))["runs"]}
-        for r in json.load(open(f"{RES}/long_{t}.json")).values():
-            v = var[r["value"]]
-            if v in runs[r["seed"]]["methods"]:
-                diffs.append(r["best_valid"]["test_MRR"] - runs[r["seed"]]["methods"][v]["MRR"])
-    return sg(min(diffs)), sg(max(diffs))
-
-
-def num(k):
-    return ["none", "one", "two", "three", "four", "five", "six", "seven", "eight"][k]
-
-
-def ahead(p, a="ahead of", b="behind"):
-    return a if p["delta_MRR"] > 0 else b
-
-
-def maxabs_tn():
-    return max(abs(pr(t, "dnfr", b)["delta_MRR"]) for t, _, b in TN_PAIRS if pr(t, "dnfr", b))
-
-
 # ------------------------------------------------------------------ results
 def results(dc):
     heading(dc, "4. Results", 1)
+    # ---------------- 4.1
     heading(dc, "4.1 Accuracy against path, rule, completion and degree-only baselines (RQ1)", 2)
-    P_(dc, "Table 2 summarises test MRR on the four tasks. Degree alone explained little of it. The edge prior of Zietz et al. "
-           f"[@zietz2024], which uses the degrees of both endpoints, reached {m('het_CtD','prior')} on Hetionet compound–treats–disease, "
-           f"{m('het_DpS','prior')} on disease–symptom and {m('hkg_DpS','prior')} on the graded graph, and popularity "
-           f"{m('het_CtD','popularity')}, {m('het_DpS','popularity')}, {m('pkg_ind','popularity')} and {m('hkg_DpS','popularity')}, against "
-           f"{m('het_CtD','dnfr')}, {m('het_DpS','dnfr')}, {m('pkg_ind','dnfr')} and {m('hkg_DpS','dnfr')} for DNFR. Under leave-dyad-out "
-           "splits the target pair contributes nothing to its own degree, which is one reason why degree-only baselines are weaker here "
-           "than when edges are reconstructed in the graph they came from [@zietz2024].")
+    PSm = R3.get("prior_summary", {})
+    P_(dc, "Table 2 summarises test MRR. Because the tasks rank different numbers of candidates, from 137 diseases to 17,080, we "
+           "compare methods within a task and not across tasks. Degree alone explained little. Popularity, which ranks every tail "
+           "by its number of training positives, and the edge prior of Zietz et al. [@zietz2024], which uses the degrees of both "
+           "endpoints, were far behind every path method on every task (Supplementary Tables S1–S4).")
+    if PSm:
+        c = PSm["het_CtD"]
+        P_(dc, "The edge prior was below popularity, which looks wrong at first sight, because for a fixed head the prior is close "
+               "to monotone in the degree of the tail. We checked it (Supplementary Table S9). On the two disease–symptom tasks the "
+               "gap was a matter of resolution: with 1000 permutations instead of 100, or with the analytical approximation of the "
+               "prior, which ranks tails exactly as popularity does, the prior reached "
+               f"{f3(PSm['het_DpS']['prior1000_MRR'])} and {f3(PSm['hkg_DpS']['prior1000_MRR'])} against "
+               f"{f3(PSm['het_DpS']['popularity_MRR'])} and {f3(PSm['hkg_DpS']['popularity_MRR'])} for popularity. On "
+               "compound–treats–disease the gap remained "
+               f"({f3(c['analytic_MRR'])} analytic, {f3(c['popularity_MRR'])} popularity). There, for "
+               f"{pct(c['share_zero_true'])} of test queries the true pair had a prior of zero: most compounds have one or two "
+               "indications, so under leave-dyad-out splits many test compounds have no training indication left, the prior of "
+               "every candidate is zero, and all candidates tie. Popularity still orders the diseases. The prior is therefore "
+               "correct, and weak for a reason that follows from the split rather than from the implementation.")
+    P_(dc, "Among path methods, the fixed weighting of DWPC with logistic regression was at least as accurate as DNFR on three of the "
+           f"four tasks. On Hetionet drug repurposing DNFR minus DWPC-LR was {dci(pr('het_CtD','dnfr','dwpc_lr'))} "
+           f"({pr('het_CtD','dnfr','dwpc_lr')['seed_wins']}/{pr('het_CtD','dnfr','dwpc_lr')['seeds']} splits in favour of DNFR, "
+           f"inconclusive); on the two disease–symptom tasks DWPC-LR was ahead by {sg(-pr('het_DpS','dnfr','dwpc_lr')['delta_MRR'])[1:]} "
+           f"and {sg(-pr('hkg_DpS','dnfr','dwpc_lr')['delta_MRR'])[1:]}"
+           + (", a difference under our rule on both" if all(verdict_of(pr(t, 'dnfr', 'dwpc_lr')) == 'different' for t in ('het_DpS', 'hkg_DpS')) else "")
+           + f". Only on PrimeKG was DNFR ahead ({dci(pr('pkg_ind','dnfr','dwpc_lr'))}, two splits, which is too few for a "
+           "verdict). Adding degree and prior features to DWPC-LR, as in Rephetio, did not help on any task. Completion of the "
+           f"target relation alone was far behind on Hetionet drug repurposing (Soft-Impute {m('het_CtD','softimpute')}), which "
+           f"gives it no access to the rest of the graph, came close on PrimeKG ({m('pkg_ind','softimpute')}), where drugs have "
+           f"more indications, and led on the dense graded graph ({m('hkg_DpS','softimpute')} against {m('hkg_DpS','dnfr')} for "
+           "DNFR), where a disease is linked to a symptom through diseases with similar symptom profiles, the setting in which a "
+           f"low-rank description should work well. AnyBURL, given 100 s of rule learning, reached {m('het_CtD','anyburl')}, "
+           f"{m('het_DpS','anyburl')} and {m('hkg_DpS','anyburl')} on the three tasks on which it ran, below DNFR and DWPC-LR on "
+           "each. The untuned embeddings were far below every path method; since their training was not tuned, we do not "
+           "interpret that gap. PrimeKG accuracies of all path methods are lower bounds, because the metapaths with more than five "
+           "million paths, the most hub-dominated ones, were excluded (Section 3.5).")
     R.table2(dc)
-    p1, p2, p3 = pr("het_CtD", "dnfr", "dwpc_lr"), pr("pkg_ind", "dnfr", "dwpc_lr"), pr("pkg_ind", "dnfr", "softimpute")
-    q1, q2, q3 = pr("het_DpS", "dnfr", "dwpc_lr"), pr("het_DpS", "dnfr", "softimpute"), pr("hkg_DpS", "dnfr", "softimpute")
-    P_(dc, "On Hetionet drug repurposing, methods that use paths were far ahead of completion of the treatment relation alone, "
-           f"which has no access to the rest of the graph (Soft-Impute {m('het_CtD','softimpute')}); on PrimeKG, where a drug has more "
-           f"indications on average, Soft-Impute ({m('pkg_ind','softimpute')}) came close to the path methods and exceeded DWPC-LR "
-           f"({m('pkg_ind','dwpc_lr')}). Among path methods, DNFR "
-           f"and DWPC with logistic regression did not differ detectably on Hetionet (DNFR minus DWPC-LR {dci(p1)}, corrected 95% interval "
-           f"{nbci(p1)}), while on PrimeKG DNFR was ahead by {dci(p2)} on both splits and ahead of Soft-Impute by {dci(p3)}, a "
-           f"difference that the corrected interval {nbci(p3)} does not establish with two splits. On "
-           f"disease–symptom prediction DNFR was not the most accurate method: on Hetionet DWPC-LR was ahead (DNFR minus DWPC-LR "
-           f"{dci(q1)}, {q1['seed_wins']}/{q1['seeds']} splits in favour of DNFR) and Soft-Impute was {sg(-q2['delta_MRR'])} ahead; "
-           f"on the dense graded graph learned from emergency-department records Soft-Impute led ({m('hkg_DpS','softimpute')} against "
-           f"{m('hkg_DpS','dnfr')}), the setting in which a low-rank description is expected to work well. Adding degree and prior "
-           "features to DWPC-LR, as in Rephetio, did not help: its difference from DWPC-LR was within the equivalence margin on the "
-           f"two disease–symptom tasks ({sg(pr('het_DpS','dwpc_lr_full','dwpc_lr')['delta_MRR'])} and "
-           f"{sg(pr('hkg_DpS','dwpc_lr_full','dwpc_lr')['delta_MRR'])}) and {dci(pr('het_CtD','dwpc_lr_full','dwpc_lr'))} on "
-           "compound–treats–disease. AnyBURL, given 100 s "
-           f"of rule learning, reached {m('het_CtD','anyburl')}, {m('het_DpS','anyburl')} and {m('hkg_DpS','anyburl')}, below DNFR and "
-           "DWPC-LR on each. The untuned embeddings were far below every path method; since their training was not tuned, we do not "
-           "interpret that gap.")
+    nb = {t: r3p(t, "nbfnet", "dnfr") for t in R3T}
+    nbs = {t: r3sum(t, "nbfnet") for t in R3T}
+    P_(dc, "NBFNet, which learns both how a path is extended and how paths are aggregated, is the closest learned counterpart to the "
+           "question we ask. Our compact CPU version (three layers of dimension 32, Section 3.4) reached "
+           f"{m('hkg_DpS','nbfnet')} on the graded graph over {nbs['hkg_DpS']['n']} splits, against {m('hkg_DpS','dnfr')} for DNFR "
+           f"(NBFNet minus DNFR {dci3(nb['hkg_DpS'])}) and {m('hkg_DpS','dwpc_lr')} for DWPC-LR, and "
+           + (f"{f3(nbs['het_DpS']['mean'])} on Hetionet disease–symptom over {num(nbs['het_DpS']['n'])} "
+              f"split{'s' if nbs['het_DpS']['n'] > 1 else ''} (DNFR minus NBFNet on the same "
+              f"split{'s' if nbs['het_DpS']['n'] > 1 else ''} {sg(-nb['het_DpS']['delta'])})" if nbs.get("het_DpS") else "was not run on Hetionet disease–symptom")
+           + ". A learned operator for path extension and aggregation, with about "
+           "ten thousand parameters, thus did not do better than a fixed product with learned memberships on these tasks. It was "
+           "not run on the drug-repurposing graphs, whose size exceeds what our CPU implementation can train in reasonable time.")
 
+    # ---------------- 4.2
     heading(dc, "4.2 What each learned component adds (RQ2)", 2)
-    P_(dc, "Table 3 isolates the components. Two of them helped on every task on which they were tested, with the same sign on every "
-           "split; the t-norm rows are judged by the decision rule of Section 3.5.")
+    P_(dc, "Table 3 isolates the components of DNFR, all trained with the same protocol.")
     R.table3(dc)
+    rn, pn, dn = comp_support("dnfr", "dnfr_max")
     P_(dc, "**Aggregating paths.** Keeping only the strongest path instead of the noisy-OR of all paths lowered MRR by "
-           f"{dd('het_CtD','dnfr','dnfr_max',ci=False)[1:]} on Hetionet compound–treats–disease, {dd('het_DpS','dnfr','dnfr_max',ci=False)[1:]} "
-           f"on disease–symptom and {dd('hkg_DpS','dnfr','dnfr_max',ci=False)[1:]} on the graded graph. The number of routes between two "
-           "entities carries information that the best single route does not. The max-path ablation was not run on PrimeKG.")
+           + joinand([f"{sg(pr(t,'dnfr','dnfr_max')['delta_MRR'])[1:]} on {SH(t)} ({pr(t,'dnfr','dnfr_max')['seed_wins']}/{pr(t,'dnfr','dnfr_max')['seeds']} splits)" for t in rn])
+           + f". The difference was supported under our rule on {joinand([SH(t) for t in dn]) if dn else 'none of the tasks'}"
+           + (f" and inconclusive on {joinand([SH(t) for t in rn if t not in dn])}" if len(dn) < len(rn) else "")
+           + ". The number of routes between two entities carries information that the best single route does not. The ablation was "
+           "not run on PrimeKG.")
+    rd, pd_, dd_ = comp_support("dnfr", "dnfr_nodeg")
     fd = {t: pr(t, "dnfr", "dnfr_fixdeg") for t in TASKS}
     s02, s06 = pr("hkg_DpS", "product_fixdeg", "product_fixdeg02"), pr("hkg_DpS", "product_fixdeg", "product_fixdeg06")
     P_(dc, "**Discounting hubs.** Removing the degree terms of Equation 1 lowered MRR by "
-           + ", ".join(dd(t, 'dnfr', 'dnfr_nodeg', ci=False)[1:] for t in TASKS[:3]) + f" and {dd('hkg_DpS','dnfr','dnfr_nodeg',ci=False)[1:]} "
-           "on the four tasks. Whether the discount has to be learned per relation depended on the graph. Learned coefficients were "
-           f"better than a fixed b~r~ = c~r~ = 0.4 on the graded graph ({dci(fd['hkg_DpS'])}). Elsewhere the fixed discount was at "
-           f"least as good: learned minus fixed was {dci(fd['het_CtD'])} on Hetionet compound–treats–disease (different under our "
-           f"rule, corrected interval {nbci(fd['het_CtD'])}), {dci(fd['het_DpS'])} on Hetionet disease–symptom (inconclusive) and "
-           f"{dci(fd['pkg_ind'])} on PrimeKG. On the graded graph the fixed product with discount 0.4 was "
-           f"{sg(s02['delta_MRR'])} [{sg(s02['ci_lo'])}, {sg(s02['ci_hi'])}] against a discount of 0.2 and {sg(s06['delta_MRR'])} "
-           f"[{sg(s06['ci_lo'])}, {sg(s06['ci_hi'])}] against 0.6, so the value we took from DWPC is not a tuned optimum. Discounting "
-           "hubs matters everywhere; learning the discount per relation matters only on the graded graph. Reading the graded weights "
-           f"added {dci(pr('hkg_DpS','dnfr','dnfr_binary'))} on that graph.")
+           + joinand([f"{sg(pr(t,'dnfr','dnfr_nodeg')['delta_MRR'])[1:]} on {SH(t)} ({pr(t,'dnfr','dnfr_nodeg')['seed_wins']}/{pr(t,'dnfr','dnfr_nodeg')['seeds']})" for t in rd])
+           + f", with the same sign on every split; under our rule the difference was supported on "
+           f"{joinand([SH(t) for t in dd_]) if dd_ else 'none of the tasks'}"
+           + (f", while on {joinand([SH(t) for t in rd if t not in dd_])} the corrected test did not reach significance after "
+              "adjustment" if len(dd_) < len(rd) else "") + ". "
+           "Whether the discount has to be learned per relation depended on the graph. Learned coefficients were better than a "
+           f"fixed b~r~ = c~r~ = 0.4 on the graded graph ({dci(fd['hkg_DpS'])}); elsewhere the fixed discount was at least as good "
+           f"(learned minus fixed {dci(fd['het_CtD'])} on compound–treats–disease, {dci(fd['het_DpS'])} on Hetionet disease–symptom "
+           f"and {dci(fd['pkg_ind'])} on PrimeKG). On the graded graph the fixed product with discount 0.4 was "
+           f"{sg(s02['delta_MRR'])} against a discount of 0.2 and {sg(s06['delta_MRR'])} against 0.6, so the DWPC value is not a "
+           f"tuned optimum. Reading the graded weights added {dci(pr('hkg_DpS','dnfr','dnfr_binary'))} on that graph.")
     tp = {t: pr(t, "dnfr", "product") for t in TASKS}; th = {t: pr(t, "dnfr", "hamacher") for t in TASKS}
-    vc = verdict_count(TN_PAIRS)
-    P_(dc, "**Learning the t-norm.** A Schweizer–Sklar parameter learned per metapath was not consistently better than fixed members of "
-           "its own family. Against the fixed product the differences were " + ", ".join(sg(tp[t]['delta_MRR']) for t in TASKS)
-           + " on the four tasks, and against the fixed Hamacher product " + ", ".join(sg(th[t]['delta_MRR']) for t in TASKS) + ". "
-           f"Under our rule {num(vc['different'])} of these eight comparisons {'was' if vc['different'] == 1 else 'were'} different, "
-           f"{num(vc['equivalent'])} equivalent and {num(vc['inconclusive'])} inconclusive. Judged by bootstrap intervals alone, as in "
-           "the first version of this paper, the learned t-norm is ahead of the product and of the Hamacher product on the graded "
-           f"graph ({dci(tp['hkg_DpS'])} and {dci(th['hkg_DpS'])}) and behind the product on PrimeKG ({dci(tp['pkg_ind'])}, two "
-           "splits); the gain over the product on Hetionet disease–symptom that the first version reported with five splits is "
-           f"{dci(tp['het_DpS'])} with ten. The corrected intervals, which include variation between splits, are wider: on the graded graph "
-           f"{nbci(tp['hkg_DpS'])} against the product and {nbci(th['hkg_DpS'])} against the Hamacher product. The largest difference "
-           f"in either direction was {maxabs_tn():.3f}, and with ten splits the 90% corrected intervals still extend to about ±0.015, so "
-           "we cannot claim that fixed and learned t-norms are equivalent within ±0.01 either; we claim only that learning the t-norm "
-           "gave no consistent gain. "
-           f"One p per metapath differed from a single shared p by {sg(pr('het_CtD','dnfr','dnfr_shared')['delta_MRR'])}, "
-           f"{sg(pr('het_DpS','dnfr','dnfr_shared')['delta_MRR'])} and {sg(pr('pkg_ind','dnfr','dnfr_shared')['delta_MRR'])} where the "
-           "shared variant was run.")
+    tn = [(t, b) for t in TASKS for b in ("product", "hamacher") if pr(t, "dnfr", b)]
+    vc = {k: sum(1 for t, b in tn if verdict_of(pr(t, "dnfr", b)) == k) for k in ("different", "equivalent", "inconclusive")}
+    mx = max(abs(pr(t, "dnfr", b)["delta_MRR"]) for t, b in tn)
+    P_(dc, "**Learning the t-norm.** A Schweizer–Sklar parameter learned per metapath was not consistently better than fixed members "
+           "of its own family. Against the fixed product the differences were " + joinand([f"{sg(tp[t]['delta_MRR'])} on {SH(t)}" for t in TASKS])
+           + "; against the fixed Hamacher product " + joinand([sg(th[t]['delta_MRR']) for t in TASKS]) + f". Of these {num(len(tn))} "
+           f"comparisons, {num(vc['different'])} {'was' if vc['different'] <= 1 else 'were'} different under our rule, "
+           f"{num(vc['equivalent'])} equivalent and {num(vc['inconclusive'])} inconclusive; the largest difference in either "
+           f"direction was {mx:.3f}. We therefore claim that learning the t-norm gave no consistent gain, not that fixed and "
+           "learned t-norms are equivalent. One p per metapath differed from a single shared p by "
+           + joinand([sg(pr(t, 'dnfr', 'dnfr_shared')['delta_MRR']) for t in TASKS if pr(t, 'dnfr', 'dnfr_shared')])
+           + " where the shared variant was run.")
     fr = {t: pr(t, "dnfr_frozen", "product_frozen") for t in TASKS}; lm = {t: pr(t, "product", "product_frozen") for t in TASKS}
     P_(dc, "The t-norm mattered most when the memberships could not be learned. With memberships frozen at their initial values, "
            f"learning p improved on the product by {dci(fr['hkg_DpS'])} on the graded graph and by {dci(fr['het_DpS'])} on Hetionet "
            f"disease–symptom, and learning the memberships instead of the t-norm improved the product by {dci(lm['hkg_DpS'])} on the "
-           "graded graph. Learned memberships and a learned operator are, to a large extent, substitutes, as one would expect from "
-           "flexible neuro-fuzzy systems in which weights and t-norm parameters both scale the strength of a rule [@rutkowski2003].")
+           "graded graph. Memberships and operator are, to a large extent, substitutes in this model: both rescale the strength of "
+           "a path, as in flexible neuro-fuzzy systems in which weights and t-norm parameters scale the strength of a rule "
+           "[@rutkowski2003]. This is a structural property of the model, and Section 4.4 asks what it implies for learning p.")
 
-    heading(dc, "4.3 Is the t-norm parameter identified?", 2)
-    st = RS["stopping"]
-    bt = {t: st[t]["dnfr"]["best_epoch"]["median"] for t in TASKS if t in st}
-    P_(dc, "With the default early stopping, the learned p ended close to where it started (Table 4). The default runs reached their "
-           "best validation MRR at a median epoch of " + ", ".join(f"{ri(bt[t])}" for t in TASKS) + " on the four tasks. On "
-           f"compound–treats–disease, {ri(bt['het_CtD'])} Adam steps of at most about 0.1 each in θ~m~ leave p near p~0~ whatever the "
-           "data say; on the other tasks training ran longer, and the penalty and the shallow loss described below kept p close to its "
-           "start. Table 4 is therefore a statement about the default training procedure, not about the objective. We separated the two "
-           "with training without early stopping (Table 5, Figure 3) and a profile over fixed values of p (Figure 2).")
+    # ---------------- 4.3 refinements
+    heading(dc, "4.3 Four refinements (DNFR 2.0) and a validation-selected t-norm (RQ2)", 2)
+    rc = refine_counts()
+    P_(dc, "Table 4 and Figure 3 report the four refinements of Section 3.3, each added to DNFR alone and removed from DNFR 2.0, "
+           f"on the three tasks on which we ran them. Of the {num(rc['n'])} add-one comparisons, "
+           + (f"none showed a gain under our rule" if not rc["pos_diff"] else f"{num(len(rc['pos_diff']))} showed a gain under our rule")
+           + (f", {num(len(rc['neg_diff']))} showed a loss" if rc["neg_diff"] else "")
+           + (f", {num(len(rc['equivalent']))} {'was' if len(rc['equivalent']) == 1 else 'were'} equivalent within ±0.01" if rc["equivalent"] else "")
+           + f" and {num(len(rc['inconclusive']))} were inconclusive; the point estimates ranged from {sg(min(rc['deltas']))} to "
+           f"{sg(max(rc['deltas']))}. The refinements were plausible on paper, and we expected some of them to help. They did not, "
+           "and the reasons differ between them.")
     R.table4(dc)
-    lh, ld = L["hkg_DpS"], L.get("het_DpS")
-    P_(dc, f"**Without early stopping** (Table 5, Figure 3), p still did not converge to a common value. On the graded graph, which has a "
-           f"single metapath, p ended at a median of {f3(lh['by_init']['-2']['p_final']['median'],2)} from p~0~ = −2 "
-           f"(range {f3(lh['by_init']['-2']['p_final']['min'],2)} to {f3(lh['by_init']['-2']['p_final']['max'],2)} over splits), "
-           f"{f3(lh['by_init']['-0.1']['p_final']['median'],2)} from −0.1 and {f3(lh['by_init']['0.5']['p_final']['median'],2)} from 0.5. "
-           "Started at −2, p moved between about −4.2 and −1.4 before settling (Figure 3), with a gradient norm of the order of "
-           f"10^−4^; started at −0.1, it reached about −1, the Hamacher product, within 100 epochs and then returned to the product as the memberships adapted. "
-           + (f"On Hetionet disease–symptom ({len(ld['seeds'])} splits) the per-metapath values spread from "
-              f"{f3(min(ld['by_init'][k]['p_final']['min'] for k in ld['by_init']),1)} to "
-              f"{f3(max(ld['by_init'][k]['p_final']['max'] for k in ld['by_init']),1)}, with medians of "
-              + ", ".join(f"{f3(ld['by_init'][k]['p_final']['median'],2)} from p~0~ = {k.replace('-', '−')}" for k in ld['by_init'])
-              + "; the per-metapath vectors from different starts had a median Spearman correlation of "
-              f"{f3(ld['agreement']['spearman']['median'],2)}, and only {pct(ld['agreement']['sign_agree'])} of metapaths had the same "
-              "sign from every start. " if ld else "")
-           + "On the same splits, training for 400 epochs (with the parameters of the best validation epoch) changed test MRR relative "
-           "to the corresponding early-stopped runs by "
-           f"{long_vs_default()[0]} to {long_vs_default()[1]}, so longer training did not consistently help.")
-    ph_ = prof_summary("hkg_DpS")
-    hrow = lambda p: prof_row("hkg_DpS", p)
-    ex = lambda p: hrow(p)["final_loss_minus_seed_min"]
-    am = ph_["argmin"] or []
-    same = len(set(am)) == 1
-    txt = ("**Profile.** With p fixed and every other parameter trained for up to 300 epochs, the training loss on the graded "
-           "graph after training was lowest at "
-           + (f"p = {am[0]:g} in every split".replace("-", "−") if same else
-              "different values in different splits (" + ", ".join(f"{x:g}".replace("-", "−") for x in am) + ")")
-           + f" (Figure 2), but the differences were small: the loss in excess of each split's minimum averaged {ex(-1):.3f} at "
-           f"p = −1, {ex(-0.5):.3f} at p = −0.5, {ex(-4):.3f} at p = −4 and {ex(0):.3f} at the product, on a loss of about 4.3. None "
-           "of these runs met the convergence criterion; the loss was still falling by "
-           f"{min(r['loss_drop_last50'] for r in ph_['rows'] if r['p'] <= 0):.3f} to "
-           f"{max(r['loss_drop_last50'] for r in ph_['rows'] if r['p'] <= 0):.3f} per 50 epochs at the epoch limit, as much as the "
-           "differences between values of p, so the profile locates no minimum within the non-positive range. For p ≥ 0.5 the loss "
-           "was far higher; at p = 0.5 every path started with strength zero, no gradient reached any parameter, and the "
-           f"model did not train (test MRR {f3(hrow(0.5)['test_best'])}). Held-out accuracy was clearer than the loss: validation MRR "
-           "was highest at p ≤ −0.5 in every split (at " + ", ".join(f"{x:g}".replace("-", "−") for x in PF['hkg_DpS']['argmax_valid_by_seed'])
-           + f"), and test MRR was {f3(hrow(-2)['test_best'])}, {f3(hrow(-1)['test_best'])} and {f3(hrow(-0.5)['test_best'])} at "
-           f"p = −2, −1 and −0.5 against {f3(hrow(0)['test_best'])} at the product, higher in every split and a larger difference "
-           "than any between t-norms trained with early stopping (Table 3). ")
-    if "het_DpS" in PF:
-        pd_ = prof_summary("het_DpS"); drow = lambda p: prof_row("het_DpS", p)
-        dam = pd_["argmin"] or []
-        dx = lambda p: drow(p)["final_loss_minus_seed_min"]
-        dsame = len(set(dam)) == 1
-        txt += ("On Hetionet disease–symptom, with one p for all metapaths and a coarser grid (−4, −1, 0, 0.5, 0.75), the loss was lowest at "
-                + (f"p = {dam[0]:g} in both splits".replace("p = 0 in", "the product in").replace("-", "−") if dsame else
-                   "different values in the two splits")
-                + f", validation MRR also peaked there, and the excess loss was {dx(-1):.3f} at p = −1 and {dx(-4):.3f} at p = −4; "
-                f"test MRR was {f3(drow(0)['test_best'])} at the product, {f3(drow(-1)['test_best'])} at p = −1 and "
-                f"{f3(drow(-4)['test_best'])} at p = −4. ")
-    ldm = L["het_DpS"]["by_init"]["-0.1"]["p_final"]["median"] if "het_DpS" in L else None
-    txt += ("Held-out accuracy thus prefers a region of the family on each task, stronger-than-product t-norms on the graded graph "
-            "and the neighbourhood of the product on Hetionet disease–symptom, while the training loss varies across that region by "
-            "little more than its residual decrease, and gradient-based training does not reach the preferred region reliably. From p~0~ = −0.1 the learned p on the graded graph passed through −1 and returned "
-            "to the product as the memberships adapted, and from −2 it overshot to about −4"
-            + (f"; on Hetionet disease–symptom, learned per metapath from −0.1, it ended at a median of {f3(ldm,2)}, away from the "
-               "product" if ldm is not None else "")
-            + " (Table 5, Figure 3). Which value training reports depends on where it starts, on the penalty and on when it stops.")
+    figure(dc, f"{ROOT}/figures/fig3_refinements.png", 6.3,
+           "**Figure 3.** The refinements of Section 3.3 and the validation-selected fixed t-norm: difference in test MRR with its "
+           "95% paired bootstrap interval, per task. Grey band, the equivalence margin ±0.01. Colour: blue, equivalent; red, "
+           "different; grey, inconclusive (rule of Section 3.6). Numbers at the right give the splits run.")
+    bt = R3.get("hkg_DpS", {}).get("beta", {})
+    med = lambda x: float(np.median(x)) if x else float("nan")
+    ov = {t: r3p(t, "dnfr_overlap", "dnfr") for t in R3T}; po = {t: r3p(t, "product_overlap", "product") for t in R3T}
+    P_(dc, "**R1, overlap-aware aggregation.** Added to DNFR, the overlap penalty changed MRR by "
+           + joinand([f"{sg(ov[t]['delta'])} on {SH(t)}" for t in R3T if ov[t]])
+           + ". The learned exponent β, initialised at 1, fell to a median of "
+           f"{f3(med(bt.get('dnfr_overlap')), 3)} on the graded graph (and {f3(med(bt.get('dnfr2')), 3)} within DNFR 2.0): when the "
+           "memberships are learned, training switches the penalty off. With memberships tied to the fixed product, β stayed "
+           f"larger (median {f3(med(bt.get('product_overlap')), 2)}) and the penalty cost "
+           + joinand([f"{sg(po[t]['delta'])[1:]} on {SH(t)}" for t in R3T if po[t]])
+           + ". Evidence that the independence assumption of the noisy-OR hurts would have shown up as a gain here; instead, paths "
+           "through a shared node appear to carry information that a discount removes, consistent with the gain from aggregation "
+           "itself.")
+    gu = {t: r3p(t, "dnfr_gumbel", "dnfr") for t in R3T}
+    ops = R3.get("hkg_DpS", {}).get("ops_single") or {}
+    ra = {t: R3.get(t, {}).get("restarts", {}).get("dnfr2") for t in R3T}
+    txt = ("**R2, discrete operator choice.** Choosing among the product, the minimum and the Hamacher product instead of "
+           "learning a continuous p changed MRR by " + joinand([f"{sg(gu[t]['delta'])} on {SH(t)}" for t in R3T if gu[t]])
+           + (" (equivalent within ±0.01 on " + joinand([SH(t) for t in R3T if gu[t] and gu[t]["verdict"] == "equivalent"]) + ")"
+              if any(gu[t] and gu[t]["verdict"] == "equivalent" for t in R3T) else "") + ". ")
+    if ops:
+        n = sum(ops.values())
+        txt += ("On the graded graph, with its single metapath, DNFR 2.0 chose the Hamacher product in "
+                f"{ops.get('hamacher', 0)} of {n} splits and the minimum in {ops.get('min', 0)}, never the product, in line with the "
+                "profile below, which favours t-norms stronger than the product there. ")
+    if any(ra.values()):
+        txt += ("Restarted with different random seeds, the operator chosen for a metapath was the same in all three restarts for "
+                + joinand([f"{pct(ra[t]['all_same_mean'])} of metapaths on {SH(t)}" for t in R3T if ra[t]]) + ". ")
+    txt += ("A discrete choice is easier to report than a continuous parameter, but it does not make the operator more "
+            "accurate.")
     P_(dc, txt)
-    figure(dc, f"{ROOT}/figures/fig2_profile.png", 6.3,
-           "**Figure 2.** Profile over a fixed t-norm parameter p (shared by all metapaths). Top: final training loss minus its minimum "
-           "over the grid, per split. Bottom: test MRR of the parameters with the best validation MRR. Every other parameter was trained "
-           "without early stopping until the loss stopped decreasing or the epoch limit was reached. Dashed lines mark the Hamacher "
-           "product (p = −1), the product (p = 0) and the Łukasiewicz t-norm (p = 1). At p = 0.5 on the graded graph the model did not "
-           "train (all paths have strength zero); its loss lies far above the plotted range and is omitted from the top panel.")
-    R.table5(dc)
-    figure(dc, f"{ROOT}/figures/fig3_trajectories.png", 6.3,
-           "**Figure 3.** Learned p during 400 epochs without early stopping and without penalty, by initial value p₀. Graded graph: one "
-           "line per split (single metapath). Hetionet disease–symptom: thin lines are the metapaths of the first split, thick lines the "
-           "median over metapaths for each split. Dotted vertical lines mark the epoch with the best validation MRR.")
-    P_(dc, "We conclude that the learned t-norm parameter is set by optimisation, that is by initialisation, penalty and stopping, "
-           "rather than by the data: the training loss is so shallow in p that its gradient does not move p to the region that "
-           "held-out accuracy prefers. The data determine two things. They exclude the nilpotent end of the family on graded evidence, where the "
-           f"Łukasiewicz t-norm and starts at p~0~ = 0.5 lost {dd('hkg_DpS','dnfr','luk',ci=False)[1:]} and "
-           f"{sg(-pr('hkg_DpS','dnfr_pp05','dnfr')['delta_MRR'])[1:]} in MRR; and on the graded graph they favour a broad region of "
-           "stronger-than-product t-norms (and on Hetionet disease–symptom the neighbourhood of the product), which a profile or a "
-           "search on validation data finds and end-to-end learning misses. In the "
-           "restarts with early stopping, the per-metapath values from different starts had a median Spearman correlation of "
-           f"{f3(S['het_DpS']['p_agreement']['spearman_median'],2)} on Hetionet disease–symptom and "
-           f"{f3(S['het_CtD']['p_agreement']['spearman_median'],2)} on compound–treats–disease, and the same sign for "
-           f"{pct(S['het_DpS']['p_agreement']['sign_agree_mean'])} and {pct(S['het_CtD']['p_agreement']['sign_agree_mean'])} of "
-           "metapaths, so the relative ordering of metapaths is at best weakly reproducible. The DrD–DpS metapath of Table 8, with "
-           "p = −2.78 under the default penalty, is one of the few that moved far from its start.")
+    ic = {t: r3p(t, "dnfr_ic", "dnfr") for t in R3T}; icl = {t: r3p(t, "dnfr2", "dnfr2_no_ic") for t in R3T}
+    gl = {t: r3p(t, "dnfr2", "dnfr2_no_gumbel") for t in R3T}
+    P_(dc, "**R3, information-content discount.** Replacing the degree feature by the logarithm of the number of paths through a node "
+           "changed MRR by " + joinand([f"{sg(ic[t]['delta'])} on {SH(t)} ({ic[t]['wins']}/{ic[t]['J']} splits)" for t in R3T if ic[t]])
+           + ". Within DNFR 2.0 the same feature was harmless (removing it changed MRR by "
+           + joinand([sg(icl[t]["delta"]) for t in R3T if icl[t]]) + "), and DNFR 2.0 without the discrete operator choice lost "
+           + joinand([sg(-gl[t]["delta"])[1:] for t in R3T if gl[t]]) + ": the information-content feature hurt with a continuous "
+           "Schweizer–Sklar parameter and not with a choice among fixed operators. We did not investigate this interaction further. "
+           "Path occurrence and degree are strongly correlated in these graphs, so there is little that the information content "
+           "could add to the degree discount.")
+    sat = R3.get("saturation", {})
+    an = {t: r3p(t, "dnfr_anneal", "dnfr") for t in R3T}
+    tb = R3.get("hkg_DpS", {}).get("tau_best", {})
+    txt = ("**R4, membership annealing.** Annealing the temperature of the memberships changed MRR by "
+           + joinand([f"{sg(an[t]['delta'])} on {SH(t)}" for t in R3T if an[t]]) + ". ")
+    if sat:
+        h, dps = sat["hkg_DpS"][0], sat["het_DpS"][0]
+        txt += (f"It addresses a problem that the trained models barely have: in the default model of the first split, "
+                f"{100 * h['mu_gt_099']:.1f}% of the memberships on paths of the graded graph and {100 * dps['mu_gt_099']:.1f}% on "
+                f"Hetionet disease–symptom exceeded 0.99, the region where the gradient of log μ vanishes, whereas "
+                f"{pct(h['mu_lt_001'])} and {pct(dps['mu_lt_001'])} were below 0.01, where it does not. ")
+    if tb.get("dnfr_anneal"):
+        txt += (f"The best validation epoch fell at a temperature of {f3(med(tb['dnfr_anneal']), 2)} (median) on the graded "
+                "graph, after most of the annealing, so the schedule mainly changed the final temperature. ")
+    P_(dc, txt)
+    v2 = {t: r3p(t, "dnfr2", "dnfr") for t in R3T}; v2p = {t: r3p(t, "dnfr2", "product") for t in R3T}
+    P_(dc, "**DNFR 2.0.** With all four refinements, DNFR 2.0 differed from DNFR by "
+           + joinand([f"{dci3(v2[t])} on {SH(t)}" for t in R3T if v2[t]]) + ", and from the fixed product by "
+           + joinand([sg(v2p[t]["delta"]) for t in R3T if v2p[t]])
+           + ". None of these differences was supported under our rule"
+           * (not any(v2[t] and v2[t]["verdict"] == "different" for t in R3T))
+           + ". We keep the name for the combined model so that the four modifications can be cited, but we do not recommend it "
+           "over DNFR or over the fixed product.")
+    fv = {t: r3p(t, "fixp_val", "dnfr") for t in R3T}; fvp = {t: r3p(t, "fixp_val", "product") for t in R3T}
+    ch = R3.get("hkg_DpS", {}).get("fixp_val_choice") or {}
+    P_(dc, "**A fixed t-norm selected on validation data.** Training with a fixed shared p from a grid and keeping, on each split, "
+           "the value with the best validation MRR is the procedure that the identifiability analysis below recommends; it uses the "
+           "same early stopping as every other variant. It differed from DNFR by "
+           + joinand([f"{dci3(fv[t])} on {SH(t)}" for t in R3T if fv[t]]) + " and from the fixed product by "
+           + joinand([f"{dci3(fvp[t])} on {SH(t)}" for t in R3T if fvp[t]])
+           + (f"; the gain over the product on the graded graph was supported under our rule" if fvp.get("hkg_DpS") and fvp["hkg_DpS"]["verdict"] == "different" else "")
+           + (f". On the graded graph the grid value chosen was −0.5 in {ch.get('fixp_m05', 0)} splits, −2 in {ch.get('fixp_m2', 0)} "
+              f"and −4 in {ch.get('fixp_m4', 0)}. A fixed p = −2 trained with early stopping reached {m('hkg_DpS','fixp_m2')}, below "
+              "the 0.338 that the first, unconverged profile reported without early stopping, so part of that earlier gain was due "
+              "to longer training rather than to the value of p" if ch else "") + ".")
 
-    heading(dc, "4.4 Held-out diseases", 2)
+    # ---------------- 4.4 identifiability
+    heading(dc, "4.4 Is the t-norm parameter identified by the training objective? (RQ3)", 2)
+    pv = S["het_CtD"]["p_by_variant"]["dnfr"]
+    bt_ = {t: RS["stopping"][t]["dnfr"]["best_epoch"]["median"] for t in TASKS if t in RS["stopping"]}
+    P_(dc, "Two questions need to be kept apart. One is structural: whether the model can produce the same scores with different "
+           "values of p, because the memberships compensate; Section 4.2 showed that they partly can. The other is practical: "
+           "whether the training data, through the training loss, determine p within a useful range [@raue2009]. Table 5 and "
+           "Figure 2 address the second.")
+    P_(dc, "**Restarts.** With the default early stopping, the learned p ended near its starting value (Table 5). On "
+           f"compound–treats–disease the best validation epoch had a median of {ri(bt_['het_CtD'])}; with learning rate 0.1 and "
+           "dp/dθ ≈ 0.9 near p~0~ = −0.1, that many Adam steps could move p by close to one unit, yet the learned values had an "
+           f"interquartile range of only [{f3(pv['q25'], 2)}, {f3(pv['q75'], 2)}]. The small spread is an empirical outcome, a "
+           "small and inconsistent gradient, not a mechanical consequence of early stopping. Restarts from p~0~ = −2, −1 and 0.5 "
+           "ended in different places and reached similar accuracy, except that starts in the nilpotent range (p~0~ = 0.5) "
+           "failed on the graded graph.")
+    F = {t: R3.get(t, {}).get("free_p") for t in TASKS}
+    if any(F.values()):
+        ft = [t for t in TASKS if F[t]]
+        P_(dc, "**Unbounded parameter.** The bounded parameterisation p = 6σ(θ) − 5 has a small derivative near its bounds, and some "
+               "learned values sat close to them. With p = θ, clipped only to keep Equation 2 finite, the learned values still "
+               "depended on the start: " + joinand([
+                   f"on {SH(t)}, median {f3(np.median([r['median_by_init']['dnfr_free_pm2'] for r in F[t]]), 2)} from −2, "
+                   f"{f3(np.median([r['median_by_init']['dnfr_free'] for r in F[t]]), 2)} from −0.1 and "
+                   f"{f3(np.median([r['median_by_init']['dnfr_free_pp05'] for r in F[t]]), 2)} from 0.5" for t in ft])
+               + ", with a median spread of " + joinand([f"{f3(np.median([r['spread_median'] for r in F[t]]), 2)}" for t in ft])
+               + " between starts for the same metapath. The lack of convergence is not an artefact of the parameterisation.")
+    if PS:
+        iv = PS["intervals"]
+        P_(dc, "**Converged profile.** On the graded graph we fixed a shared p on a grid from −5 to 0 and fitted every other "
+               "parameter by L-BFGS until the loss changed by less than 10^−9^ (Section 3.4). Over the whole range the converged "
+               "training loss varied by " + joinand([f"{x:.4f}" for x in PS["loss_range"]]) + " nats in the "
+               f"{num(len(PS['seeds']))} splits, against a loss of about 4.3, and |∂L/∂p| at the converged fits was at most "
+               f"{PS['max_abs_dLdp']:.4f}. The minimiser was not reproducible: the loss was lowest at p = "
+               + joinand([f"{r['p_argmin']:g}".replace("-", "−") for r in iv]) + " in the three splits, and the sets of p within "
+               "χ²(0.95, 1)/(2N) of each split's minimum, a profile-likelihood style interval that we use descriptively, were "
+               + joinand([f"[{r['p_lo']:g}, {r['p_hi']:g}]".replace("-", "−") if r["p_lo"] != r["p_hi"] else f"{{{r['p_lo']:g}}}".replace("-", "−") for r in iv])
+               + (", which do not all overlap" if max(r["p_lo"] for r in iv) > min(r["p_hi"] for r in iv) else "")
+               + " (Figure 2; Supplementary Tables S7 and S8). Only one split had an interior minimum, with curvature "
+               + (f"∂²L/∂p² ≈ {[c for c in PS['curvature'] if c][0]:.3f}" if any(PS["curvature"]) else "too small to estimate")
+               + ". In the terminology of Raue et al. [@raue2009], p is practically non-identified by the training objective once "
+               "the memberships are learned.")
+        P_(dc, "Held-out accuracy was more informative than the loss. Validation MRR at the converged fits was highest at p = "
+               + joinand([f"{r['p_best_valid']:g}".replace("-", "−") for r in iv]) + ", and test MRR at the value chosen on "
+               "validation exceeded that of the product by " + joinand([sg(r["test_at_valid_choice"] - r["test_product"]) for r in iv])
+               + ". The data therefore carry information about p, but the softmax loss, averaged over all candidates, hardly "
+               "registers the reordering of the few top-ranked ones that decides MRR. That is why selecting p on validation data "
+               "helps (Section 4.3) while learning it by gradient descent does not.")
+    figure(dc, f"{ROOT}/figures/fig2_profile_lbfgs.png", 6.3,
+           "**Figure 2.** Converged profile over a fixed shared t-norm parameter p on the graded graph, three splits. Left: training "
+           "loss minus its minimum over the grid (×10⁻³ nat). Centre: ∂L/∂p at the converged fit. Right: test MRR of the converged "
+           "fit. All other parameters were fitted by L-BFGS to convergence. Dashed lines mark the Hamacher product (p = −1) and the "
+           "product (p = 0).")
+    R.table5(dc)
+    P_(dc, "Two further observations complete the picture. Training for 400 epochs without early stopping did not make the learned "
+           "p converge either (Supplementary Table S6), and on the graded graph the nilpotent end of the family is excluded by the "
+           f"data: the Łukasiewicz t-norm lost {sg(-pr('hkg_DpS','dnfr','luk')['delta_MRR'])[1:]} in MRR, because every path there "
+           "contains a symptom-to-disease edge with a small membership, and for p > 0 such a path has strength exactly zero. The "
+           "per-metapath values learned from different starts were at best weakly correlated (median Spearman correlation "
+           f"{f3(S['het_DpS']['p_agreement']['spearman_median'], 2)} on Hetionet disease–symptom), so no single learned value, "
+           "of any metapath, should be interpreted.")
+
+    # ---------------- 4.5 held-out diseases
+    heading(dc, "4.5 Held-out diseases", 2)
     tg = "_tail"; nt = nseeds("het_CtD", "dnfr", tg)
     pn = pr("het_CtD", "dnfr_nodeg", "dnfr", tg)
     P_(dc, "A random split lets a test disease keep other indications in training. When every indication of a test disease was held "
            f"out together (Table 6, {nt} splits), all methods fell sharply: DNFR reached {m('het_CtD','dnfr',tg)}, against "
            f"{m('het_CtD','dnfr')} with random splits. Path methods remained ahead of completion, popularity and the edge prior, which "
            f"carry no information about a disease without training indications ({m('het_CtD','softimpute',tg)}, "
-           f"{m('het_CtD','popularity',tg)} and {m('het_CtD','prior',tg)}), and at this level of accuracy the differences among the DNFR "
-           "variants and DWPC-LR are small. Degree and prior features, harmless on random splits, hurt DWPC-LR here "
-           f"({m('het_CtD','dwpc_lr_full',tg)} against {m('het_CtD','dwpc_lr',tg)}), because a held-out disease has no training "
-           "indications, so its degree is zero and its prior near zero. The variant without degree terms reached "
-           f"{m('het_CtD','dnfr_nodeg',tg)}, "
-           f"{dci(pn)} relative to DNFR, ahead on {pn['seed_wins']} of {pn['seeds']} splits; a reversal of the random-split result is "
-           "plausible, since for a disease without indications the remaining routes often pass through well-connected genes and drugs "
-           "that the degree terms discount, but the corrected interval "
-           f"{nbci(pn) if 'nb_ci95_lo' in pn else ''} does not establish it.")
+           f"{m('het_CtD','popularity',tg)} and {m('het_CtD','prior',tg)}). Degree and prior features hurt DWPC-LR here "
+           f"({m('het_CtD','dwpc_lr_full',tg)} against {m('het_CtD','dwpc_lr',tg)}), because a held-out disease has degree zero. "
+           f"The variant without degree terms reached {m('het_CtD','dnfr_nodeg',tg)}, {dci(pn)} relative to DNFR, ahead on "
+           f"{pn['seed_wins']} of {pn['seeds']} splits. A reversal of the random-split result is plausible, since for a disease "
+           "without indications the remaining routes often pass through well-connected genes and drugs that the degree terms "
+           f"discount, but the corrected interval {nbci(pn)} does not establish it, and we ran this split on one task only.")
     R.table_tail(dc)
 
-    heading(dc, "4.5 Robustness to missing edges (RQ3)", 2)
-    P_(dc, "Removing edges at random lowered every method, but path methods stayed ahead of completion (Table A5, Figure 4). With a "
-           f"quarter of the edges left, DNFR still reached an MRR of {m('het_CtD','dnfr','_sp0.25')} on compound–treats–disease, against "
-           f"{m('het_CtD','softimpute','_sp0.25')} for Soft-Impute. This comparison is structurally unfavourable to completion, which "
-           "loses the very treatment edges it is fitted to as the graph thins, whereas path methods can route around them. The "
-           f"advantage of the degree terms, large on the full graph, vanished on the thinnest graphs ({m('het_CtD','dnfr_nodeg','_sp0.25')} "
-           "without them at 25% of the edges), consistent with their role: once most edges are gone, few nodes remain hubs. DNFR and "
-           "the fixed product were within 0.01 of each other on both thinned graphs.")
+    # ---------------- 4.6 sparsity
+    heading(dc, "4.6 Robustness to missing edges", 2)
+    P_(dc, "Removing edges at random lowered every method, and path methods stayed ahead of completion (Figure 4; Supplementary "
+           f"Table S5). With a quarter of the edges left, DNFR reached {m('het_CtD','dnfr','_sp0.25')} on compound–treats–disease, "
+           f"against {m('het_CtD','softimpute','_sp0.25')} for Soft-Impute. This comparison favours path methods by construction, "
+           "because completion loses the very edges it is fitted to. The advantage of the degree terms vanished on the thinnest "
+           f"graphs ({m('het_CtD','dnfr_nodeg','_sp0.25')} without them at 25% of the edges), consistent with their role: once most "
+           "edges are gone, few nodes remain hubs.")
     figure(dc, f"{ROOT}/figures/fig4_sparsity.png", 6.0,
            "**Figure 4.** MRR with all edges and with 50% and 25% of the edges of every relation kept after random removal. Points are "
-           "means and error bars standard deviations over splits (three splits on the thinned graphs; the all-edges points use all "
+           "means and error bars standard deviations over splits (three splits on the thinned graphs; the all-edges points use the "
            "random splits of Table 2). The two panels have different y ranges.")
 
-    heading(dc, "4.6 Explanations (RQ3)", 2)
-    P_(dc, "Because each score is a noisy-OR, deleting a path changes −log(1 − P) by exactly its share, so the attribution is exact for "
-           "the additive score with all other scores fixed. Two qualifications matter for how a reader should interpret a share. "
-           "First, paths that share an edge count that edge once per path, so the shares of overlapping paths partly double-count the "
-           "same fact; the three leading paths shared at least one edge for "
-           + by_task(lambda t: f"{pct(E2[t]['top3_share_edge'])} of pairs") + ". Second, deleting paths from one pair tests only how much of its evidence is removed. Table 7 reports both kinds of test.")
-    R.table_expl(dc)
+    # ---------------- 4.7 explanations
+    heading(dc, "4.7 Explanations (RQ4)", 2)
     e = lambda t, k: E[t][k]
-    P_(dc, "The explanations were less concise than a single chain. A test pair on Hetionet disease–symptom was supported by a median of "
-           f"{e('het_DpS','n_paths_median'):.0f} paths, and {e('het_DpS','k50_median'):.0f} of them carried half of the evidence; on "
-           f"compound–treats–disease the corresponding numbers were {e('het_CtD','n_paths_median'):.0f} and {e('het_CtD','k50_median'):.0f}. "
-           "At the level of metapaths they were concise: a single metapath carried at least half of the evidence for the median pair on "
-           "every task. Deleting the three leading paths left "
-           f"{pct(e('het_DpS','del_top3_keep10'))} of correct top-10 predictions on Hetionet disease–symptom in the top 10, "
-           f"{pct(e('hkg_DpS','del_top3_keep10'))} on the graded graph and {pct(e('het_CtD','del_top3_keep10'))} on "
-           "compound–treats–disease, whereas deleting three random paths of the same pair left almost all of them. The share-matched "
-           "control shows what this contrast measures: deleting random paths until their share equalled that of the top three left "
-           + by_task(lambda t: pct(E2[t]['stay_top10']['matched3'])) + " of them in the top 10, close to the top-three deletion, and the curves of rank against the share removed were nearly the same for "
-           "leading and random paths. Within a pair, an additive score depends on how much evidence is removed, not on which paths "
-           "carry it; the top-3 against random-3 contrast mainly confirms that shares are skewed.")
-    P_(dc, "The edge-level counterfactual is more informative. Removing the single fact that carried the largest share of a pair's "
-           "evidence, and with it every path from the same head that used it, left "
-           + by_task(lambda t: f"{pct(E2[t]['stay_top10']['edge_top'])} (random fact: {pct(E2[t]['stay_top10']['edge_rand'])})")
-           + " of correct top-10 predictions in the top 10; the control removed a random fact on the pair's paths. The leading fact "
-           "carried a median of " + by_task(lambda t: pct(E2[t]['top_edge_share'])) + " of the evidence. A correct ranking thus depends more on the facts the explanation names than on other facts on the same "
-           "paths, which is what a clinician checking an explanation would want to know, although most correct rankings survived the "
-           "loss of their leading fact; this test was run without retraining, so it measures the dependence of the "
-           "trained model on a fact, not what the model would have learned without it. DWPC with logistic regression gives a comparable "
-           "attribution by metapath; its leading metapath coincided with that of DNFR for "
-           f"{pct(e('het_DpS','same_top_mp'))} of the pairs on Hetionet disease–symptom and {pct(e('het_CtD','same_top_mp'))} on "
-           "compound–treats–disease, and deleting it removed a similar share of correct predictions. The advantage of DNFR for "
-           "explanation is therefore resolution, individual paths and facts with memberships rather than metapath totals, not "
-           "faithfulness, which both additive models have.")
+    P_(dc, "Because each score is a noisy-OR, deleting a path changes −log(1 − P) by exactly its share; the attribution is exact for "
+           "the model's additive score, not for the underlying evidence. Paths that share a fact count it once per path: the three "
+           "leading paths shared at least one fact for " + joinand([f"{pct(E2[t]['top3_share_edge'])} of pairs on {SH(t)}" for t in ("het_CtD", "het_DpS", "hkg_DpS") if t in E2])
+           + ". Table 7 therefore reports the attribution both to paths and to facts.")
+    R.table_expl(dc)
+    P_(dc, "At the level of paths the explanations were less concise than a single chain: a test pair on Hetionet disease–symptom "
+           f"was supported by a median of {e('het_DpS','n_paths_median'):.0f} paths, {e('het_DpS','k50_median'):.0f} of which "
+           f"carried half of the evidence. Deleting the three leading paths left {pct(e('het_DpS','del_top3_keep10'))} of correct "
+           "top-10 predictions in the top 10 there, but deleting random paths with the same total share left "
+           f"{pct(E2['het_DpS']['stay_top10']['matched3'])}, "
+           "so within a pair an additive score depends on how much evidence is removed, not on which paths carry it.")
+    if E3:
+        ts = [t for t in ("het_CtD", "het_DpS", "hkg_DpS") if t in E3]
+        P_(dc, "At the level of facts the picture is clearer. Summing path shares, the leading fact appeared to carry "
+               + joinand([f"{pct(E3[t]['top_edge_double_median'])} of the evidence on {SH(t)}" for t in ts])
+               + "; its Shapley value, which splits each path term equally among its facts and sums to the total without double "
+               "counting, was " + joinand([pct(E3[t]["top_edge_shapley_median"]) for t in ts]) + ". Half of the attribution lay on "
+               + joinand([f"{E3[t]['k50_edges_median']:.0f}" for t in ts]) + " facts. Removing the fact with the largest Shapley "
+               "share from the graph, so that competing candidates lost its evidence too, left "
+               + joinand([f"{pct(E3[t]['stay_top10_edge_top_sh'])} of correct top-10 predictions on {SH(t)}" for t in ts])
+               + " in the top 10, against " + joinand([pct(E2[t]["stay_top10"]["edge_rand"]) for t in ts if t in E2])
+               + " after removing a random fact on the same paths. A correct ranking depends more on the facts the explanation "
+               "names than on other facts on its paths, which is what a clinician checking an explanation would want to know, "
+               "although most rankings survived the loss of their leading fact. This test was run without retraining, so it "
+               "measures the dependence of the trained model on a fact, not what a model trained without it would predict.")
+    if "het_CtD" in E3 and E3["het_CtD"].get("lead_class"):
+        lc = E3["het_CtD"]["lead_class"]
+        P_(dc, "For drug repurposing we classified the leading metapath of each correct top-10 prediction. It ran through a gene "
+               f"that the compound binds or regulates and that is associated with the disease for {pct(lc['gene'])} of predictions, "
+               f"and through pharmacologic classes, similar compounds or similar diseases for {pct(lc['associative'])}. Most "
+               "explanations of correct predictions are therefore evidence by association, drugs like this one treat the disease, "
+               "rather than a mechanism of action.")
     ex = {x["task"]: x for x in XS["explanations"]}
-    P_(dc, "Table 8 shows the leading paths for one correctly top-ranked pair from each of three tasks. For doxorubicin and breast cancer, "
-           f"{ex['het_CtD']['n_paths']:,} paths supported the prediction, and the strongest ran through the drug's pharmacologic classes, "
-           "topoisomerase inhibitors and anthracyclines, to other drugs of those classes that Hetionet records as treating breast cancer. "
-           "This is evidence by association, drugs like this one treat the disease, not a mechanism of action, and the three leading "
-           f"paths carried only {pct(ex['het_CtD']['top3_share'])} of the evidence. For multiple sclerosis and muscle weakness, the "
-           "leading path ran through amyotrophic lateral sclerosis, which Hetionet links to multiple sclerosis by a \"resembles\" edge "
-           "derived from text co-occurrence [@himmelstein2017], a weaker kind of evidence than a curated association. On the graded "
-           "emergency-department graph, bronchitis was linked to fatigue most strongly through persistent cough, sore throat and congestion "
-           "shared with pneumonia, streptococcal pharyngitis, mononucleosis and sinusitis. These examples illustrate the form of the "
-           "explanations; they were not rated by clinicians, and we make no claim about their clinical plausibility or usefulness.")
+    P_(dc, "Table 8 shows the leading paths for one correctly top-ranked pair from each of three tasks. For doxorubicin and breast "
+           f"cancer, {ex['het_CtD']['n_paths']:,} paths supported the prediction, and the strongest ran through the drug's "
+           "pharmacologic classes, topoisomerase inhibitors and anthracyclines, to other drugs of those classes that Hetionet "
+           "records as treating breast cancer. For multiple sclerosis and muscle weakness, the leading path ran through amyotrophic "
+           "lateral sclerosis, which Hetionet links to multiple sclerosis by a \"resembles\" edge derived from text co-occurrence "
+           "[@himmelstein2017], a weaker kind of evidence than a curated association. On the graded emergency-department graph, "
+           "bronchitis was linked to fatigue through persistent cough, sore throat and congestion shared with pneumonia, "
+           "streptococcal pharyngitis, mononucleosis and sinusitis. These examples illustrate the form of the explanations; they "
+           "were not rated by clinicians, and we make no claim about their clinical plausibility or usefulness.")
     R.table_examples(dc)
 
-    heading(dc, "4.7 Computational cost", 2)
-    ts = {t: S[t]["time_s"] for t in TASKS}
-    P_(dc, "One training run of DNFR took about " + ", ".join(f"{ts[t]['dnfr']:.0f} s" for t in TASKS[:3])
-           + f" and {ts['hkg_DpS']['dnfr']:.0f} s on the four tasks with the default early stopping, after a one-off path enumeration; "
-           "DWPC with logistic regression took " + ", ".join(f"{ts[t]['dwpc_lr']:.1f}" for t in TASKS) + " s on the same path sets. "
-           + f"Training for 400 epochs without early stopping took about {long_minutes('hkg_DpS'):.0f} min per run on the graded graph and {long_minutes('het_DpS'):.0f} min on Hetionet disease–symptom. "
-           + "Timings were measured on a shared two-core machine with one or "
-           "two threads per run and are indicative only.")
+    # ---------------- 4.8 cost
+    heading(dc, "4.8 Computational cost", 2)
+    ts_ = {t: S[t]["time_s"] for t in TASKS}
+    nbh = r3sum("hkg_DpS", "nbfnet"); nbd = r3sum("het_DpS", "nbfnet")
+    P_(dc, "One training run of DNFR took about " + ", ".join(f"{ts_[t]['dnfr']:.0f} s" for t in TASKS[:3])
+           + f" and {ts_['hkg_DpS']['dnfr']:.0f} s on the four tasks with the default early stopping, after a one-off path "
+           "enumeration; DWPC with logistic regression took " + ", ".join(f"{ts_[t]['dwpc_lr']:.1f}" for t in TASKS)
+           + " s on the same path sets. Overlap-aware aggregation nearly tripled the time per run on the graded graph "
+           f"({r3sum('hkg_DpS','dnfr_overlap')['time_s']:.0f} s against {r3sum('hkg_DpS','dnfr')['time_s']:.0f} s). NBFNet took "
+           + (f"{nbh['time_s']:.0f} s per run on the graded graph" if nbh and nbh.get("time_s") else "")
+           + (f" and {nbd['time_s'] / 60:.0f} min on Hetionet disease–symptom" if nbd and nbd.get("time_s") else "")
+           + ". Timings were measured on a shared two-core machine with one thread per run and are indicative only.")
 
 
 # ------------------------------------------------------------------ discussion
 def discussion(dc):
+    rc = refine_counts()
     heading(dc, "5. Discussion", 1)
     heading(dc, "5.1 Principal findings", 2)
-    P_(dc, "We set out to find which learned components of a neuro-fuzzy path reasoner matter for multi-hop reasoning on medical "
-           "knowledge graphs. Across four tasks the answer was consistent. Combining all paths by noisy-OR rather than keeping the best "
-           "one, and discounting edges at hub nodes, carried the gains that the model had over its ablations. Learning the discount per "
-           "relation helped on the graph with graded clinical evidence and not elsewhere, where a fixed DWPC-like discount was as good "
-           "or better. The t-norm itself, the most visibly neuro-fuzzy part of the model, was set by optimisation rather than by the data: "
-           "the training loss was shallow in its parameter over the non-positive range, the learned value ended wherever initialisation, "
-           "penalty and stopping left it, also after 400 epochs without early stopping, and learning it gave no consistent gain over "
-           "the fixed product or Hamacher product. The data did reject the nilpotent end of the family on graded evidence, and on the "
-           "graded graph held-out accuracy favoured a broad region of stronger-than-product t-norms that end-to-end learning did not reach. It mattered most when "
-           "the memberships were frozen, which shows that learned memberships and a learned operator do much the same work.")
-    P_(dc, f"As a predictor, DNFR did not differ detectably from degree-weighted path counts on Hetionet drug repurposing, was more "
-           "accurate on PrimeKG, and was less accurate than DWPC with logistic regression on both disease–symptom tasks and than "
-           "low-rank completion on the graded graph. Degree-only "
-           "baselines, including an edge prior that accounts for the degrees of both endpoints, were far behind every path method, so "
-           "the accuracy of the path methods is not an artefact of degree. When test diseases had no indications in training, every "
-           f"method fell to an MRR of about {f3(max(summ('het_CtD',x,'_tail')['MRR']['mean'] for x in ('dnfr','product','hamacher','dnfr_nodeg','dwpc_lr')),2)} "
-           "or less. The distinctive contribution of DNFR is the resolution of its explanations, path by path and fact by fact with "
-           "edge memberships, rather than accuracy or faithfulness.")
-    heading(dc, "5.2 Why end-to-end learning does not identify the t-norm parameter", 2)
-    P_(dc, "The profile gives a direct answer: over p ∈ [−4, 0] the training loss differs by at most a few hundredths of a nat, "
-           "on the graded graph about as much as it still decreases per 50 epochs late in training, so its gradient with respect to p "
-           "is small and its sign changes as the other parameters move (Figure 3). Two mechanisms make the "
-           "loss insensitive. First, the degree terms and the metapath reliabilities already rescale every path. A t-norm with p < 0 raises "
-           "the strength of a path with one weak edge relative to the product; the same change in ranking can be produced by raising "
-           "the membership of weak edges, which the membership parameters do per relation, or by raising the reliability of the "
-           "metapath. When all three are learned together, many combinations rank the candidates in nearly the same order. The "
-           "frozen-membership experiment supports this reading: once the memberships could not move, learning p recovered part of what "
-           "learning the memberships gave. Second, the softmax loss averages over all candidate tails, and changes in p that reorder a "
-           "few top-ranked candidates barely change it. That is why, on the graded graph, test MRR differed by "
-           f"{f3(prof_row('hkg_DpS', -1)['test_best'] - prof_row('hkg_DpS', 0)['test_best'], 2)} between p = −1 and the product while "
-           f"the training loss differed by only {prof_row('hkg_DpS',0)['final_loss_minus_seed_min'] - prof_row('hkg_DpS',-1)['final_loss_minus_seed_min']:.3f}. Neither mechanism is specific to our model, and the first was anticipated in flexible "
-           "neuro-fuzzy systems, where t-norm parameters are learned jointly with weights that can play the same role [@rutkowski2003].")
-    mu = RS["mu_hkg"]
-    P_(dc, "Only the nilpotent end of the family behaves differently, and the reason is visible in the memberships the model learned. "
-           "On the graded graph the published weights are small (median w~e~ = "
-           f"{f3(mu['raw_weight']['median'])}), the learned memberships of disease-to-symptom edges tracked them (median μ "
-           f"{f3(mu['DpS']['median'],2)}, Spearman ρ = {f3(mu['DpS_spearman_with_weight'],2)} with w~e~), and the memberships of "
-           f"symptom-to-disease edges, which pass through symptom hubs, were much smaller (median μ {f3(mu['DpS^-1']['median'],4)}). "
-           "Every path of the graded task contains one such edge. For p > 0 such a path has strength exactly zero and passes no "
-           "gradient (Section 3.2), so the Łukasiewicz t-norm discards almost all evidence and a start at p = 0.5 cannot recover. "
-           "Large knowledge graphs are also close to block-structured, and our earlier analysis of the NHANES relation suggested that "
-           "under such structure the product and its neighbours in the family order pairs in nearly the same way [@truong2026].")
-    P_(dc, "For fuzzy-logic practice the implication is that a learned t-norm parameter should not be read as a property of the domain "
-           "unless its identifiability has been checked: by restarting from several values, by training without early stopping, and, "
-           "most directly, by a profile over fixed values. Each check is cheap relative to the experiments it qualifies. Where the "
-           "profile shows that held-out accuracy depends on p more clearly than the training loss does, as on our graded graph, p should be "
-           "selected on validation data as a hyperparameter rather than learned.")
+    _, _, dmax = comp_support("dnfr", "dnfr_max"); _, _, ddeg = comp_support("dnfr", "dnfr_nodeg")
+    P_(dc, "We asked which learned components of a neuro-fuzzy path reasoner matter for link prediction on medical knowledge graphs. "
+           "Combining all paths by noisy-OR rather than keeping the best one, and discounting edges at hub nodes, carried the gains "
+           "that the model had over its ablations. Both had the same sign on every split of every task on which they were tested; "
+           f"after adjustment for multiple comparisons, aggregation was supported on {num(len(dmax))} and hub discounting on "
+           f"{num(len(ddeg))} of the tasks, and the remaining differences, though large, were inconclusive with the splits we had. "
+           "Learning the discount per relation "
+           "helped on the graph with graded clinical evidence and not elsewhere. The t-norm, the most visibly neuro-fuzzy part of "
+           "the model, gave no consistent gain when learned, and the training loss barely depends on it once the memberships are "
+           "learned: with every other parameter fitted to convergence, the loss changed by thousandths of a nat over p from −5 to "
+           "0, and its minimiser differed between splits. Held-out accuracy did depend on it, which is why choosing it on "
+           "validation data helped where learning it did not.")
+    P_(dc, "Four refinements that addressed apparent weaknesses of the model did not improve it"
+           + (", and two made it worse on the graded graph" if sum(1 for t, l in rc["neg_diff"] if t == "hkg_DpS") >= 2 else "")
+           + ". Each failure is informative. The overlap penalty was switched off by training whenever the memberships were "
+           "learned, and cost accuracy when it could not be, so paths through a shared node add evidence rather than repeat it, "
+           "at least as these graphs encode it. A discrete operator choice was not more accurate than a continuous one. "
+           "Information content added nothing to degree. Membership annealing addressed saturation near 1, which the trained "
+           "models hardly show. As a predictor, DNFR was matched or beaten by degree-weighted path counts with logistic regression "
+           "on three of four tasks, by low-rank completion on the graded graph, and was matched by a compact NBFNet; its distinctive "
+           "contribution is the resolution of its explanations, path by path and fact by fact, rather than accuracy.")
+    heading(dc, "5.2 Why the training objective does not identify the t-norm", 2)
+    P_(dc, "Two mechanisms make the loss insensitive to p. First, the memberships and metapath reliabilities already rescale every "
+           "path. A t-norm with p < 0 raises the strength of a path with one weak edge relative to the product; raising the "
+           "membership of weak edges, or the reliability of the metapath, has much the same effect on the ranking. When all three "
+           "are learned together, many combinations rank candidates in nearly the same order. The frozen-membership experiment "
+           "shows this structural redundancy directly: once the memberships could not move, learning p recovered part of what "
+           "learning them gave. Second, the softmax loss averages over all candidate tails, and a change in p that reorders a few "
+           "top-ranked candidates barely changes it, while it can change MRR. Neither mechanism is specific to our model; the first "
+           "was anticipated for flexible neuro-fuzzy systems [@rutkowski2003], and the second applies to any operator learned "
+           "through a ranking surrogate.")
+    P_(dc, "The practical consequence is narrow and, we think, general. A learned t-norm parameter, or a learned choice among "
+           "operators, should not be read as a property of the medical domain unless its identifiability has been checked: by "
+           "restarting from several values, by a profile over fixed values with the other parameters converged, and by asking "
+           "whether held-out accuracy and training loss agree. Where they disagree, as on our graded graph, the operator should be "
+           "selected on validation data as a hyperparameter. These checks are cheap compared with the experiments they qualify.")
     heading(dc, "5.3 What is specific to medical knowledge graphs", 2)
     P_(dc, "Most of these findings would hold for any sparse, hub-dominated graph, and we do not claim otherwise. Three features of the "
-           "medical graphs studied here shaped them. First, curated biomedical graphs mix evidence of very different strength under the "
-           "same relation types: Hetionet's disease–disease \"resembles\" edges come from text co-occurrence, while its compound–disease "
-           "edges are curated indications [@himmelstein2017]. A single membership per relation cannot tell these apart, which is one "
-           "reason why the explanations in Table 8 include weak links and why learned memberships helped only where edges carried their "
-           "own graded weight. Second, hubs in these graphs are biologically meaningful and well studied, such as genes with hundreds "
-           "of disease associations or symptoms such as fatigue and pain shared by many diseases, and they are also the product of "
-           "uneven research attention [@bonner2022]. Discounting them helped on random splits but not, apparently, for diseases with no "
-           "known indications (Section 4.4), where the remaining evidence runs through exactly these hubs. Third, the graded graph "
-           "learned from patient records encodes how often a disease produces a symptom; its weights are small and its symptom nodes "
-           "highly connected, which is what made the nilpotent t-norms fail and the learned discount useful. A developer building on "
-           "a curated graph should therefore discount hubs with a fixed damping, a developer building on a graph learned from records "
-           "should learn the discount, and both should check zero-shot performance separately.")
+           "graphs studied here shaped them. First, curated biomedical graphs mix evidence of very different strength under the "
+           "same relation types: Hetionet's disease–disease \"resembles\" edges come from text co-occurrence, while its "
+           "compound–disease edges are curated indications [@himmelstein2017]. A single membership per relation cannot tell these "
+           "apart, which is one reason why the explanations in Table 8 include weak links and why learned memberships helped only "
+           "where edges carried their own graded weight. Second, hubs in these graphs are biologically meaningful and are also the "
+           "product of uneven research attention [@bonner2022]. Discounting them helped on random splits but perhaps not for "
+           "diseases with no known indications (Section 4.5), where the remaining evidence runs through exactly these hubs. Third, "
+           "the graded graph learned from patient records is a single bipartite relation, so its only metapath, "
+           "disease–symptom–disease–symptom, links a disease to a symptom through diseases with similar symptom profiles. It tests "
+           "the composition of graded collaborative evidence from records, not multi-relational reasoning, and it is the task on "
+           "which low-rank completion led and on which the operator mattered most for held-out accuracy.")
     heading(dc, "5.4 Implications for explainable clinical decision support", 2)
     bullets(dc, [C(x) for x in [
-        "**Learn or fix memberships before operators.** A path reasoner over a medical graph should discount hubs, with a fixed DWPC-like "
-        "discount as a strong default and a learned one where edges carry graded evidence. The t-norm can then be chosen among a few "
-        "fixed, non-nilpotent operators, on validation data if it matters; learning it end to end adds parameters without adding "
-        "accuracy, and the learned value is not interpretable.",
-        "**Aggregate evidence, do not select it.** Noisy-OR over all paths was consistently better than the strongest path, so an "
-        "explanation should show the leading paths together with the share of the evidence they carry (Tables 7 and 8) rather than a "
-        "single \"reason\", and should flag paths that share a fact.",
-        "**Test explanations at the level of facts.** Deleting paths within one pair confirms only that shares are skewed; removing a "
-        "fact from the graph and re-ranking tests what a clinician would question.",
-        "**Expect explanations to be by association.** The leading paths for drug repurposing ran through pharmacologic classes and "
-        "similar drugs, and some disease–symptom paths through text-mined \"resembles\" links. Path shares make such evidence visible "
-        "and discountable, but they do not turn it into a mechanism.",
-        "**Report the strongest simple baselines and harder splits.** DWPC with logistic regression was better than DNFR on two of "
-        "four tasks and not detectably worse on a third, low-rank completion led on the dense graph, and a disease-centred split reduced every method to a small fraction "
-        "of its accuracy on random splits. Claims for new medical link predictors should be made against these, under leave-dyad-out "
-        "splits and, for repurposing, with held-out diseases."]], numbered=True)
+        "**Learn or fix memberships before operators.** A path reasoner over a medical graph should discount hubs, with a fixed "
+        "DWPC-like discount as a strong default and a learned one where edges carry graded evidence. The operator can then be chosen "
+        "among a few fixed, non-nilpotent t-norms on validation data; learning it end to end adds parameters without adding accuracy, "
+        "and the learned value is not interpretable.",
+        "**Aggregate evidence, do not select it.** Noisy-OR over all paths was consistently better than the strongest path, and "
+        "discounting overlapping paths did not help, so an explanation should show the leading paths together with the share of the "
+        "evidence they carry rather than a single \"reason\".",
+        "**Attribute to facts, and test at the level of facts.** Path shares double-count facts shared by several paths; an edge-level "
+        "Shapley attribution does not, and removing a fact from the graph and re-ranking tests what a clinician would question.",
+        "**Expect explanations to be by association.** The leading paths for drug repurposing mostly ran through pharmacologic classes "
+        "and similar drugs, and some disease–symptom paths through text-mined \"resembles\" links. Path shares make such evidence "
+        "visible and discountable, but they do not turn it into a mechanism.",
+        "**Report the strongest simple baselines and harder splits.** Degree-weighted path counts matched or beat every learned path "
+        "model on three of four tasks, low-rank completion led on the record-derived graph, and a disease-centred split reduced every "
+        "method to a small fraction of its accuracy on random splits."]], numbered=True, start=1)
     heading(dc, "5.5 Limitations", 2)
+    nc = nseeds("het_CtD", "dnfr"); nca = nseeds("het_CtD", "dnfr_nodeg")
     bullets(dc, [C(x) for x in [
-        f"**Splits and power.** The comparisons with the fixed product and Hamacher product on the two disease–symptom tasks used "
-        f"{nseeds('het_DpS','dnfr')} splits, but "
-        "Hetionet compound–treats–disease used three, PrimeKG two and the disease-centred split four, and other variants were run on "
-        "five or fewer splits, as the tables mark. Under the corrected resampled t-test even ten splits leave 90% intervals of about "
-        "±0.015, so equivalence within ±0.01 could not be shown; differences of this size are not interpreted.",
-        f"**Identifiability analyses on two tasks, with limited convergence.** The profile and the training without early stopping were run on the two "
-        f"disease–symptom tasks ({len(PF.get('hkg_DpS',{}).get('seeds',[]))} and {len(PF.get('het_DpS',{}).get('seeds',[]))} splits for "
-        "the profile), where a run is cheap; on the drug-repurposing tasks we rely on the restarts with early stopping. The profile "
-        "fixes one p for all metapaths and so does not test whether the data identify the differences between metapaths, which the "
-        "restarts suggest they do only weakly. The profile runs reached the epoch limit before the loss had stopped decreasing.",
-        "**Early stopping.** The default stopping rule ended training early on some tasks; training for 400 epochs did not "
-        "consistently change accuracy where we tried it, but we did not re-run every variant and baseline without early stopping. "
-        "The comparisons in Tables 2 and 3 are between variants trained with the same rule.",
-        "**Untuned embeddings, no graph neural networks.** TransE and RotatE were trained for 25 epochs without hyperparameter search, "
-        f"and ComplEx did not train beyond chance level under the same budget (MRR {m('het_CtD','kge_ComplEx') if summ('het_CtD','kge_ComplEx') else '—'} "
-        "on compound–treats–disease). Embedding accuracy depends strongly on training configuration [@ruffinelli2020], so the gap "
-        "between them and the path methods is not a finding of this study. NBFNet [@zhu2021] and TxGNN [@huang2024], which learn path "
-        "operators and are the natural competitors of a learned neuro-fuzzy reasoner, require GPU training on graphs of this size and "
-        "were not run. AnyBURL was given 100 s of rule learning and might improve with more.",
-        "**Metapath budget.** Metapaths with more than five million paths were excluded for tractability, including the side-effect and "
-        "anatomy-expression metapaths on Hetionet and "
+        f"**Splits and power.** The main comparisons used {nc} splits on compound–treats–disease, ten on the two disease–symptom "
+        f"tasks and two on PrimeKG; the component ablations on compound–treats–disease used {nca}, and several variants fewer, as "
+        "the tables mark. With Holm adjustment over the comparisons of each table, differences of about 0.02 to 0.04 MRR were often "
+        "not supported even when their sign was the same on every split, and with ten splits the corrected 90% intervals still extend "
+        "to about ±0.015, so equivalence within ±0.01 was rarely attainable. With two splits no equivalence verdict is possible, and "
+        "PrimeKG results are descriptive.",
+        "**PrimeKG not covered by the third-revision experiments.** The refinements, the validation-selected t-norm, NBFNet and the "
+        "disease-centred split were not run on PrimeKG, whose path sets take several hours per run on our hardware. The zero-shot "
+        "result, the most clinically relevant one, therefore rests on Hetionet compound–treats–disease alone, with "
+        f"{nseeds('het_CtD','dnfr','_tail')} splits and 137 candidate diseases; whether removing the degree terms helps for unseen "
+        "diseases on a realistic candidate set of 17,080 diseases remains open.",
+        "**Identifiability analyses on the smallest graph.** The converged profile was run on the graded graph only, with one shared "
+        "p; it does not test whether the data identify differences between metapaths, which the restarts suggest they do only "
+        "weakly. On the other tasks we rely on restarts, the unbounded parameterisation and the frozen-membership experiment.",
+        "**Learned-operator baselines.** Our NBFNet is a compact CPU implementation (three layers, dimension 32, DistMult messages, "
+        "sum aggregation) and was run on the two disease–symptom graphs only; the original model with larger dimensions, and "
+        "BioPathNet [@hu2026] and TxGNN [@huang2024] on the drug-repurposing graphs, require GPU training. TransE and RotatE were "
+        "untuned and ComplEx did not train beyond chance under the same budget; embedding accuracy depends strongly on training "
+        "configuration [@ruffinelli2020], so the gap is not a finding of this study.",
+        "**Metapath budget.** Metapaths with more than five million paths were excluded for all path methods, including the "
+        "side-effect and anatomy-expression metapaths on Hetionet and "
         f"{len(DS['pkg_ind']['skipped'])} of {DS['pkg_ind']['metapaths_all']} metapaths on PrimeKG, mostly through drug–drug "
-        "interactions and contraindications. These are the densest and most hub-dominated metapaths, so the size of the effect of hub "
-        "discounting may be underestimated relative to a model that uses them: the discount would matter more where paths through "
-        "hubs dominate. All path methods used the same set, so the comparisons between them are unaffected, but the absolute accuracy "
-        "of path methods on PrimeKG is a lower bound. A sampled-path version of the excluded metapaths was beyond our computing budget.",
-        "**No clinical evaluation of explanations.** The explanations in Table 8 were not rated by clinicians; Table 7 measures "
-        "concision and the dependence of the ranking on the paths and facts shown, not clinical usefulness. A rating study with "
-        "several clinicians on a sample of correct and incorrect predictions is the next step.",
-        "**Scores are not probabilities.** DNFR is trained with a ranking loss, and its score P orders candidates without being "
-        "calibrated.",
+        "interactions and contraindications. These are the most hub-dominated metapaths, so the effect of hub discounting may be "
+        "underestimated.",
+        "**No clinical evaluation of explanations.** The explanations were not rated by clinicians; Table 7 measures concision, "
+        "attribution and the dependence of the ranking on the facts shown, and the mechanistic classification is a structural check "
+        "against Hetionet's own gene relations, not a clinical judgement. A rating study with several clinicians on correct and "
+        "incorrect predictions is the next step.",
+        "**Scores are not probabilities,** and DNFR's score P orders candidates without being calibrated.",
         "**Missing data are not random.** The sparsity analysis removed edges uniformly at random; in practice, less-studied genes and "
-        "diseases lose more edges. The disease-centred split addresses one form of this for drug repurposing only.",
-        "**Secondary evidence from an unreviewed study.** The NHANES relation and the earlier observations that motivated this work come "
-        "from our own analysis, deposited openly but not yet peer reviewed [@truong2026]; the conclusions of this paper do not depend "
-        "on it, and the secondary test is reported in Appendix B only.",
+        "diseases lose more edges.",
         "**Associations, not mechanisms.** Paths in these graphs combine curated, text-mined and co-occurrence evidence; a high-scoring "
         "path is a reason to look, not evidence of a causal mechanism. The graded graph was learned by others from records we did not "
-        "access, and the full MIMIC-IV release, which would allow building such graphs directly, requires credentialed access we did "
-        "not hold [@johnson2023]."]])
+        "access [@rotmensch2017;johnson2023]."]])
 
 
 def conclusion(dc):
     heading(dc, "6. Conclusion", 1)
-    P_(dc, "In a controlled component analysis of differentiable neuro-fuzzy reasoning on four tasks from three medical knowledge graphs, the gains came "
-           "from aggregating all paths by noisy-OR and from discounting edges at hub nodes; learning the discount per relation helped "
-           "only where edges carried graded clinical evidence. The parameter of a learned t-norm was not identified by end-to-end "
-           "loss: the loss was shallow in it, its learned value depended on where it started and when training stopped, and learning "
-           "it gave no consistent gain over a fixed product or Hamacher product. The data excluded the nilpotent t-norms on graded "
-           "evidence, and held-out accuracy favoured stronger-than-product t-norms there, a preference that a profile over fixed values "
-           "found and end-to-end learning missed. Path explanations from such a model are exact and fine-grained, and correct rankings "
-           "depend more on the facts they name than on other facts, but they mostly express evidence by association. For explainable clinical decision "
-           "support on knowledge graphs, effort is better spent on how much each edge counts and on how paths are combined than on "
-           "learning the operator that composes them.")
+    P_(dc, "In a controlled component analysis of differentiable neuro-fuzzy path reasoning on four tasks from three medical knowledge "
+           "graphs, the accuracy came from aggregating all paths by noisy-OR and from discounting edges at hub nodes; learning the "
+           "discount per relation helped only where edges carried graded clinical evidence. Four refinements that addressed "
+           "apparent weaknesses of the model, overlap-aware aggregation, a discrete operator choice, an information-content discount "
+           "and membership annealing, did not improve it. The t-norm parameter is practically non-identified by the training loss "
+           "once memberships are learned, while held-out accuracy depends on it, so it should be selected on validation data and "
+           "not interpreted when learned. Degree-weighted path counts were as accurate on most tasks. For explainable clinical "
+           "decision support on knowledge graphs, effort is better spent on how much each fact counts, on how paths are combined "
+           "and on attributing predictions to facts than on learning the operator that composes them.")
 
 
-# ------------------------------------------------------------------ appendices
-def appendix(dc):
-    heading(dc, "Appendix A. Supplementary tables and figure", 1)
-    R.appendix_task(dc, 1, "het_CtD", "Hetionet compound–treats–disease.")
-    R.appendix_task(dc, 2, "het_DpS", "Hetionet disease–presents–symptom. The t-norm comparisons (fixed product and Hamacher product) "
-                                      "use ten splits, other variants five.")
-    R.appendix_task(dc, 3, "pkg_ind", "PrimeKG drug–indication–disease, ranked against all diseases; no p-value is computed for "
-                                      "comparisons run on one split.")
-    R.appendix_task(dc, 4, "hkg_DpS", "Graded disease–symptom graph learned from emergency-department records. The t-norm comparisons "
-                                      "and restarts use ten splits, other variants five.")
-    R.table_sparsity(dc)
-    figure(dc, f"{ROOT}/figures/figA1_restarts.png", 6.3,
-           "**Figure A1.** Learned p at the default early stopping, by initial value p₀ (rows) and task (panels). Each point is one "
-           "metapath in one split; | marks p₀. Grey lines join the values of the same metapath in the first split across the four "
-           "restarts without penalty. The graded graph has a single metapath. Accuracies of the same runs are in Table 4.")
-    heading(dc, "Appendix B. Secondary test on a population relation (NHANES)", 1)
-    N = XS["nhanes"]; J = XS["jack"]
-    P_(dc, "A secondary test uses the 24 × 24 relation between nine PHQ-9 symptoms and 15 socioeconomic, lifestyle and health concepts "
-           "from our earlier analysis [@truong2026]. Each concept is a survey-weighted fuzzy membership a~n,c~ ∈ [0, 1] of respondent n. "
-           "The raw relation from concept i to concept j is the weighted fuzzy subsethood S(i → j) = Σ~n~ w~n~ min(a~n,i~, a~n,j~) / Σ~n~ "
-           "w~n~ a~n,i~, and the relation used here corrects it for chance: μ(i → j) = max(0, (S − S~0~)/(1 − S~0~)), where S~0~ is the "
-           "value S would take if j were independent of i. DNFR is fitted to the relation measured in 2013–2018, with every pair "
-           "predicted from its indirect paths only, and evaluated by the Spearman correlation of its predictions with the relation "
-           "measured independently in 2007–2012. Membership here is a calibration of the given degree, σ(a~r~ + g~r~ logit μ), with one "
-           "(a~r~, g~r~) per pair of concept types. With 24 concepts this test has little power, and it measures agreement between two "
-           "survey periods rather than link prediction.")
-    P_(dc, f"The fixed rows of Table B1 reproduce our earlier analysis, with the product ahead of the other fixed t-norms (Spearman ρ = "
-           f"{f3(N['product']['rho_hold'])}). A single learned Schweizer–Sklar parameter added nothing ({f3(N['ss_shared']['rho_hold'])}), "
-           f"and a parameter per metapath without calibration was slightly worse ({f3(N['ss_permp']['rho_hold'])}). Calibrating the "
-           f"membership per relation type raised agreement with the held-out relation to {f3(N['calib_product']['rho_hold'])} with the "
-           f"product and to {f3(N['dnfr']['rho_hold'])} with learned p per metapath. Dropping each of the 24 concepts in turn, DNFR "
-           f"exceeded the calibrated product in {J['dnfr_minus_calibproduct']['n_positive']} of 24 runs by "
-           f"{f3(J['dnfr_minus_calibproduct']['min'])} to {f3(J['dnfr_minus_calibproduct']['max'])}, with a jackknife standard error "
-           f"of {f3(J['dnfr_minus_calibproduct']['jack_se'])}, as large as the differences; we do not treat this as evidence for "
-           "learning the operator. Most of the improvement comes from calibrating memberships, in line with the main results.")
-    R.table_nhanes(dc)
-
-
+# ------------------------------------------------------------------ declarations
 def declarations(dc):
     heading(dc, "7. Declarations", 1)
     P_(dc, "**Ethics.** The study uses only public, de-identified or aggregate data: Hetionet and PrimeKG, the disease–symptom graph "
@@ -616,21 +664,26 @@ def declarations(dc):
            "derived from the public NHANES files [@truong2026]. Saigon International University does not require ethics approval for "
            "secondary analysis of public anonymised data.")
     P_(dc, "**Data availability.** Hetionet v1.0 is available from its GitHub repository and PrimeKG from Harvard Dataverse "
-           "(doi:10.7910/DVN/IXA7BM). The parsed health knowledge graph, the NHANES relations used in Appendix B, the per-query ranks of "
-           "every method on every split, the trained models, the path explanations and the statistics files from which every number in "
-           "this paper is generated are deposited at Zenodo (version 1.1.0; all versions: https://doi.org/10.5281/zenodo.23879352), "
-           "together with a script that downloads Hetionet and PrimeKG and checks them against the checksums of the files we used.")
-    P_(dc, "**Code availability.** The implementation of DNFR and of all baselines, the tests, and the scripts that compute the statistics "
-           "and figures and build this manuscript from the result files are available under the MIT licence at "
-           "https://github.com/Bangth2026/dnfr-medical-kg (release v1.1.0, archived at https://doi.org/10.5281/zenodo.23879352).")
+           "(doi:10.7910/DVN/IXA7BM). The parsed health knowledge graph, the per-query ranks of every method on every split, the "
+           "trained models, the path explanations and the statistics files from which every number in this paper is generated are "
+           "deposited at Zenodo (all versions: https://doi.org/10.5281/zenodo.23879352; [AUTHOR TO CONFIRM: version number of the "
+           "third-revision release]), together with a script that downloads Hetionet and PrimeKG and checks them against the "
+           "checksums of the files we used.")
+    P_(dc, "**Code availability.** The implementation of DNFR, DNFR 2.0, the compact NBFNet and all baselines, the tests, and the "
+           "scripts that compute the statistics and figures and build this manuscript from the result files are available under the "
+           "MIT licence at https://github.com/Bangth2026/dnfr-medical-kg (branch revision3; [AUTHOR TO CONFIRM: release tag]).")
     P_(dc, "**CRediT author statement.** Truong Hai Bang: Conceptualization; Methodology; Software; Formal analysis; Data curation; "
-           "Visualization; Writing – original draft; Writing – review and editing. Van An Phan Thi: Validation (review of the path "
-           "explanations in Table 8 against the source graphs); Writing – review and editing. All authors approved the final manuscript "
-           "and agree to be accountable for all aspects of the work.")
+           "Visualization; Writing – original draft; Writing – review and editing. Van An Phan Thi: Validation (a check that the "
+           "nodes and edges of the path explanations in Table 8 exist in the source graphs with the stated relations; this was a "
+           "check of graph correctness, not a clinical judgement); Writing – review and editing. All authors approved the final "
+           "manuscript and agree to be accountable for all aspects of the work.")
+    P_(dc, "**Independent verification.** [AUTHOR TO CONFIRM: describe what an author re-ran or re-derived without the AI system, "
+           "for example the test MRR of DNFR, the product and DWPC-LR on one split of each task recomputed from the released "
+           "per-query ranks, and a manual check of the leave-dyad-out removal on one split. State only what was actually done.]")
     P_(dc, "**Declaration of generative AI and AI-assisted technologies in the manuscript preparation process.** During the preparation "
-           "of this work the authors used Claude (Anthropic) to draft and edit the manuscript text. Its use in writing and running the "
-           "analysis code is described in Section 3.5. After using this tool, the authors reviewed and edited the content as needed and "
-           "take full responsibility for the content of the publication.")
+           "of this work the authors used Claude (Anthropic) to draft and edit the manuscript text and, as described in Section 3.6, "
+           "to write and run the analysis code under the authors' direction. After using this tool, the authors reviewed and edited "
+           "the content as needed and take full responsibility for the content of the publication.")
     P_(dc, "**Funding.** This research did not receive any specific grant from funding agencies in the public, commercial, or "
            "not-for-profit sectors.")
     P_(dc, "**Declaration of competing interest.** The authors declare no known competing financial interests or personal relationships "
@@ -640,5 +693,45 @@ def declarations(dc):
 def references(dc):
     from references import REFS
     heading(dc, "References", 1)
+    for i, k in enumerate(ORDER):
+        para(dc, f"[{i + 1}] {REFS[k]}", align="left", size=10, line=1.15, space_after=3)
+
+
+# ------------------------------------------------------------------ supplementary material
+def supplement(dc):
+    para(dc, f"**Supplementary material for: {TITLE}**", align="left", size=13, line=1.3, space_after=8)
+    heading(dc, "S1. Full results by task", 1)
+    R.supp_task(dc, 1, "het_CtD", "Hetionet compound–treats–disease.")
+    R.supp_task(dc, 2, "het_DpS", "Hetionet disease–presents–symptom.")
+    R.supp_task(dc, 3, "pkg_ind", "PrimeKG drug–indication–disease, ranked against all diseases (two splits; descriptive).")
+    R.supp_task(dc, 4, "hkg_DpS", "Graded disease–symptom graph learned from emergency-department records.")
+    heading(dc, "S2. Sparsity, long training and converged profile", 1)
+    R.supp_sparsity(dc, 5)
+    R.supp_long(dc, 6)
+    R.supp_profile(dc, 7)
+    figure(dc, f"{ROOT}/figures/figA1_restarts.png", 6.3,
+           "**Figure S1.** Learned p at the default early stopping, by initial value p₀ (rows) and task (panels). Each point is one "
+           "metapath in one split; | marks p₀. The graded graph has a single metapath.")
+    figure(dc, f"{ROOT}/figures/fig3_trajectories.png", 6.3,
+           "**Figure S2.** Learned p during 400 epochs without early stopping and without penalty, by initial value p₀. Graded graph: "
+           "one line per split. Hetionet disease–symptom: thin lines are the metapaths of the first split, thick lines the median "
+           "over metapaths per split. Dotted vertical lines mark the epoch with the best validation MRR.")
+    heading(dc, "S3. Checks requested in review", 1)
+    R.supp_prior(dc, 9)
+    R.supp_valid(dc, 10)
+    heading(dc, "S4. Secondary test on a population relation (NHANES)", 1)
+    N = XS["nhanes"]; J = XS["jack"]
+    P_(dc, "A secondary test uses the 24 × 24 relation between nine PHQ-9 symptoms and 15 socioeconomic, lifestyle and health concepts "
+           "from our earlier, not peer-reviewed analysis [@truong2026]. DNFR is fitted to the relation measured in 2013–2018, with "
+           "every pair predicted from its indirect paths only, and evaluated by the Spearman correlation of its predictions with the "
+           "relation measured independently in 2007–2012. With 24 concepts this test has little power.")
+    P_(dc, f"The fixed rows of Table S11 reproduce the earlier analysis, with the product ahead of the other fixed t-norms (ρ = "
+           f"{f3(N['product']['rho_hold'])}). A single learned Schweizer–Sklar parameter added nothing ({f3(N['ss_shared']['rho_hold'])}). "
+           f"Calibrating the membership per relation type raised agreement to {f3(N['calib_product']['rho_hold'])} with the product "
+           f"and {f3(N['dnfr']['rho_hold'])} with learned p per metapath; a jackknife over concepts gave a standard error of "
+           f"{f3(J['dnfr_minus_calibproduct']['jack_se'])} for the difference, as large as the difference itself.")
+    R.supp_nhanes(dc, 11)
+    heading(dc, "References", 1)
+    from references import REFS
     for i, k in enumerate(ORDER):
         para(dc, f"[{i + 1}] {REFS[k]}", align="left", size=10, line=1.15, space_after=3)

@@ -1,36 +1,41 @@
-"""Build the manuscript (.docx) from the statistics files. Usage: python3 manuscript/build_manuscript.py [out.docx]"""
+"""Build the third-revision manuscript and its supplementary material (.docx) from the statistics files.
+Usage: python3 manuscript3/build_manuscript.py [out_dir]"""
 import os, sys, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ms_common import ROOT, ORDER
 from docx_helpers import new_document
 import ms_front, ms_text
 
-HIGHLIGHTS = [
-    "Component analysis of a neuro-fuzzy path reasoner on four medical prediction tasks.",
-    "Hub discounting helped on all four tasks, noisy-OR aggregation on all three tested.",
-    "The t-norm parameter learned end to end reflected optimisation, not the data.",
-    "Learned t-norms gave no consistent gain over fixed product or Hamacher t-norms.",
-    "Degree-weighted path counts were not detectably worse on three of four tasks.",
-]
 CONTRIBUTIONS = [
-    "A controlled component analysis on four tasks from three medical graphs that separates path aggregation, degree-aware and evidence-aware edge "
-    "memberships and the t-norm, with fixed product, minimum, Hamacher and Łukasiewicz t-norms, a fixed DWPC-like degree discount and "
-    "frozen memberships trained under the same protocol, and a pre-specified equivalence rule for comparing operators.",
-    "Evidence that the parameter of a learned t-norm is set by optimisation rather than by the data in this setting: a profile over "
-    "fixed values shows the training loss to be shallow over the non-positive range, and restarts, with and without early stopping, "
-    "do not converge to a common value; the data exclude the nilpotent end of the family on graded evidence, where held-out "
-    "accuracy favours a broad region of stronger t-norms that end-to-end learning does not reach.",
-    "A comparison with degree-weighted path counts (with and without degree and prior features), AnyBURL, low-rank completion and two "
-    "degree-only baselines under leave-dyad-out random and disease-centred splits, a sparsity analysis, and an evaluation of path "
-    "explanations by concision, share-matched deletion and edge-level counterfactuals, with the implementation (DNFR, Algorithm 1), "
-    "tests and all result files released.",
+    "A controlled component analysis on four tasks from three medical graphs that separates path aggregation, degree-aware and "
+    "evidence-aware edge memberships and the t-norm, with fixed and validation-selected t-norms, frozen memberships and a fixed "
+    "DWPC-like discount trained under the same protocol, and a decision rule for equivalence and difference fixed before the "
+    "analyses added in this revision.",
+    "A test of four refinements of the model (overlap-aware aggregation, a discrete operator choice, an information-content hub "
+    "discount and membership annealing), each added alone and removed from their combination, DNFR 2.0. None improved accuracy "
+    "detectably, and the learned parameters show why.",
+    "An identifiability analysis of the t-norm parameter that separates structural redundancy between memberships and operator from "
+    "practical non-identifiability by the training objective, using restarts, an unbounded parameterisation and a converged "
+    "profile, and shows that validation-based selection recovers what end-to-end learning misses.",
+    "A comparison with degree-weighted path counts, AnyBURL, a compact NBFNet, low-rank completion and degree-only baselines under "
+    "leave-dyad-out random and disease-centred splits, and an evaluation of path explanations with an exact edge-level Shapley "
+    "attribution and fact-level counterfactuals, with the implementation, tests and all result files released.",
 ]
 
 
-def build(out):
+def check(out):
+    from docx import Document
+    doc = Document(out)
+    txt = [p.text for p in doc.paragraphs] + [c.text for t in doc.tables for r in t.rows for c in r.cells]
+    left = [t for t in txt if re.search(r"\[@|\[NA\]|CẦN|TODO|\bnan\b|\{[a-z_]+\(|AUTHOR TO", t)]
+    return txt, left
+
+
+def build(outdir):
+    os.makedirs(outdir, exist_ok=True)
     d = new_document()
     ms_text.title_block(d)
-    ms_text.highlights(d, HIGHLIGHTS)
+    ms_text.highlights(d, ms_text.highlights_list())
     ms_text.abstract(d)
     ms_text.keywords(d)
     ms_front.introduction(d, CONTRIBUTIONS)
@@ -40,23 +45,22 @@ def build(out):
     ms_text.results(d)
     ms_text.discussion(d)
     ms_text.conclusion(d)
-    ms_text.appendix(d)
     ms_text.declarations(d)
     ms_text.references(d)
-    d.save(out)
-    # checks
+    out = os.path.join(outdir, "Manuscript_AIM_DNFR_rev3.docx"); d.save(out)
+    s = new_document(); ms_text.supplement(s)
+    outs = os.path.join(outdir, "Supplementary_AIM_DNFR_rev3.docx"); s.save(outs)
     from docx import Document
-    doc = Document(out)
-    txt = [p.text for p in doc.paragraphs]
+    txt = [p.text for p in Document(out).paragraphs]
     i = txt.index("Abstract"); j = next(k for k in range(i, len(txt)) if txt[k].startswith("Keywords"))
-    words = sum(len(re.findall(r"\S+", t)) for t in txt[i + 1:j]) - 4   # minus the four structure labels
-    left = [t for t in txt if re.search(r"\[@|\[NA\]|CẦN|TODO|\bnan\b|\{[a-z_]+\(", t)]
-    print(f"saved {out}; abstract {words} words; {len(ORDER)} references; leftover markers: {len(left)}")
-    for t in left[:5]:
-        print("   ", t[:120])
-    return words
+    words = sum(len(re.findall(r"\S+", t)) for t in txt[i + 1:j]) - 4
+    for f in (out, outs):
+        _, left = check(f)
+        print(f"saved {f}; markers left: {len(left)}")
+        for t in left:
+            print("   ", t[:150])
+    print(f"abstract {words} words; {len(ORDER)} references")
 
 
 if __name__ == "__main__":
-    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "manuscript", "Manuscript_AIM_DNFR_rev2.docx")
-    build(out)
+    build(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "manuscript3", "out"))
