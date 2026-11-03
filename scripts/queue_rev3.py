@@ -14,9 +14,9 @@ J["A"].append(("ctd_v1_s3", "het_CtD", 3, "dnfr,dnfr_nodeg,dnfr_max,product,hama
 # splits 4-9: headline comparison only (the operator/degree ablations stay at splits 0-3 for CPU reasons)
 for s in range(4, 10):
     J["A"].append((f"ctd_v1_s{s}", "het_CtD", s, "dnfr,product", BASE))
-for s in range(0, 10):
-    J["A"].append((f"ctd_v2_s{s}", "het_CtD", s, "dnfr2", ""))
 for s in range(0, 5):
+    J["A"].append((f"ctd_v2_s{s}", "het_CtD", s, "dnfr2", ""))
+for s in range(0, 3):
     J["A"].append((f"ctd_add_s{s}", "het_CtD", s, "dnfr_overlap", ""))
 for s in range(0, 5):
     J["A"].append((f"ctd_grid_s{s}", "het_CtD", s, "fixp_m2,fixp_m1,fixp_m05", ""))
