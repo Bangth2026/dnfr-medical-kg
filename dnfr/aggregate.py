@@ -74,8 +74,11 @@ def paired(d, a, b, n_boot=2000, seed=0):
     if J > 1:
         var = per.var(ddof=1)
         corr = 1 / J + float(np.mean(nte)) / float(np.mean(ntr))
-        t = delta / np.sqrt(corr * var) if var > 0 else np.inf * np.sign(delta)
-        out["t_nb"] = float(t); out["p"] = float(2 * student_t.sf(abs(t), J - 1)) if np.isfinite(t) else 0.0
+        if var > 0:
+            t = delta / np.sqrt(corr * var)
+            out["t_nb"] = float(t); out["p"] = float(2 * student_t.sf(abs(t), J - 1))
+        else:   # identical per-split differences (e.g. identical rankings): no test
+            out["t_nb"] = None; out["p"] = 1.0 if delta == 0 else None
     else:
         out["p"] = None
     pooled = np.concatenate(diffs)
@@ -166,7 +169,7 @@ if __name__ == "__main__":
             stats[key] = s
     if os.path.exists(f"{R}/nhanes_dnfr.json"):
         stats["nhanes"] = json.load(open(f"{R}/nhanes_dnfr.json"))
-    json.dump(stats, open(f"{R}/paper_stats.json", "w"), indent=1)
+    json.dump(stats, open(f"{R}/paper_stats.json", "w"), indent=1, allow_nan=False)
     for k, s in stats.items():
         if k == "nhanes":
             continue
