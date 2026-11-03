@@ -5,7 +5,7 @@ import hashlib, os, subprocess, sys, urllib.request
 ROOT = os.path.dirname(os.path.abspath(__file__)); D = os.path.join(ROOT, "data")
 FILES = {
     # Hetionet v1.0 (Himmelstein et al., eLife 2017), CC0
-    "hetionet-nodes.tsv": ("https://github.com/hetio/hetionet/raw/main/hetnet/tsv/hetionet-v1.0-nodes.tsv",
+    "hetionet-nodes.tsv": ("https://raw.githubusercontent.com/hetio/hetionet/main/hetnet/tsv/hetionet-v1.0-nodes.tsv",
                            "d2789861ab5b977dcee3c23ac9c9f7ce"),
     "h.sif.gz": ("https://media.githubusercontent.com/media/hetio/hetionet/main/hetnet/tsv/hetionet-v1.0-edges.sif.gz",
                  "b4b2ab8890d403c2077a65e0f34fc4d9"),

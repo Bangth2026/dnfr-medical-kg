@@ -1,9 +1,21 @@
-"""Differentiable Neuro-Fuzzy Reasoning (DNFR) and fixed-t-norm variants.
+"""Differentiable Neuro-Fuzzy Reasoning (DNFR, DNFR 2.0) and fixed-t-norm variants.
 
 Score of a query pair (h, t):
     P(h,t) = 1 - (1 - beta0) * prod_{paths pi} (1 - w_m(pi) * T_{p_m(pi)}(mu(e_1), ..., mu(e_L)))
 with learned edge membership mu(e) = sigmoid(a_tau - b_tau log(1+d_out(u)) - c_tau log(1+d_in(v))),
 a Schweizer-Sklar t-norm whose parameter p_m is learned per metapath, and metapath reliability w_m.
+
+DNFR 2.0 (third revision) adds four optional components, each of which can be switched off on its own:
+  agg="overlap"   overlap-aware noisy-OR: log(1-P) = log(1-beta0) + sum_pi omega_pi log(1 - v_pi), with
+                  omega_pi = prod_{x interior node of pi} (v_pi / max_{pi' of the same pair through x} v_pi')^beta.
+                  Two paths of a pair have node-set Jaccard > 0.5 exactly when they share an interior node, so the
+                  rule discounts the weaker of every pair of paths with Jaccard > 0.5; beta = 0 recovers noisy-OR.
+  tnorm="gumbel"  per-metapath choice among product, minimum and Hamacher t-norms, relaxed by Gumbel-softmax
+                  during training (temperature annealed) and hard (arg-max) at evaluation.
+  feat="ic"       hub discount from information content: IC(v) = -log P(v), with P(v) the share of the enumerated
+                  (training-graph) paths of the task that visit v; enters the membership in place of log(1+degree).
+  anneal=True     membership temperature: mu = sigmoid(z / tau), tau annealed geometrically from 2 to 0.5.
+p_param="free"   (identifiability check) p = theta, clipped to [-20, 0.95], instead of p = 6 sigmoid(theta) - 5.
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,10 +30,29 @@ torch.set_num_threads(int(os.environ.get("NT", "2")))
 class SplitData:
     """Per-split tensors: paths grouped by metapath, with degree features per hop."""
 
-    def __init__(self, P, kg_split, keep_mask, pair_id, n_pairs, trav_index):
+    def __init__(self, P, kg_split, keep_mask, pair_id, n_pairs, trav_index, overlap=False, feat="degree"):
         self.n_pairs = n_pairs
         self.chunks = []
         deg = {}
+        types = sorted(kg_split.names)
+        tix = {t: i for i, t in enumerate(types)}
+        maxn = max(kg_split.n(t) for t in types) + 1
+        ic = None
+        if feat == "ic":   # path-occurrence counts per (type, node) on the kept (training-graph) paths
+            cnt = {t: np.zeros(kg_split.n(t), np.float64) for t in types}
+            src_t = P["mps"][0][0][1]
+            for mi, mp in enumerate(P["mps"]):
+                sel = np.where((P["mp"] == mi) & keep_mask)[0]
+                if len(sel) == 0:
+                    continue
+                s = P["sources"][P["src"][sel]]
+                nodes = [s, P["k1"][sel]] + ([P["tgt"][sel]] if len(mp) == 2 else [P["k2"][sel], P["tgt"][sel]])
+                ntypes = [mp[0][1]] + [tr[2] for tr in mp]
+                for x, t in zip(nodes, ntypes):
+                    cnt[t] += np.bincount(x, minlength=kg_split.n(t))
+            ic = {t: np.log1p(c).astype(np.float32) for t, c in cnt.items()}   # = -IC(v) + const(type)
+            self.ic_counts = cnt
+        groups = []
         for mi, mp in enumerate(P["mps"]):
             sel = np.where((P["mp"] == mi) & keep_mask)[0]
             if len(sel) == 0:
@@ -29,6 +60,7 @@ class SplitData:
             s = P["sources"][P["src"][sel]]
             nodes = [s, P["k1"][sel]] + ([P["tgt"][sel]] if len(mp) == 2 else [P["k2"][sel], P["tgt"][sel]])
             hops = []
+            ntypes = [mp[0][1]] + [tr[2] for tr in mp]
             for h, tr in enumerate(mp):
                 if tr not in deg:
                     A = kg_split.adj(tr)
@@ -42,9 +74,29 @@ class SplitData:
                     wv = np.asarray(W[nodes[h], nodes[h + 1]]).ravel().astype(np.float64)
                     wv = np.clip(wv, 1e-4, 1 - 1e-4)
                     lw = torch.from_numpy(np.log(wv / (1 - wv)).astype(np.float32))
-                hops.append((trav_index[tr], torch.from_numpy(do[nodes[h]]), torch.from_numpy(di[nodes[h + 1]]), lw))
-            self.chunks.append(dict(mp=mi, pair32=torch.from_numpy(pair_id[sel].astype(np.int32)), hops=hops,
-                                    path_index=sel.astype(np.int32)))
+                fu, fv = do[nodes[h]], di[nodes[h + 1]]
+                if ic is not None:   # rescaled so that its mean matches the degree feature it replaces
+                    gu, gv = ic[ntypes[h]][nodes[h]], ic[ntypes[h + 1]][nodes[h + 1]]
+                    fu = (gu * (fu.mean() / max(gu.mean(), 1e-6))).astype(np.float32)
+                    fv = (gv * (fv.mean() / max(gv.mean(), 1e-6))).astype(np.float32)
+                hops.append((trav_index[tr], torch.from_numpy(np.ascontiguousarray(fu)), torch.from_numpy(np.ascontiguousarray(fv)), lw))
+            ch = dict(mp=mi, pair32=torch.from_numpy(pair_id[sel].astype(np.int32)), hops=hops,
+                      path_index=sel.astype(np.int32))
+            if overlap:   # keys of the interior nodes: (pair, node type, node)
+                pid = pair_id[sel].astype(np.int64)
+                ks = [(pid * len(types) + tix[ntypes[1]]) * maxn + nodes[1]]
+                if len(mp) == 3:
+                    ks.append((pid * len(types) + tix[ntypes[2]]) * maxn + nodes[2])
+                groups.append(ks)
+            self.chunks.append(ch)
+        self.n_groups = 0
+        if overlap:
+            allk = np.concatenate([k for ks in groups for k in ks])
+            uk = np.unique(allk); del allk
+            self.n_groups = len(uk)
+            for ch, ks in zip(self.chunks, groups):
+                ch["g"] = [torch.from_numpy(np.searchsorted(uk, k).astype(np.int32)) for k in ks]
+            del uk
 
 
 _WCACHE = {}
@@ -103,7 +155,8 @@ P_RAW0 = math.log(4.9 / 1.1)  # p0 = 6*4.9/6 - 5 = -0.1
 
 class DNFR(torch.nn.Module):
     def __init__(self, n_trav, n_mp, tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", use_weight=True,
-                 p_init=-0.1, fixed_deg=None, freeze_mem=False):
+                 p_init=-0.1, fixed_deg=None, freeze_mem=False, learn_p=True, p_param="sigmoid", anneal=False,
+                 beta_init=1.0, ops=("product", "min", "hamacher"), feat="degree"):
         """p_init: initial t-norm parameter. fixed_deg: if a number, b_r = c_r = fixed_deg for every relation
         (not learned; DWPC-style damping). freeze_mem: keep a, b, c, g at their initial values."""
         super().__init__()
@@ -115,13 +168,49 @@ class DNFR(torch.nn.Module):
         self.c = torch.nn.Parameter(torch.full((n_trav,), b0), requires_grad=learn_deg)
         self.w_raw = torch.nn.Parameter(torch.full((n_mp,), -3.0))
         n_p = n_mp if p_mode == "per_mp" else 1
-        p_raw0 = math.log((p_init + 5) / (1 - p_init))  # inverse of p = 6 sigmoid(theta) - 5
+        self.p_param = p_param
+        p_raw0 = math.log((p_init + 5) / (1 - p_init)) if p_param == "sigmoid" else float(p_init)  # p = 6 sigmoid(theta) - 5
         self.register_buffer("p_raw0", torch.tensor(p_raw0), persistent=False)
-        self.p_raw = torch.nn.Parameter(torch.full((n_p,), p_raw0), requires_grad=(tnorm == "ss"))
+        self.p_raw = torch.nn.Parameter(torch.full((n_p,), p_raw0), requires_grad=(tnorm == "ss" and learn_p))
         self.leak_raw = torch.nn.Parameter(torch.tensor(-6.0))
-        self.tnorm, self.p_mode, self.agg = tnorm, p_mode, agg
+        self.tnorm, self.p_mode, self.agg, self.feat = tnorm, p_mode, agg, feat
+        # DNFR 2.0 components
+        self.beta_raw = torch.nn.Parameter(torch.tensor(math.log(math.expm1(beta_init))), requires_grad=(agg == "overlap"))
+        self.ops = tuple(ops)
+        self.op_logit = torch.nn.Parameter(torch.zeros(n_mp, len(ops)), requires_grad=(tnorm == "gumbel"))
+        self.anneal = anneal
+        self.register_buffer("tau", torch.tensor(2.0 if anneal else 1.0), persistent=anneal)
+        self.gumbel_tau = 1.0
+        self.stochastic = False
+        self._y = None
+        self._gmax = None
+
+    # ---- schedule hooks called by the training loops ----
+    def begin_epoch(self, ep):
+        """Set temperatures for epoch ep and draw the Gumbel noise used by both passes of this epoch."""
+        if self.anneal:
+            self.tau.fill_(max(0.5, 2.0 * (0.25 ** (ep / 100.0))))
+        if self.tnorm == "gumbel":
+            self.gumbel_tau = max(0.2, math.exp(-0.02 * ep))
+            g = -torch.log(-torch.log(torch.rand_like(self.op_logit).clamp(1e-9, 1 - 1e-9)))
+            self._g = g
+        self.stochastic = True
+
+    def end_epoch(self):
+        self.stochastic = False
+
+    def op_weights(self):
+        """Weights of the candidate t-norms per metapath: relaxed sample in training, one-hot arg-max otherwise."""
+        if self.stochastic:
+            return torch.softmax((self.op_logit + self._g) / self.gumbel_tau, dim=1)
+        return F.one_hot(self.op_logit.argmax(1), len(self.ops)).float()
+
+    def beta(self):
+        return F.softplus(self.beta_raw)
 
     def p(self):
+        if self.p_param == "free":
+            return torch.clamp(self.p_raw, -20.0, 0.95)
         return 6 * torch.sigmoid(self.p_raw) - 5
 
     def p_of(self, mi):
@@ -130,10 +219,21 @@ class DNFR(torch.nn.Module):
 
     def path_logvalue(self, ch):
         """log(w_m * T(mu)) for every path in a chunk."""
-        logmu = [F.logsigmoid(self.a[t] - self.b[t] * du - self.c[t] * dv + (0 if lw is None else self.g[t] * lw))
+        logmu = [F.logsigmoid((self.a[t] - self.b[t] * du - self.c[t] * dv + (0 if lw is None else self.g[t] * lw)) / self.tau)
                  for (t, du, dv, lw) in ch["hops"]]
-        lt = log_tnorm(self.tnorm, logmu, self.p_of(ch["mp"]) if self.tnorm == "ss" else None)
+        if self.tnorm == "gumbel":
+            y = self.op_weights()[ch["mp"]]
+            if self.stochastic:
+                lt = torch.logsumexp(torch.stack([torch.log(y[k].clamp(min=1e-30)) + log_tnorm(op, logmu)
+                                                  for k, op in enumerate(self.ops)]), 0)
+            else:
+                lt = log_tnorm(self.ops[int(y.argmax())], logmu)
+        else:
+            lt = log_tnorm(self.tnorm, logmu, self.p_of(ch["mp"]) if self.tnorm == "ss" else None)
         return lt + F.logsigmoid(self.w_raw[ch["mp"]])
+
+    def chosen_ops(self):
+        return [self.ops[i] for i in self.op_logit.argmax(1).tolist()]
 
     def s0(self):
         return F.logsigmoid(-self.leak_raw)  # log(1 - beta0)
@@ -148,6 +248,30 @@ def to_logit(S):
 def forward_all(model, sd, grad_S=None):
     """Return S = log(1-P) for all pairs. If grad_S given, backprop it chunk by chunk."""
     S = torch.full((sd.n_pairs,), 0.0)
+    if model.agg == "overlap":
+        if grad_S is None or model._gmax is None:   # strongest path through each (pair, interior node)
+            gmax = torch.full((sd.n_groups,), -1e9)
+            with torch.no_grad():
+                for ch in sd.chunks:
+                    lv = model.path_logvalue(ch)
+                    for g in ch["g"]:
+                        gmax.scatter_reduce_(0, g.long(), lv, reduce="amax")
+            model._gmax = gmax
+        gmax = model._gmax
+        beta = model.beta()
+        for ch in sd.chunks:
+            pair = ch["pair32"].long()
+            def contrib_of(lv):
+                lw = sum(lv - gmax[g.long()] for g in ch["g"])        # log of prod (v / v_max)
+                return torch.exp(beta * lw) * torch.log1p(-torch.exp(torch.clamp(lv, max=-1e-6)))
+            if grad_S is None:
+                with torch.no_grad():
+                    S.index_add_(0, pair, contrib_of(model.path_logvalue(ch)))
+            else:
+                contrib_of(model.path_logvalue(ch)).backward(grad_S[pair])
+        if grad_S is not None:
+            model._gmax = None
+        return S if grad_S is None else None
     if model.agg == "noisyor":
         for ch in sd.chunks:
             ch["pair"] = ch["pair32"].long()
@@ -257,6 +381,8 @@ def train(model, sd, train_q, train_pos_by_src, ranker, valid_q, known, n_src, e
     best, best_state, bad, hist = -1, None, 0, []
     t_start = time.time()
     for ep in range(1, epochs + 1):
+        if hasattr(model, "begin_epoch"):
+            model.begin_epoch(ep)
         Sp = forward_all(model, sd).detach().requires_grad_(True)   # path part, no grad yet
         S0 = model.s0()
         S = Sp + S0
@@ -272,6 +398,8 @@ def train(model, sd, train_q, train_pos_by_src, ranker, valid_q, known, n_src, e
         gS = Sp.grad.detach()
         forward_all(model, sd, grad_S=gS)  # accumulate path-parameter gradients
         opt.step()
+        if hasattr(model, "end_epoch"):
+            model.end_epoch()
         if ep % eval_every == 0 or ep == epochs:
             with torch.no_grad():
                 Sv = forward_all(model, sd) + model.s0()
@@ -279,6 +407,8 @@ def train(model, sd, train_q, train_pos_by_src, ranker, valid_q, known, n_src, e
                 z0v = float(torch.clamp(to_logit(model.s0()), -30, 30))
             m = metrics(ranker.ranks(zv, z0v, valid_q, known))
             hist.append((ep, float(loss.detach()), m["MRR"]))
+            if getattr(model, "tnorm", "") == "gumbel":
+                hist[-1] = hist[-1] + (model.chosen_ops(),)
             if verbose:
                 print(f"    ep {ep} loss {float(loss):.4f} valid MRR {m['MRR']:.4f} ({time.time()-t_start:.0f}s)", flush=True)
             if m["MRR"] > best + 1e-4:

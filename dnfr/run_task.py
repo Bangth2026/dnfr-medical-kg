@@ -40,7 +40,35 @@ VARIANTS = {
     # second revision: sensitivity of the fixed degree discount to its value
     "product_fixdeg02": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", fixed_deg=0.2),
     "product_fixdeg06": dict(tnorm="product", p_mode="shared", degree=True, agg="noisyor", fixed_deg=0.6),
+    # third revision: DNFR 2.0 (overlap-aware aggregation, Gumbel-softmax operator choice, information-content
+    # hub discount, membership temperature annealing), leave-one-out and add-one ablations
+    "dnfr2":            dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="overlap", feat="ic", anneal=True),
+    "dnfr2_no_overlap": dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="noisyor", feat="ic", anneal=True),
+    "dnfr2_no_gumbel":  dict(tnorm="ss", p_mode="per_mp", degree=True, agg="overlap", feat="ic", anneal=True),
+    "dnfr2_no_ic":      dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="overlap", feat="degree", anneal=True),
+    "dnfr2_no_anneal":  dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="overlap", feat="ic", anneal=False),
+    "dnfr_overlap":     dict(tnorm="ss", p_mode="per_mp", degree=True, agg="overlap"),
+    "dnfr_gumbel":      dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="noisyor"),
+    "dnfr_ic":          dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", feat="ic"),
+    "dnfr_anneal":      dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", anneal=True),
+    "product_overlap":  dict(tnorm="product", p_mode="shared", degree=True, agg="overlap"),
+    # restarts of the Gumbel-softmax choice (same split, other random streams for initial noise)
+    "dnfr2_r1":         dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="overlap", feat="ic", anneal=True, restart=1),
+    "dnfr2_r2":         dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="overlap", feat="ic", anneal=True, restart=2),
+    "dnfr_gumbel_r1":   dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="noisyor", restart=1),
+    "dnfr_gumbel_r2":   dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="noisyor", restart=2),
+    # third revision: t-norm parameter fixed and selected on validation data (grid; p = 0 is the product t-norm)
+    "fixp_m4":  dict(tnorm="ss", p_mode="shared", degree=True, agg="noisyor", p_init=-4.0, learn_p=False),
+    "fixp_m2":  dict(tnorm="ss", p_mode="shared", degree=True, agg="noisyor", p_init=-2.0, learn_p=False),
+    "fixp_m1":  dict(tnorm="ss", p_mode="shared", degree=True, agg="noisyor", p_init=-1.0, learn_p=False),
+    "fixp_m05": dict(tnorm="ss", p_mode="shared", degree=True, agg="noisyor", p_init=-0.5, learn_p=False),
+    "fixp_05":  dict(tnorm="ss", p_mode="shared", degree=True, agg="noisyor", p_init=0.5, learn_p=False),
+    # third revision: unbounded parameterisation of p (p = theta), no penalty, three initial values
+    "dnfr_free_pm2":  dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=0.0, p_init=-2.0, p_param="free"),
+    "dnfr_free":      dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=0.0, p_init=-0.1, p_param="free"),
+    "dnfr_free_pp05": dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", l2=0.0, p_init=0.5, p_param="free"),
 }
+FIXP = {"fixp_m4": -4.0, "fixp_m2": -2.0, "fixp_m1": -1.0, "fixp_m05": -0.5, "product": 0.0, "fixp_05": 0.5}
 L2_DEFAULT = 1e-3
 
 
@@ -152,7 +180,13 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
         removed = {(spec["s"], spec["t"]): removed_keys}
         kg_split = kg.copy_without(removed)
         mask = drop_paths_using(P, kg, removed)
-        sd = SplitData(P, kg_split, mask, pair_id, n_pairs, trav_index) if variants else None
+        SD = {}
+        def get_sd(overlap, feat):   # one SplitData per (aggregation, feature) setting, built when first needed
+            k = (overlap, feat)
+            if k not in SD:
+                SD.clear(); import gc; gc.collect()
+                SD[k] = SplitData(P, kg_split, mask, pair_id, n_pairs, trav_index, overlap=overlap, feat=feat)
+            return SD[k]
         run_res = dict(seed=seed, n_train=len(tr_q), n_valid=len(va_q), n_test=len(te_q),
                        paths_kept=int(mask.sum()), methods={})
         if seed in PREV_SEED:  # keep methods already computed for this split
@@ -160,9 +194,11 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
                 if k in PREV_SEED[seed]:
                     run_res[k] = PREV_SEED[seed][k]
         test_tq = te_q
-        for v in variants:
-            torch.manual_seed(seed)
-            cfg = dict(VARIANTS[v]); l2 = cfg.pop("l2", L2_DEFAULT)
+        order = sorted(variants, key=lambda v: (VARIANTS[v].get("agg") == "overlap", VARIANTS[v].get("feat", "degree")))
+        for v in order:
+            cfg = dict(VARIANTS[v]); l2 = cfg.pop("l2", L2_DEFAULT); restart = cfg.pop("restart", 0)
+            torch.manual_seed(seed + 1000 * restart)
+            sd = get_sd(cfg.get("agg") == "overlap", cfg.get("feat", "degree"))
             model = DNFR(len(trav), len(P["mps"]), **cfg)
             t0 = time.time()
             print(f"[{task}{tag} seed {seed}] {v}", flush=True)
@@ -177,9 +213,20 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
             print(f"   test {m}", flush=True)
             run_res["methods"][v] = m
             run_res.setdefault("ranks", {})[v] = r.tolist()
+            if cfg.get("tnorm") == "gumbel":
+                run_res.setdefault("ops_chosen", {})[v] = model.chosen_ops()
+                run_res.setdefault("op_probs", {})[v] = torch.softmax(model.op_logit, 1).detach().numpy().round(4).tolist()
+                run_res.setdefault("ops_trace", {})[v] = [h[3] for h in hist if len(h) > 3]
+            if cfg.get("agg") == "overlap":
+                run_res.setdefault("beta", {})[v] = float(model.beta())
+            if cfg.get("anneal"):
+                run_res.setdefault("tau_best", {})[v] = float(model.tau)
             if cfg.get("tnorm") == "ss":
                 run_res.setdefault("p_learned", {})[v] = model.p().detach().numpy().tolist()
                 run_res.setdefault("w_learned", {})[v] = torch.sigmoid(model.w_raw).detach().numpy().tolist()
+            if v in ("dnfr2",) and seed == seeds[0]:
+                torch.save(model.state_dict(), f"{OUT}/{task}{tag}_dnfr2_seed{seed}.pt")
+                np.save(f"{OUT}/{task}{tag}_test_q_seed{seed}.npy", te_q)
             if v == "dnfr":
                 st = {k: v_.detach().numpy().tolist() for k, v_ in model.state_dict().items()}
                 st["p"] = model.p().detach().numpy().tolist()
@@ -190,7 +237,7 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
                     np.save(f"{OUT}/{task}{tag}_test_q_seed{seed}.npy", te_q)
             json.dump(results | {"runs": results["runs"] + [run_res]}, open(out_file, "w"), indent=1)
         if do_baselines:
-            del sd
+            SD.clear()
             import gc; gc.collect()
             RANKS.clear()
             run_res["methods"].update(baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt,

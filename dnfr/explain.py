@@ -40,7 +40,7 @@ def setup(task, seed=0):
     trav = kg.traversals(); ti = {t: i for i, t in enumerate(trav)}
     sd = SplitData(P, kg_s, mask, pair_id, len(ukey), ti)
     model = DNFR(len(trav), len(P["mps"]), **VARIANTS["dnfr"])
-    model.load_state_dict(torch.load(f"{OUT}/{task}_dnfr_seed{seed}.pt"))
+    model.load_state_dict(torch.load(f"{OUT}/{task}_dnfr_seed{seed}.pt"), strict=False)
     known = {}
     for s, t in posl:
         known.setdefault(int(s), set()).add(int(t))
