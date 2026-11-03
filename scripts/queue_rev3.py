@@ -14,6 +14,9 @@ J["A"].append(("ctd_v1_s3", "het_CtD", 3, "dnfr,dnfr_nodeg,dnfr_max,product,hama
 # splits 4-9: headline comparison only (the operator/degree ablations stay at splits 0-3 for CPU reasons)
 for s in range(4, 10):
     J["A"].append((f"ctd_v1_s{s}", "het_CtD", s, "dnfr,product", BASE))
+# reviewer M3: component ablations on all ten splits
+for s in range(4, 10):
+    J["A"].append((f"ctd_abl_s{s}", "het_CtD", s, "dnfr_nodeg,dnfr_max", ""))
 for s in range(0, 5):
     J["A"].append((f"ctd_v2_s{s}", "het_CtD", s, "dnfr2", ""))
 for s in range(0, 3):
@@ -29,6 +32,10 @@ for s in range(0, 5):
     J["B"].append((f"hkg_rst_s{s}", "hkg_DpS", s, RST + "," + FREE, ""))
 for s in range(0, 10):
     J["B"].append((f"dps_main_s{s}", "het_DpS", s, "dnfr2,dnfr_overlap,dnfr_gumbel,fixp_m2,fixp_m1,fixp_m05,fixp_05", ""))
+ABL = "dnfr_max,dnfr_nodeg,dnfr_fixdeg,dnfr_frozen,product_frozen"
+for s in range(5, 10):
+    J["B"].append((f"hkg_abl_s{s}", "hkg_DpS", s, ABL + ",dnfr_binary", ""))
+    J["B"].append((f"dps_abl_s{s}", "het_DpS", s, ABL, ""))
 for s in range(0, 3):
     J["B"].append((f"dps_loo_s{s}", "het_DpS", s, "dnfr2_no_overlap,dnfr2_no_gumbel,dnfr2_no_ic,dnfr2_no_anneal,dnfr_ic,dnfr_anneal,product_overlap", ""))
 for s in range(0, 2):

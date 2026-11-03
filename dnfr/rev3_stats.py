@@ -23,9 +23,9 @@ FAMILY = [  # (a, b): the comparisons that enter the Holm family of a task
     ("product_overlap", "product"),
     ("dnfr2", "dnfr2_no_overlap"), ("dnfr2", "dnfr2_no_gumbel"), ("dnfr2", "dnfr2_no_ic"), ("dnfr2", "dnfr2_no_anneal"),
     ("fixp_val", "dnfr"), ("fixp_val", "product"),
-    ("dnfr", "product"), ("dnfr", "dwpc_lr"), ("product", "dwpc_lr"), ("dnfr", "popularity"),
-    ("nbfnet", "dnfr"), ("nbfnet", "dwpc_lr"), ("nbfnet", "softimpute"),
 ]
+# separate Holm family: the learned-operator GNN against the main path methods and completion (reviewer M7)
+FAMILY_NBF = [("nbfnet", "dnfr"), ("nbfnet", "dwpc_lr"), ("nbfnet", "softimpute"), ("nbfnet", "product")]
 RESTARTS = {"dnfr2": ["dnfr2", "dnfr2_r1", "dnfr2_r2"], "dnfr_gumbel": ["dnfr_gumbel", "dnfr_gumbel_r1", "dnfr_gumbel_r2"]}
 FREE = ["dnfr_free_pm2", "dnfr_free", "dnfr_free_pp05"]
 FREE_INIT = {"dnfr_free_pm2": -2.0, "dnfr_free": -0.1, "dnfr_free_pp05": 0.5}
@@ -219,13 +219,16 @@ def main():
         if not runs:
             continue
         S = dict(n_splits=len(runs), summary=summary(runs), paired={})
-        for a, b in FAMILY:
-            v = paired(runs, a, b)
-            if v:
-                S["paired"][f"{a}__{b}"] = v
-        hp = holm({k: v["p"] for k, v in S["paired"].items()})
-        for k, v in S["paired"].items():
-            v["p_holm"] = hp.get(k); v["verdict"] = verdict(v)
+        for fam_name, fam in (("refine", FAMILY), ("nbfnet", FAMILY_NBF)):
+            F = {}
+            for a, b in fam:
+                v = paired(runs, a, b)
+                if v:
+                    F[f"{a}__{b}"] = v
+            hp = holm({k: v["p"] for k, v in F.items()})
+            for k, v in F.items():
+                v["p_holm"] = hp.get(k); v["verdict"] = verdict(v); v["family"] = fam_name
+            S["paired"].update(F)
         S["fixp_val_choice"] = collections.Counter(r["methods"]["fixp_val"]["chosen"] for r in runs if "fixp_val" in r["methods"])
         S["restarts"] = {k: restart_agreement(runs, v) for k, v in RESTARTS.items()}
         S["ops_single"] = collections.Counter(o for r in runs for o in r["extra"].get("ops_chosen", {}).get("dnfr2", []))

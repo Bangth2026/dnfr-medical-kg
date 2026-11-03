@@ -93,6 +93,11 @@ def paired(d, a, b, n_boot=2000, seed=0):
     return out
 
 
+FAM_BASE = {"dwpc_lr", "dwpc_lr_full", "anyburl", "softimpute", "svd", "prior", "popularity"}
+FAM_COMP = {"dnfr_max", "dnfr_nodeg", "dnfr_fixdeg", "dnfr_binary", "product", "hamacher", "dnfr_shared",
+            "hamacher__vs__product", "dnfr_frozen__vs__product_frozen", "product__vs__product_frozen"}
+
+
 def set_verdicts(family):
     """Third-revision decision rule (margin 0.01 MRR), applied to every comparison of a family (dict name -> paired()):
     equivalent  both 90% intervals, corrected t and stratified bootstrap, lie inside (-0.01, 0.01);
@@ -163,12 +168,21 @@ if __name__ == "__main__":
                     pr = paired(d, "dnfr", m)
                     if pr:
                         s["paired"][m] = pr
-            set_verdicts(s["paired"])
             s["paired_extra"] = {}
             for a_, b_ in EXTRA_PAIRS:
                 if a_ in s["summary"] and b_ in s["summary"]:
                     s["paired_extra"][f"{a_}__vs__{b_}"] = paired(d, a_, b_)
-            set_verdicts(s["paired_extra"])
+            # Holm families by question: RQ1 baselines (Table 2), RQ2 components (Table 3); every other comparison
+            # (restarts, penalties, other fixed t-norms, untuned embeddings, refinements in this file) is descriptive
+            # and adjusted within its own family. The refinement family is computed in rev3_stats.py.
+            allp = dict(s["paired"]); allp.update({k: v for k, v in s["paired_extra"].items() if v})
+            fam = {"base": [k for k in allp if k in FAM_BASE],
+                   "comp": [k for k in allp if k in FAM_COMP]}
+            fam["descr"] = [k for k in allp if k not in fam["base"] and k not in fam["comp"]]
+            for name, keys in fam.items():
+                set_verdicts({k: allp[k] for k in keys})
+                for k in keys:
+                    allp[k]["family"] = name
             # learned t-norm parameters of every variant with a learned p
             s["p_by_variant"] = {}
             for v in P_INIT:
