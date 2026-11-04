@@ -38,10 +38,12 @@ def main(task, seed=0):
     pairs, contr, edges = path_table(ctx)
     # metapath class of every kept path (same order as path_table)
     pidx = np.concatenate([ch["path_index"] for ch in ctx["sd"].chunks])
-    cls_of_mp = np.array([mp_class(m) for m in P["mps"]])
-    pcls = cls_of_mp[P["mp"][pidx]]
+    CLS = ("gene", "associative", "other")       # int8 codes: a string array per path does not fit in memory on CtD
+    cls_of_mp = np.array([CLS.index(mp_class(m)) for m in P["mps"]], dtype=np.int8)
+    pcls = cls_of_mp[P["mp"][pidx]]; del pidx
     psrc = ukey[pairs] // n_t
-    o = np.argsort(psrc, kind="stable"); pairs, contr, edges, psrc, pcls = pairs[o], contr[o], edges[o], psrc[o], pcls[o]
+    o = np.argsort(psrc, kind="stable")
+    pairs = pairs[o]; contr = contr[o]; edges = edges[o]; psrc = psrc[o]; pcls = pcls[o]; del o
     sb = np.searchsorted(psrc, np.arange(len(ctx["sources"]) + 1))
     s0 = float(ctx["model"].s0()); kmap = {int(k): i for i, k in enumerate(ukey)}
 
@@ -74,7 +76,7 @@ def main(task, seed=0):
                         top_edge_double=float(dbl[j] / tot), k50_edges=int(np.searchsorted(cum, 0.5 - 1e-12) + 1),
                         k80_edges=int(np.searchsorted(cum, 0.8 - 1e-12) + 1),
                         edge_top_sh=float(ranker.ranks(zz, z0, te[qi:qi + 1], known)[0]),
-                        lead_class=str(scl[lead]), gene_share=float(c[scl[own] == "gene"].sum() / tot)))
+                        lead_class=CLS[int(scl[lead])], gene_share=float(c[scl[own] == 0].sum() / tot)))
     R = {k: np.array([x[k] for x in rec]) for k in rec[0]}
     out = dict(task=task, seed=seed, n_hits=len(rec), records=rec,
                summary=dict(top_edge_shapley_median=float(np.median(R["top_edge_shapley"])),
