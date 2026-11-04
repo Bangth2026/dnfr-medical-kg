@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23879352.svg)](https://doi.org/10.5281/zenodo.23879352)
 
-Concept DOI (all versions, resolves to the latest): [10.5281/zenodo.23879352](https://doi.org/10.5281/zenodo.23879352). Version 1.0.0: [10.5281/zenodo.23879353](https://doi.org/10.5281/zenodo.23879353). Version 1.1.0: [10.5281/zenodo.23948874](https://doi.org/10.5281/zenodo.23948874).
+Concept DOI (all versions, resolves to the latest): [10.5281/zenodo.23879352](https://doi.org/10.5281/zenodo.23879352). Version 1.0.0: [10.5281/zenodo.23879353](https://doi.org/10.5281/zenodo.23879353). Version 1.1.0: [10.5281/zenodo.23948874](https://doi.org/10.5281/zenodo.23948874). Version v3.0-rev3: [10.5281/zenodo.23949261](https://doi.org/10.5281/zenodo.23949261).
 
 Code, derived data and result files for the manuscript
 

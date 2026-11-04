@@ -681,8 +681,8 @@ def declarations(dc):
     P_(dc, "**Data availability.** Hetionet v1.0 is available from its GitHub repository and PrimeKG from Harvard Dataverse "
            "(doi:10.7910/DVN/IXA7BM). The parsed health knowledge graph, the per-query ranks of every method on every split, the "
            "trained models, the path explanations and the statistics files from which every number in this paper is generated are "
-           "deposited at Zenodo (https://doi.org/10.5281/zenodo.23879352, which resolves to the latest version; the version "
-           "for this article is the deposit of code release v3.0-rev3), together with a script that downloads Hetionet and PrimeKG and checks them against the "
+           "deposited at Zenodo (version v3.0-rev3: https://doi.org/10.5281/zenodo.23949261; all versions: "
+           "https://doi.org/10.5281/zenodo.23879352), together with a script that downloads Hetionet and PrimeKG and checks them against the "
            "checksums of the files we used.")
     P_(dc, "**Code availability.** The implementation of DNFR, DNFR 2.0, the compact NBFNet and all baselines, the tests, and the "
            "scripts that compute the statistics and figures and build this manuscript from the result files are available under the "

@@ -236,7 +236,8 @@ def build(outdir):
         ("AI-assistance statement.", "Section 7 now has an 'Independent verification' paragraph: without the AI system, the "
                                      "corresponding author checked every result reported in the article, in the text, tables, "
                                      "figures and supplementary material, against the released result files. The code and data "
-                                     "of this revision are identified by release tag v3.0-rev3."),
+                                     "of this revision are identified by release tag v3.0-rev3 and archived at Zenodo "
+                                     "(https://doi.org/10.5281/zenodo.23949261)."),
         ("CRediT.", "The second author's role is now described as a check that the nodes and edges in Table 8 exist in the source "
                     "graphs with the stated relations, a check of graph correctness and not a clinical judgement."),
         ("Length.", "Tables A1–A5, the long-training table, both restart figures and Appendix B moved to the supplementary file; Table "
