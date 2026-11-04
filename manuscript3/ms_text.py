@@ -138,25 +138,28 @@ def abstract(dc):
     lr = PS.get("loss_range") or [float("nan")]
     fv = r3p("hkg_DpS", "fixp_val", "product")
     para(dc, "**Abstract**", align="left", space_after=2)
-    P_(dc, "**Objective:** Path-based reasoning over medical knowledge graphs can explain its predictions, but it composes evidence "
-           "with operators fixed in advance. We asked which parts of a differentiable neuro-fuzzy path reasoner are worth learning, "
-           "and whether four plausible refinements improve it.")
+    P_(dc, "**Objective:** Path-based reasoning over medical knowledge graphs explains its predictions but composes evidence "
+           "with fixed operators. We asked which parts of a differentiable neuro-fuzzy path reasoner are worth learning, "
+           "and whether four refinements improve it.")
     P_(dc, "**Methods:** Differentiable Neuro-Fuzzy Reasoning (DNFR) learns degree-discounting edge memberships, a Schweizer–Sklar "
            "t-norm per metapath and a noisy-OR over paths. DNFR 2.0 adds overlap-aware aggregation, a discrete operator choice, an "
            "information-content hub discount and membership annealing. On drug repurposing (Hetionet, PrimeKG) and disease–symptom "
            "prediction (Hetionet; a graph learned from emergency-department records) we compared ablations, fixed and "
-           "validation-selected t-norms, the refinements, NBFNet and path, rule, completion and degree-only baselines under "
-           "leave-dyad-out splits, and profiled the t-norm parameter to convergence.")
+           "validation-selected t-norms, the refinements, NBFNet and simpler baselines under leave-dyad-out splits, and profiled "
+           "the t-norm parameter to convergence.")
     r_max = [pr(t, "dnfr", "dnfr_max")["delta_MRR"] for t in TASKS if pr(t, "dnfr", "dnfr_max")]
     txt = (f"**Results:** Aggregating all paths instead of the strongest one raised mean reciprocal rank (MRR) by "
-           f"{min(r_max):.2f}–{max(r_max):.2f}, and hub discounting also helped on every task. "
+           f"{min(r_max):.2f}–{max(r_max):.2f}, and hub discounting helped on every task. "
            + ("No refinement improved MRR detectably" if not rc["pos_diff"] else
               f"{Num(len(rc['pos_diff']))} of {rc['n']} refinement tests showed a gain")
-           + (", and two lowered it on the graded graph. " if sum(1 for t, l in rc["neg_diff"] if t == "hkg_DpS") >= 2 else ". ")
-           + f"With all other parameters fitted to convergence, the training loss changed by at most {max(lr):.3f} nats over "
-           "t-norm parameters from −5 to 0, and its minimiser differed between splits; a t-norm selected on validation data beat the "
-           f"fixed product by {fv['delta']:.3f} on the graded graph. Degree-weighted path counts were as accurate as DNFR on three "
-           "of four tasks, and a compact NBFNet matched it on the graded graph.")
+           + (", and two lowered it on the graded graph" if sum(1 for t, l in rc["neg_diff"] if t == "hkg_DpS") >= 2 else "")
+           + ("; combined, they lowered MRR by " + f"{abs(r3p('het_DpS', 'dnfr2', 'dnfr')['delta']):.3f} on Hetionet disease–symptom"
+              if (r3p("het_DpS", "dnfr2", "dnfr") or {}).get("verdict") == "different" else "")
+           + ". " + f"With everything else fitted to convergence, the training loss varied by at most {max(lr):.3f} nats over "
+           "t-norm parameters from −5 to 0, with split-dependent minimisers; a t-norm selected on validation data beat the "
+           f"fixed product by {fv['delta']:.3f} on the graded graph. Degree-weighted path counts beat DNFR on two tasks and "
+           "were not detectably worse on a third; a compact NBFNet came within "
+           f"{abs(r3p('hkg_DpS', 'nbfnet', 'dnfr')['delta']):.3f} of DNFR on the graded graph.")
     P_(dc, txt)
     P_(dc, "**Conclusion:** Path aggregation and hub discounting carry the accuracy. The training loss barely constrains the "
            "composition operator, so a learned operator should not be read as a property of the domain; it is better chosen on "
@@ -240,7 +243,8 @@ def results(dc):
               f"split{'s' if nbs['het_DpS']['n'] > 1 else ''} (DNFR minus NBFNet on the same "
               f"split{'s' if nbs['het_DpS']['n'] > 1 else ''} {sg(-nb['het_DpS']['delta'])})" if nbs.get("het_DpS") else "was not run on Hetionet disease–symptom")
            + ". A learned operator for path extension and aggregation, with about "
-           "ten thousand parameters, thus did not do better than a fixed product with learned memberships on these tasks. It was "
+           "ten thousand parameters, thus did not do detectably better than DNFR on these tasks (inconclusive on both under our "
+           "rule). It was "
            "not run on the drug-repurposing graphs, whose size exceeds what our CPU implementation can train in reasonable time.")
 
     # ---------------- 4.2
@@ -342,7 +346,7 @@ def results(dc):
     P_(dc, "**R3, information-content discount.** Replacing the degree feature by the logarithm of the number of paths through a node "
            "changed MRR by " + joinand([f"{sg(ic[t]['delta'])} on {SH(t)} ({ic[t]['wins']}/{ic[t]['J']} splits)" for t in R3T if ic[t]])
            + ". Within DNFR 2.0 the same feature was harmless (removing it changed MRR by "
-           + joinand([sg(icl[t]["delta"]) for t in R3T if icl[t]]) + "), and DNFR 2.0 without the discrete operator choice lost "
+           + joinand([sg(-icl[t]["delta"]) for t in R3T if icl[t]]) + "), and DNFR 2.0 without the discrete operator choice lost "
            + joinand([sg(-gl[t]["delta"])[1:] for t in R3T if gl[t]]) + ": the information-content feature hurt with a continuous "
            "Schweizer–Sklar parameter and not with a choice among fixed operators. We did not investigate this interaction further. "
            "Path occurrence and degree are strongly correlated in these graphs, so there is little that the information content "
@@ -351,7 +355,8 @@ def results(dc):
     an = {t: r3p(t, "dnfr_anneal", "dnfr") for t in R3T}
     tb = R3.get("hkg_DpS", {}).get("tau_best", {})
     txt = ("**R4, membership annealing.** Annealing the temperature of the memberships changed MRR by "
-           + joinand([f"{sg(an[t]['delta'])} on {SH(t)}" for t in R3T if an[t]]) + ". ")
+           + joinand([f"{sg(an[t]['delta'])} on {SH(t)} ({an[t]['wins']}/{an[t]['J']} splits)" for t in R3T if an[t]])
+           + (" (not run on compound–treats–disease)" if not an.get("het_CtD") else "") + ". ")
     if sat:
         h, dps = sat["hkg_DpS"][0], sat["het_DpS"][0]
         txt += (f"It addresses a problem that the trained models barely have: in the default model of the first split, "
@@ -368,6 +373,8 @@ def results(dc):
            + joinand([sg(v2p[t]["delta"]) for t in R3T if v2p[t]])
            + ". None of these differences was supported under our rule"
            * (not any(v2[t] and v2[t]["verdict"] == "different" for t in R3T))
+           + "".join(f". On {SH(t)} DNFR 2.0 was less accurate than DNFR under our rule ({v2[t]['wins']}/{v2[t]['J']} splits "
+                     "in its favour)" for t in R3T if v2[t] and v2[t]["verdict"] == "different" and v2[t]["delta"] < 0)
            + ". We keep the name for the combined model so that the four modifications can be cited, but we do not recommend it "
            "over DNFR or over the fixed product.")
     fv = {t: r3p(t, "fixp_val", "dnfr") for t in R3T}; fvp = {t: r3p(t, "fixp_val", "product") for t in R3T}
@@ -562,8 +569,10 @@ def discussion(dc):
            "learned, and cost accuracy when it could not be, so paths through a shared node add evidence rather than repeat it, "
            "at least as these graphs encode it. A discrete operator choice was not more accurate than a continuous one. "
            "Information content added nothing to degree. Membership annealing addressed saturation near 1, which the trained "
-           "models hardly show. As a predictor, DNFR was matched or beaten by degree-weighted path counts with logistic regression "
-           "on three of four tasks, by low-rank completion on the graded graph, and was matched by a compact NBFNet; its distinctive "
+           "models hardly show. Combined, the four did not help either"
+           + (", and on Hetionet disease–symptom they lowered accuracy" if (r3p("het_DpS", "dnfr2", "dnfr") or {}).get("verdict") == "different" else "")
+           + ". As a predictor, DNFR was matched or beaten by degree-weighted path counts with logistic regression "
+           "on three of four tasks and by low-rank completion on the graded graph, and a compact NBFNet came close to it; its distinctive "
            "contribution is the resolution of its explanations, path by path and fact by fact, rather than accuracy.")
     heading(dc, "5.2 Why the training objective does not identify the t-norm", 2)
     P_(dc, "Two mechanisms make the loss insensitive to p. First, the memberships and metapath reliabilities already rescale every "
@@ -604,8 +613,8 @@ def discussion(dc):
         "evidence they carry rather than a single \"reason\".",
         "**Attribute to facts, and test at the level of facts.** Path shares double-count facts shared by several paths; an edge-level "
         "Shapley attribution does not, and removing a fact from the graph and re-ranking tests what a clinician would question.",
-        "**Expect explanations to be by association.** The leading paths for drug repurposing mostly ran through pharmacologic classes "
-        "and similar drugs, and some disease–symptom paths through text-mined \"resembles\" links. Path shares make such evidence "
+        "**Expect explanations to be by association.** On the split we analysed, the leading paths of correct drug-repurposing predictions all ran through pharmacologic classes, similar compounds or similar diseases, none through genes, "
+        "and some disease–symptom paths ran through text-mined \"resembles\" links. Path shares make such evidence "
         "visible and discountable, but they do not turn it into a mechanism.",
         "**Report the strongest simple baselines and harder splits.** Degree-weighted path counts matched or beat every learned path "
         "model on three of four tasks, low-rank completion led on the record-derived graph, and a disease-centred split reduced every "
@@ -613,7 +622,7 @@ def discussion(dc):
     heading(dc, "5.5 Limitations", 2)
     nc = nseeds("het_CtD", "dnfr"); nca = nseeds("het_CtD", "dnfr_nodeg")
     bullets(dc, [C(x) for x in [
-        f"**Splits and power.** The main comparisons used {nc} splits on compound–treats–disease, ten on the two disease–symptom "
+        f"**Splits and power.** The main comparisons used {num(nc)} splits on compound–treats–disease, ten on the two disease–symptom "
         f"tasks and two on PrimeKG; the component ablations on compound–treats–disease used {nca}, and several variants fewer, as "
         "the tables mark. With Holm adjustment over the comparisons of each table, differences of about 0.02 to 0.04 MRR were often "
         "not supported even when their sign was the same on every split, and with ten splits the corrected 90% intervals still extend "
@@ -657,7 +666,7 @@ def conclusion(dc):
            "apparent weaknesses of the model, overlap-aware aggregation, a discrete operator choice, an information-content discount "
            "and membership annealing, did not improve it. The t-norm parameter is practically non-identified by the training loss "
            "once memberships are learned, while held-out accuracy depends on it, so it should be selected on validation data and "
-           "not interpreted when learned. Degree-weighted path counts were as accurate on most tasks. For explainable clinical "
+           "not interpreted when learned. Degree-weighted path counts were not detectably less accurate on three of four tasks. For explainable clinical "
            "decision support on knowledge graphs, effort is better spent on how much each fact counts, on how paths are combined "
            "and on attributing predictions to facts than on learning the operator that composes them.")
 

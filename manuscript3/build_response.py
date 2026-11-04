@@ -75,7 +75,8 @@ def build(outdir):
          "non-identifiability by the training objective, cites Raue et al., and states, as the reviewer suggests, that held-out "
          "accuracy does carry information about p: test MRR at the value chosen on validation exceeded that of the product by "
          + ", ".join(sg(x["test_at_valid_choice"] - x["test_product"]) for x in iv)
-         + " in the three splits. The early-stopping sentence for compound–treats–disease was rewritten: ten Adam steps could move p "
+         + " in the three splits. The early-stopping sentence for compound–treats–disease was rewritten: the median best epoch there was "
+         + str(ri(RS["stopping"]["het_CtD"]["dnfr"]["best_epoch"]["median"])) + ", and that many Adam steps could move p "
          "by close to one unit, so the small spread observed there is an empirical outcome, not a mechanical one.")
     ch(d, "Sections 3.4 (iv), 4.4; Figure 2 (new); Table 5; Supplementary Tables S7–S8; Abstract, Conclusion.")
 
@@ -95,7 +96,8 @@ def build(outdir):
     heading(d, "M3. Statistical power on CtD and PrimeKG", 2)
     c(d, "Two or three splits do not support generalisations to all four tasks; add splits on CtD or rephrase.")
     r(d, f"We increased compound–treats–disease to {nc} splits for the main comparisons and to {nca} for the component ablations "
-         "(Table 3). We also changed how multiplicity is handled (see M4): Holm adjustment is now applied within families defined by "
+         f"(Table 3); the refinements and DNFR 2.0, added in this revision, have {r3p('het_CtD', 'dnfr_overlap', 'dnfr')['J']}–"
+         f"{r3p('het_CtD', 'dnfr2', 'dnfr')['J']} splits there. We also changed how multiplicity is handled (see M4): Holm adjustment is now applied within families defined by "
          "question (baselines, components, refinements, NBFNet) instead of over every comparison in a table, which had mixed "
          "confirmatory comparisons with descriptive restarts. Highlights, Abstract, Section 5.1 and the Conclusion no longer "
          "generalise across all four tasks; they state the sign consistency and, separately, on which tasks the difference is "
@@ -153,8 +155,11 @@ def build(outdir):
          f"{f3(mean_any('hkg_DpS', 'dnfr'))} for DNFR, difference {dci3(r3p('hkg_DpS', 'nbfnet', 'dnfr'))}) and on Hetionet "
          + (f"disease–symptom ({nb['het_DpS']['n']} split{'s' if nb['het_DpS']['n'] > 1 else ''}, MRR {f3(nb['het_DpS']['mean'])})"
             if nb.get("het_DpS") else "disease–symptom")
-         + ". On Hetionet disease–symptom one run took over an hour, which limited the number of splits. NBFNet thus matched DNFR "
-         "on the graded graph and did not beat DWPC-LR, which answers Q5 for this setting. BioPathNet (now published in Nature "
+         + ". On Hetionet disease–symptom one run took over an hour, which limited the number of splits. On the graded graph NBFNet "
+         "was within 0.001 of DNFR (inconclusive under our rule) and below DWPC-LR (a difference our rule supports); on Hetionet "
+         "disease–symptom it was ahead of DNFR by " + f"{r3p('het_DpS', 'nbfnet', 'dnfr')['delta']:.3f}" + " on three splits, too "
+         "few for a verdict. A learned operator therefore did not show a clear advantage over DNFR or DWPC-LR, which answers Q5 "
+         "for these settings. BioPathNet (now published in Nature "
          "Biomedical Engineering) and FuzzQE are cited and discussed in Section 2.2. We did not add tuned embeddings on the graded "
          "graph: on a single bipartite relation an embedding reduces to a low-rank factorisation, and Soft-Impute, which led on that "
          "graph, is that comparison. This is stated in Section 4.1.")
@@ -255,14 +260,17 @@ def build(outdir):
          f"On compound–treats–disease the true tail tied in {pct(PSm['het_CtD']['tie_any_prior100'])} of test queries, with "
          f"{pct(PSm['het_CtD']['tie_share_prior100'])} of candidates tied on average (M6, Table S9)." if PSm else "—"),
         ("Does removing degree terms help on the PrimeKG disease split?", "Not tested (M8)."),
-        ("Would NBFNet reproduce the conclusion?", "On the graded graph it matched DNFR and stayed below DWPC-LR (M7)."),
+        ("Would NBFNet reproduce the conclusion?", "On the graded graph it was within 0.001 of DNFR and below DWPC-LR; on Hetionet disease–symptom it was slightly ahead of DNFR on three splits (M7)."),
     ]
     for i, (a, b) in enumerate(Q, 1):
         para(d, f"**Q{i}. {a}** {b}")
 
     heading(d, "Other changes", 1)
     bullets(d, ["Four refinements (Section 3.3, Table 4, Figure 3) and the combined DNFR 2.0. "
-                + (f"None of the {rc['n']} add-one comparisons showed a gain under our rule." if not rc["pos_diff"] else ""),
+                + (f"None of the {rc['n']} add-one comparisons showed a gain under our rule." if not rc["pos_diff"] else "")
+                + (" Combined, DNFR 2.0 was less accurate than DNFR on Hetionet disease–symptom ("
+                   + sg(r3p('het_DpS', 'dnfr2', 'dnfr')['delta']) + ", supported by our rule)."
+                   if (r3p("het_DpS", "dnfr2", "dnfr") or {}).get("verdict") == "different" else ""),
                 "An exact edge-level Shapley attribution (Section 3.6) and a mechanistic classification of drug-repurposing "
                 "explanations.",
                 "Supplementary file with Tables S1–S11 and Figures S1–S2.",

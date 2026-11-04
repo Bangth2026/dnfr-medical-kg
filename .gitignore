@@ -10,3 +10,4 @@ manuscript/*.pdf
 # third revision: in-progress experiment outputs (merged into results/ when complete)
 logs2/
 results2/
+manuscript3/out/
