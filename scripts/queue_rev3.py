@@ -11,7 +11,7 @@ BASE = "dwpc_lr,svd,softimpute,popularity,prior,dwpc_lr_full"
 J = {"A": [], "B": []}
 # worker A: Hetionet CtD (memory-heavy, one process)
 J["A"].append(("ctd_v1_s3", "het_CtD", 3, "dnfr,dnfr_nodeg,dnfr_max,product,hamacher", BASE))
-# splits 4-9: headline comparison only (the operator/degree ablations stay at splits 0-3 for CPU reasons)
+# splits 4-9: headline comparison; the operator/degree ablations for splits 4-9 are the ctd_abl jobs below
 for s in range(4, 10):
     J["A"].append((f"ctd_v1_s{s}", "het_CtD", s, "dnfr,product", BASE))
 # reviewer M3: component ablations on all ten splits
@@ -51,7 +51,10 @@ def prio(job):
 
 if __name__ == "__main__":
     w = sys.argv[1]
+    only = sys.argv[2] if len(sys.argv) > 2 else None   # optional: run just one job id
     for job in sorted(J[w], key=prio):
+        if only and job[0] != only:
+            continue
         jid, task, seed, variants, base = job[:5]; extra = job[5].split() if len(job) > 5 else []
         d = f"{ROOT}/results2/jobs/{jid}"
         if os.path.exists(f"{d}/DONE"):
