@@ -2,11 +2,11 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23879352.svg)](https://doi.org/10.5281/zenodo.23879352)
 
-Concept DOI (all versions, resolves to the latest): [10.5281/zenodo.23879352](https://doi.org/10.5281/zenodo.23879352). Version 1.0.0: [10.5281/zenodo.23879353](https://doi.org/10.5281/zenodo.23879353).
+Concept DOI (all versions, resolves to the latest): [10.5281/zenodo.23879352](https://doi.org/10.5281/zenodo.23879352). Version 1.0.0: [10.5281/zenodo.23879353](https://doi.org/10.5281/zenodo.23879353). Version 1.1.0: [10.5281/zenodo.23948874](https://doi.org/10.5281/zenodo.23948874).
 
 Code, derived data and result files for the manuscript
 
-> Truong Hai Bang, Van An Phan Thi. *Path aggregation and hub discounting, not the learned t-norm: a controlled component analysis of differentiable neuro-fuzzy reasoning on medical knowledge graphs.* Submitted to *Artificial Intelligence in Medicine* (revised manuscript, version 1.1.0 of this repository).
+> Truong Hai Bang, Van An Phan Thi. *Which parts of a neuro-fuzzy path reasoner should be learned? A controlled component analysis on medical knowledge graphs, with four refinements (DNFR 2.0).* Submitted to *Artificial Intelligence in Medicine* (third revision, release v3.0-rev3 of this repository).
 
 DNFR scores a pair of entities by a noisy-OR over metapath-instantiated paths of length two and three. Each edge receives a learned membership (degree-aware, and reading graded evidence where the graph has it), each path is composed with a Schweizer–Sklar t-norm whose parameter is learned per metapath, and each metapath has a learned reliability. Every score decomposes exactly into the contributions of its paths.
 
@@ -84,6 +84,7 @@ python3 dnfr/aggregate.py && python3 dnfr/extra.py && python3 dnfr/revision_stat
 
 ## Versions
 
+- **v3.0-rev3** (third revision): DNFR 2.0 and its four refinements, each added alone and removed from the combination (overlap-aware aggregation, Gumbel-softmax operator choice, information-content hub discount, membership annealing); a fixed t-norm selected on validation data; a converged L-BFGS profile of the t-norm parameter and an unbounded parameterisation; a compact NBFNet (`dnfr/nbfnet.py`); an exact edge-level Shapley attribution and a mechanistic classification of explanations (`dnfr/explain_eval3.py`); a sparsity variant that keeps the target relation; 10 splits for the main comparisons on Hetionet CtD, Hetionet DpS and the graded graph; manuscript build in `manuscript3/`.
 - **1.1.0** (second revision): profile analysis of the t-norm parameter and training without early stopping (`identifiability.py`); splits 5-9 of both disease-symptom tasks for the t-norm comparisons; split 3 of the disease-centred split; degree-preserving edge prior and DWPC-LR with degree and prior features; sensitivity of the fixed degree discount; share-matched and edge-level explanation tests; corrected-t intervals and equivalence verdicts (margin 0.01 MRR); tests; manuscript build script; redrawn Figure 1. The first-revision experiments (restarts of p, fixed-degree and frozen-membership variants, popularity, AnyBURL, disease-centred split, deletion tests) are also included.
 - **1.0.0**: code and results of the first submission.
 

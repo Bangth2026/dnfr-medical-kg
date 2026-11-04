@@ -1,7 +1,7 @@
 {
-  "title": "Code and derived results for: Path aggregation and hub discounting, not the learned t-norm: a controlled component analysis of differentiable neuro-fuzzy reasoning on medical knowledge graphs",
+  "title": "Code and derived results for: Which parts of a neuro-fuzzy path reasoner should be learned? A controlled component analysis on medical knowledge graphs, with four refinements (DNFR 2.0)",
   "upload_type": "software",
-  "description": "Code, derived data and result files for Differentiable Neuro-Fuzzy Reasoning (DNFR), a path-based link predictor that learns degree-aware edge memberships, a Schweizer–Sklar t-norm per metapath and metapath reliabilities, and aggregates paths by noisy-OR, used as an instrument for a controlled component analysis on medical knowledge graphs. Tasks: drug repurposing in Hetionet v1.0 and PrimeKG, disease–symptom prediction in Hetionet and in the graded health knowledge graph of Rotmensch et al. (2017), and a secondary test on a NHANES fuzzy relation, under leave-dyad-out random and disease-centred splits. Comparators: fixed t-norms, component ablations, restarts of the t-norm parameter, DWPC with logistic regression (with and without degree and prior features), a degree-preserving edge prior, popularity, AnyBURL, truncated and soft-thresholded SVD and knowledge graph embeddings. Version 1.1.0 (second revision) adds a profile analysis of the t-norm parameter, training without early stopping, additional splits, equivalence tests, the edge prior, share-matched and edge-level explanation tests, unit tests and the script that builds the manuscript from the statistics files. Includes per-query ranks for every method and split, trained models, path explanations, and the statistics files from which every number in the manuscript is read. Hetionet and PrimeKG are downloaded by download_data.py with MD5 checks.",
+  "description": "Code, derived data and result files for Differentiable Neuro-Fuzzy Reasoning (DNFR), a path-based link predictor that learns degree-aware edge memberships, a Schweizer–Sklar t-norm per metapath and metapath reliabilities, and aggregates paths by noisy-OR, used as an instrument for a controlled component analysis on medical knowledge graphs. Tasks: drug repurposing in Hetionet v1.0 and PrimeKG, disease–symptom prediction in Hetionet and in the graded health knowledge graph of Rotmensch et al. (2017), and a secondary test on a NHANES fuzzy relation, under leave-dyad-out random and disease-centred splits. Comparators: fixed t-norms, component ablations, restarts of the t-norm parameter, DWPC with logistic regression (with and without degree and prior features), a degree-preserving edge prior, popularity, AnyBURL, truncated and soft-thresholded SVD and knowledge graph embeddings. Version v3.0-rev3 (third revision) adds DNFR 2.0, four refinements tested one at a time and in combination (overlap-aware aggregation, Gumbel-softmax operator choice, an information-content hub discount and membership annealing), a fixed t-norm selected on validation data, a converged L-BFGS profile of the t-norm parameter, an unbounded parameterisation, a compact NBFNet baseline, an exact edge-level Shapley attribution of the explanations, a mechanistic classification of the drug-repurposing explanations, a sparsity variant that keeps the target relation, and 10 leave-dyad-out splits for the main comparisons on Hetionet compound–treats–disease, Hetionet disease–symptom and the graded health knowledge graph. Version 1.1.0 (second revision) added a profile analysis of the t-norm parameter, training without early stopping, additional splits, equivalence tests, the edge prior, share-matched and edge-level explanation tests, unit tests and the script that builds the manuscript from the statistics files. Includes per-query ranks for every method and split, trained models, path explanations, and the statistics files from which every number in the manuscript is read. Hetionet and PrimeKG are downloaded by download_data.py with MD5 checks.",
   "creators": [
     {
       "name": "Truong, Hai Bang",
@@ -24,7 +24,9 @@
     "drug repurposing",
     "link prediction",
     "Hetionet",
-    "PrimeKG"
+    "PrimeKG",
+    "NBFNet",
+    "Shapley attribution"
   ],
   "related_identifiers": [
     {
@@ -38,11 +40,11 @@
       "resource_type": "publication-article"
     },
     {
-      "identifier": "10.5281/zenodo.23879353",
+      "identifier": "10.5281/zenodo.23948874",
       "relation": "isNewVersionOf",
       "resource_type": "software"
     }
   ],
-  "version": "1.1.0",
+  "version": "v3.0-rev3",
   "access_right": "open"
 }
