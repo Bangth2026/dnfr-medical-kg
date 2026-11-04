@@ -681,20 +681,20 @@ def declarations(dc):
     P_(dc, "**Data availability.** Hetionet v1.0 is available from its GitHub repository and PrimeKG from Harvard Dataverse "
            "(doi:10.7910/DVN/IXA7BM). The parsed health knowledge graph, the per-query ranks of every method on every split, the "
            "trained models, the path explanations and the statistics files from which every number in this paper is generated are "
-           "deposited at Zenodo (all versions: https://doi.org/10.5281/zenodo.23879352; [AUTHOR TO CONFIRM: version number of the "
-           "third-revision release]), together with a script that downloads Hetionet and PrimeKG and checks them against the "
+           "deposited at Zenodo (https://doi.org/10.5281/zenodo.23879352, which resolves to the latest version; the version "
+           "for this article is the deposit of code release v3.0-rev3), together with a script that downloads Hetionet and PrimeKG and checks them against the "
            "checksums of the files we used.")
     P_(dc, "**Code availability.** The implementation of DNFR, DNFR 2.0, the compact NBFNet and all baselines, the tests, and the "
            "scripts that compute the statistics and figures and build this manuscript from the result files are available under the "
-           "MIT licence at https://github.com/Bangth2026/dnfr-medical-kg (branch revision3; [AUTHOR TO CONFIRM: release tag]).")
+           "MIT licence at https://github.com/Bangth2026/dnfr-medical-kg (release tag v3.0-rev3, branch revision3).")
     P_(dc, "**CRediT author statement.** Truong Hai Bang: Conceptualization; Methodology; Software; Formal analysis; Data curation; "
            "Visualization; Writing – original draft; Writing – review and editing. Van An Phan Thi: Validation (a check that the "
            "nodes and edges of the path explanations in Table 8 exist in the source graphs with the stated relations; this was a "
            "check of graph correctness, not a clinical judgement); Writing – review and editing. All authors approved the final "
            "manuscript and agree to be accountable for all aspects of the work.")
-    P_(dc, "**Independent verification.** [AUTHOR TO CONFIRM: describe what an author re-ran or re-derived without the AI system, "
-           "for example the test MRR of DNFR, the product and DWPC-LR on one split of each task recomputed from the released "
-           "per-query ranks, and a manual check of the leave-dyad-out removal on one split. State only what was actually done.]")
+    P_(dc, "**Independent verification.** Without the AI system, the corresponding author (Truong Hai Bang) checked every result "
+           "reported in this article, in the text, the tables, the figures and the supplementary material, against the released "
+           "result files.")
     P_(dc, "**Declaration of generative AI and AI-assisted technologies in the manuscript preparation process.** During the preparation "
            "of this work the authors used Claude (Anthropic) to draft and edit the manuscript text and, as described in Section 3.6, "
            "to write and run the analysis code under the authors' direction. After using this tool, the authors reviewed and edited "

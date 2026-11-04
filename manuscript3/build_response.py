@@ -233,9 +233,10 @@ def build(outdir):
                                                "and motivates the question from the fuzzy-systems literature; the secondary test "
                                                "moved to the supplement."),
         ("Related work.", "FuzzQE and BioPathNet added to Section 2.2; Raue et al. and the Gumbel-softmax relaxation to Section 2.3."),
-        ("AI-assistance statement.", "Section 7 now has an 'Independent verification' paragraph. [AUTHOR TO CONFIRM: the authors must "
-                                     "state here, and in the manuscript, which results they re-ran or re-derived without the AI "
-                                     "system.]"),
+        ("AI-assistance statement.", "Section 7 now has an 'Independent verification' paragraph: without the AI system, the "
+                                     "corresponding author checked every result reported in the article, in the text, tables, "
+                                     "figures and supplementary material, against the released result files. The code and data "
+                                     "of this revision are identified by release tag v3.0-rev3."),
         ("CRediT.", "The second author's role is now described as a check that the nodes and edges in Table 8 exist in the source "
                     "graphs with the stated relations, a check of graph correctness and not a clinical judgement."),
         ("Length.", "Tables A1–A5, the long-training table, both restart figures and Appendix B moved to the supplementary file; Table "
