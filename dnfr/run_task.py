@@ -50,6 +50,7 @@ VARIANTS = {
     "dnfr_overlap":     dict(tnorm="ss", p_mode="per_mp", degree=True, agg="overlap"),
     "dnfr_gumbel":      dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="noisyor"),
     "dnfr_ic":          dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", feat="ic"),
+    "dnfr_ic_sd":       dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", feat="ic_sd"),
     "dnfr_anneal":      dict(tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", anneal=True),
     "product_overlap":  dict(tnorm="product", p_mode="shared", degree=True, agg="overlap"),
     # restarts of the Gumbel-softmax choice (same split, other random streams for initial noise)
@@ -181,6 +182,10 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
         removed = {(spec["s"], spec["t"]): removed_keys}
         kg_split = kg.copy_without(removed)
         mask = drop_paths_using(P, kg, removed)
+        if os.environ.get("DNFR_DROP_TARGET_MPS"):   # reviewer M4: no metapath that uses the target relation
+            bad_mp = [i for i, m in enumerate(P["mps"]) if any(tr[3] == spec["rel"] for tr in m)]
+            mask &= ~np.isin(P["mp"], bad_mp)
+            print(f"dropped {len(bad_mp)} metapaths that contain {spec['rel']}; {int(mask.sum())} paths kept", flush=True)
         SD = {}
         def get_sd(overlap, feat):   # one SplitData per (aggregation, feature) setting, built when first needed
             k = (overlap, feat)

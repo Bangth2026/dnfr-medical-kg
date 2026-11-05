@@ -45,7 +45,7 @@ def setup(task, seed=0):
     for s, t in posl:
         known.setdefault(int(s), set()).add(int(t))
     ranker = Ranker((ukey // n_t).astype(np.int64), (ukey % n_t).astype(np.int64), len(sources), n_t)
-    return dict(spec=spec, kg=kg, P=P, sd=sd, model=model, sources=sources, te=te, ukey=ukey, n_t=n_t,
+    return dict(spec=spec, kg=kg, P=P, sd=sd, model=model, sources=sources, te=te, va=va, ukey=ukey, n_t=n_t,
                 known=known, ranker=ranker, trav=trav, tr=tr, kg_s=kg_s)
 
 

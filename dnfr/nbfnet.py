@@ -116,7 +116,7 @@ def mrr_of(r):
     return dict(MRR=float(np.mean(1 / r)), H1=float(np.mean(r <= 1)), H3=float(np.mean(r <= 3)), H10=float(np.mean(r <= 10)))
 
 
-def run(task, seed, L=3, d=32, epochs=int(os.environ.get("NBF_EPOCHS", "300")), lr=5e-3, batch=int(os.environ.get("NBF_BATCH", "16"))):
+def run(task, seed, L=3, d=32, epochs=int(os.environ.get("NBF_EPOCHS", "300")), lr=float(os.environ.get("NBF_LR", "5e-3")), batch=int(os.environ.get("NBF_BATCH", "16"))):
     torch.manual_seed(seed); rng = np.random.default_rng(seed)
     G = build(task, seed)
     model = NBF(G["n_rel"], d, L)
@@ -175,4 +175,4 @@ if __name__ == "__main__":
     for s in seeds:
         m, r, G = run(task, s, L, d)
         json.dump(dict(task=task, seed=s, metrics=m, ranks=r, relations=G["bases"], n_edges=G["n_edges"]),
-                  open(f"{OUT}/nbfnet_{task}{'' if L == 3 else f'_L{L}'}_seed{s}.json", "w"))
+                  open(f"{OUT}/nbfnet_{task}{'' if L == 3 else f'_L{L}'}{'' if (d == 32 and os.environ.get('NBF_LR', '5e-3') == '5e-3') else f'_d{d}_lr' + os.environ.get('NBF_LR', '5e-3')}_seed{s}.json", "w"))

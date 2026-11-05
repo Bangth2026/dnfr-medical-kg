@@ -38,7 +38,7 @@ class SplitData:
         tix = {t: i for i, t in enumerate(types)}
         maxn = max(kg_split.n(t) for t in types) + 1
         ic = None
-        if feat == "ic":   # path-occurrence counts per (type, node) on the kept (training-graph) paths
+        if feat in ("ic", "ic_sd"):   # path-occurrence counts per (type, node) on the kept (training-graph) paths
             cnt = {t: np.zeros(kg_split.n(t), np.float64) for t in types}
             src_t = P["mps"][0][0][1]
             for mi, mp in enumerate(P["mps"]):
@@ -75,10 +75,14 @@ class SplitData:
                     wv = np.clip(wv, 1e-4, 1 - 1e-4)
                     lw = torch.from_numpy(np.log(wv / (1 - wv)).astype(np.float32))
                 fu, fv = do[nodes[h]], di[nodes[h + 1]]
-                if ic is not None:   # rescaled so that its mean matches the degree feature it replaces
+                if ic is not None and feat == "ic":   # rescaled so that its mean matches the degree feature it replaces
                     gu, gv = ic[ntypes[h]][nodes[h]], ic[ntypes[h + 1]][nodes[h + 1]]
                     fu = (gu * (fu.mean() / max(gu.mean(), 1e-6))).astype(np.float32)
                     fv = (gv * (fv.mean() / max(gv.mean(), 1e-6))).astype(np.float32)
+                elif ic is not None:   # "ic_sd" (reviewer M5 check): matched in mean and standard deviation
+                    gu, gv = ic[ntypes[h]][nodes[h]], ic[ntypes[h + 1]][nodes[h + 1]]
+                    fu = ((gu - gu.mean()) * (fu.std() / max(gu.std(), 1e-6)) + fu.mean()).astype(np.float32)
+                    fv = ((gv - gv.mean()) * (fv.std() / max(gv.std(), 1e-6)) + fv.mean()).astype(np.float32)
                 hops.append((trav_index[tr], torch.from_numpy(np.ascontiguousarray(fu)), torch.from_numpy(np.ascontiguousarray(fv)), lw))
             ch = dict(mp=mi, pair32=torch.from_numpy(pair_id[sel].astype(np.int32)), hops=hops,
                       path_index=sel.astype(np.int32))
