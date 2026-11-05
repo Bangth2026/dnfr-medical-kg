@@ -86,7 +86,8 @@ def fit(p, warm=None, max_outer=60):
     for it in range(max_outer):
         L = float(opt.step(closure))
         opt.zero_grad(); L = loss_and_grad(m)
-        g = torch.cat([q.grad.flatten() for q in params]).norm().item()
+        # a parameter that no training path reaches has no gradient; count it as zero (as torch's L-BFGS does)
+        g = torch.cat([(q.grad if q.grad is not None else torch.zeros_like(q)).flatten() for q in params]).norm().item()
         done = g < 1e-5 or (last is not None and abs(last - L) < 1e-9)
         last = L
         if done:
