@@ -10,6 +10,7 @@ DS = json.load(open(f"{RES}/data_stats.json"))
 XS = json.load(open(f"{RES}/extra_stats.json"))
 R3 = json.load(open(f"{RES}/rev3_stats.json")) if os.path.exists(f"{RES}/rev3_stats.json") else {}
 R4 = json.load(open(f"{RES}/rev4_stats.json")) if os.path.exists(f"{RES}/rev4_stats.json") else {}
+XREV = json.load(open(f"{RES}/expert_review.json")) if os.path.exists(f"{RES}/expert_review.json") else {}
 PC = json.load(open(f"{RES}/prior_check.json")) if os.path.exists(f"{RES}/prior_check.json") else {}
 
 TASKS = ["het_CtD", "het_DpS", "pkg_ind", "hkg_DpS"]

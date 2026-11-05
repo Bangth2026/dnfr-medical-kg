@@ -10,8 +10,9 @@ WORK="$(mktemp -d)"
 git clone --quiet --depth 1 --branch "$TAG" https://github.com/Bangth2026/dnfr-medical-kg.git "$WORK/repo"
 cd "$WORK/repo"
 mkdir -p rerun
+python3 -W ignore dnfr/prepare_data.py hkg > rerun/log.txt 2>&1      # builds data/hkg.pkl from the released data/hkg_edges.json
 DNFR_RESULTS="$PWD/rerun" python3 -W ignore dnfr/run_task.py hkg_DpS --seeds 0 --variants dnfr,dnfr_max,dnfr_nodeg --no_baselines \
-    > rerun/log.txt 2>&1
+    >> rerun/log.txt 2>&1
 python3 - <<'EOF'
 import json
 new = {r["seed"]: r for r in json.load(open("rerun/hkg_DpS.json"))["runs"]}[0]["methods"]

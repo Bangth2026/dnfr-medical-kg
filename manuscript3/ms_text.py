@@ -568,6 +568,7 @@ def results(dc):
     # ---------------- 4.7 explanations
     heading(dc, "4.7 Explanations (RQ4)", 2)
     e = lambda t, k: E[t][k]
+    XR = XREV
     P_(dc, "Because each score is a noisy-OR, deleting a path changes −log(1 − P) by exactly its share; the attribution is exact for "
            "the model's additive score, not for the underlying evidence. Paths that share a fact count it once per path: the three "
            "leading paths shared at least one fact for " + joinand([f"{pct(E2[t]['top3_share_edge'])} of pairs on {SH(t)}" for t in ("het_CtD", "het_DpS", "hkg_DpS") if t in E2])
@@ -631,9 +632,28 @@ def results(dc):
            "lateral sclerosis, which Hetionet links to multiple sclerosis by a \"resembles\" edge derived from text co-occurrence "
            "[@himmelstein2017], a weaker kind of evidence than a curated association. On the graded emergency-department graph, "
            "bronchitis was linked to fatigue through persistent cough, sore throat and congestion shared with pneumonia, "
-           "streptococcal pharyngitis, mononucleosis and sinusitis. These examples illustrate the form of the explanations; they "
-           "were not rated by clinicians, and we make no claim about their clinical plausibility or usefulness.")
+           "streptococcal pharyngitis, mononucleosis and sinusitis. These examples illustrate the form of the explanations"
+           + ("; a clinical assessment of a larger sample follows." if XR else
+              "; they were not rated by clinicians, and we make no claim about their clinical plausibility or usefulness."))
     R.table_examples(dc)
+    if XR and all(t in XR for t in ("het_DpS", "hkg_DpS")):
+        def r(t, *k):
+            v = XR[t]
+            for x in k:
+                v = v[x]
+            return v
+        P_(dc, "The second author, who is trained in clinical psychology, rated "
+               + joinand([f"{XR[t]['n_paths']} paths of {XR[t]['n_pairs']} correctly ranked pairs on {SH(t)}" for t in ("het_DpS", "hkg_DpS")])
+               + " without seeing the model's scores (Section 3.6). Every relation on the path agreed with biomedical knowledge for "
+               + joinand([pct(r(t, "relations_correct", "share")) for t in ("het_DpS", "hkg_DpS")])
+               + " of the rated paths. A path offered a mechanistic rationale, a shared cause, pathway or organ system, for "
+               + joinand([pct(r(t, "rationale", "M", "share")) for t in ("het_DpS", "hkg_DpS")])
+               + ", an associative one only for " + joinand([pct(r(t, "rationale", "A", "share")) for t in ("het_DpS", "hkg_DpS")])
+               + ", and was irrelevant or misleading for " + joinand([pct(r(t, "rationale", "I", "share")) for t in ("het_DpS", "hkg_DpS")])
+               + ". The median usefulness of the three leading paths to a clinician judging the prediction was "
+               + joinand([f"{r(t, 'usefulness', 'median')} of 5" for t in ("het_DpS", "hkg_DpS")])
+               + ". One rater, who is also an author, cannot establish clinical validity; the assessment shows what kind of "
+               "rationale the explanations offer, not how often clinicians would accept it.")
 
     # ---------------- 4.8 cost
     heading(dc, "4.8 Computational cost", 2)
@@ -811,10 +831,13 @@ def declarations(dc):
            "and the scripts that compute the statistics and figures and build this manuscript from the result files are available "
            f"under the MIT licence at https://github.com/Bangth2026/dnfr-medical-kg (release {RELEASE}).")
     P_(dc, "**CRediT author statement.** Truong Hai Bang: Conceptualization; Methodology; Software; Formal analysis; Data curation; "
-           "Visualization; Writing – original draft; Writing – review and editing. Van An Phan Thi: Validation (a check that the "
-           "nodes and edges of the path explanations in Table 7 exist in the source graphs with the stated relations; this was a "
-           "check of graph correctness, not a clinical judgement); Writing – review and editing. All authors approved the final "
-           "manuscript and agree to be accountable for all aspects of the work.")
+           "Visualization; Writing – original draft; Writing – review and editing. Van An Phan Thi (clinical psychology): "
+           "Conceptualization (clinical framing of the prediction tasks, of the disease-centred split and of what an explanation "
+           "should let a clinician check); Validation (a check that the relations on the explanation paths agree with biomedical "
+           "knowledge, not only with the source graphs); "
+           + ("Investigation (the clinical assessment of explanations in Section 4.7); " if XREV else "")
+           + "Writing – original draft (the clinical interpretation in Sections 5.3–5.5); Writing – review and editing. All "
+           "authors approved the final manuscript and agree to be accountable for all aspects of the work.")
     P_(dc, "**Independent verification.** Without the AI system, the corresponding author (Truong Hai Bang) checked every result "
            "reported in this article, in the text, the tables, the figures and the supplementary material, against the released "
            "result files.")

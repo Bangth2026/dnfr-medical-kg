@@ -404,6 +404,17 @@ def methods(d):
          "each path's share equally among its facts. The same fact-level counterfactual then re-scores every candidate of the head "
          "with the DWPC features recomputed without the removed fact. The score P orders candidates but is not calibrated as a "
          "probability.")
+    if XREV:
+        n = sum(v["n_pairs"] for v in XREV.values())
+        P(d, "**Clinical assessment of explanations.** On each disease–symptom task we drew, with a fixed seed, 25 held-out pairs of "
+             f"the seed-0 split that DNFR ranked in its top 10 ({n} pairs in all) and listed the three paths with the largest share of "
+             "the evidence. The second author, trained in clinical psychology, rated them without seeing ranks, scores, memberships "
+             "or shares. For each path she recorded whether every relation on it agrees with biomedical knowledge (yes, no, unsure) "
+             "and the kind of rationale it offers: mechanistic (a shared cause, pathway or organ system that would explain the "
+             "symptom), associative only (comorbidity or a similar disease, without an explanation of why) or irrelevant. For each "
+             "pair she recorded whether the disease plausibly presents with the symptom and how useful the three paths would be to a "
+             "clinician judging the prediction (1 to 5). The sheet, the key and the ratings are released with the code. The rater "
+             "knew the aims of the study, and drug repurposing was not rated, because it lies outside her expertise.")
     P(d, "**Sparsity analysis.** We removed 50% and 75% of all edges of every relation type at random, including training edges of the "
          "target relation, and repeated training and evaluation of the path methods and of completion over three splits with the same "
          "test pairs. This favours path methods by construction, since completion uses no other relation.")
