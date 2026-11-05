@@ -15,45 +15,40 @@ def rt(task, seed, variants, base="", extra=()):
 
 J = []   # (job id, heavy, command, extra environment)
 CTD = "het_CtD"
-LOO = "dnfr2_no_overlap,dnfr2_no_gumbel,dnfr2_no_ic,dnfr2_no_anneal"
-# priority 1: Hamacher and fixed degree terms on CtD (M1, Q1); annealing on CtD and DpS (M5, Q4); the ablation without
-# metapaths through the target relation (M4, Q3); the remaining DpS refinement splits
+PROF = lambda task, s, grid: (PY + [f"{ROOT}/dnfr/profile_lbfgs.py", task, str(s), grid], {"DNFR_RESULTS": f"{ROOT}/results2/prof_ext"})
+# The list is ordered by priority and interleaves CtD jobs (about 3 GB each) with light ones, so that two workers never
+# hold more than two CtD path sets. Priority 1: Hamacher and fixed degree terms on CtD (M1, Q1); annealing on CtD and
+# DpS (M5, Q4); the ablation without metapaths through the target relation (M4, Q3); the IC rescaling check (M5);
+# the profile with p > 0 on the graded graph (M3).
 for s in range(3, 10):
     J.append((f"ctd4_ham_s{s}", True, rt(CTD, s, ("hamacher," if s >= 4 else "") + "dnfr_fixdeg"), {}))
-    J.append((f"dps4_s{s}", False, rt("het_DpS", s, "dnfr_anneal,dnfr_ic,product_overlap,dnfr_shared," + LOO), {}))
+    J.append((f"dps4a_s{s}", False, rt("het_DpS", s, "dnfr_anneal"), {}))
 J.append(("hkg4_icsd", False, RUN + ["hkg_DpS", "--seeds", "0,1,2,3,4,5,6,7,8,9", "--variants", "dnfr_ic_sd", "--no_baselines"], {}))
+for s in range(0, 3):
+    c, e = PROF("hkg_DpS", s, "-1,-0.5,-0.25,0,0.1,0.25,0.5"); J.append((f"prof_hkg_s{s}", False, c, e))
 for s in range(0, 10):
     J.append((f"ctd4_ann_s{s}", True, rt(CTD, s, "dnfr_anneal"), {}))
     J.append((f"ctd4_notgt_s{s}", True, rt(CTD, s, "dnfr,product", "dwpc_lr", ["--tag", "_notgt"]), {"DNFR_DROP_TARGET_MPS": "1"}))
-# priority 2: profile with p > 0 on the graded graph (M3); DNFR 2.0, the validation-selected fixed p and the
-# frozen-membership pair on all CtD splits (M1); NBFNet tuning grid on the graded graph (M7)
-for s in range(0, 3):
-    J.append((f"prof_hkg_s{s}", False, PY + [f"{ROOT}/dnfr/profile_lbfgs.py", "hkg_DpS", str(s), "-1,-0.5,-0.25,0,0.1,0.25,0.5"],
-              {"DNFR_RESULTS": f"{ROOT}/results2/prof_ext"}))
-for s in range(5, 10):
-    J.append((f"ctd4_v2_s{s}", True, rt(CTD, s, "dnfr2"), {}))
-    J.append((f"ctd4_fix_s{s}", True, rt(CTD, s, "fixp_m2,fixp_m1,fixp_m05"), {}))
-for s in range(3, 10):
-    J.append((f"ctd4_frz_s{s}", True, rt(CTD, s, "dnfr_frozen,product_frozen"), {}))
+# priority 2: the frozen-membership pair and DNFR 2.0 on all CtD splits (M1); NBFNet tuning grid on the graded graph and
+# NBFNet on all DpS splits (M7); converged profile on Hetionet DpS (M3)
 for lr in ("5e-3", "1e-2"):
     for d in ("32", "64"):
-        if (lr, d) == ("5e-3", "32"):
-            continue
-        J.append((f"nbf_hkg_d{d}_lr{lr}", False, PY + [f"{ROOT}/dnfr/nbfnet.py", "hkg_DpS", "0,1,2,3,4,5,6,7,8,9", "3", d],
-                  {"NBF_LR": lr, "DNFR_RESULTS": f"{ROOT}/results2/nbf"}))
-# priority 3: the remaining refinements on CtD; NBFNet on all DpS splits; converged profile on Hetionet DpS (M3)
+        if (lr, d) != ("5e-3", "32"):
+            J.append((f"nbf_hkg_d{d}_lr{lr}", False, PY + [f"{ROOT}/dnfr/nbfnet.py", "hkg_DpS", "0,1,2,3,4,5,6,7,8,9", "3", d],
+                      {"NBF_LR": lr, "DNFR_RESULTS": f"{ROOT}/results2/nbf"}))
 for s in range(3, 10):
-    J.append((f"ctd4_ref_s{s}", True, rt(CTD, s, "dnfr_gumbel,dnfr_ic,dnfr_shared"), {}))
-for s in range(3, 10):
+    J.append((f"ctd4_frz_s{s}", True, rt(CTD, s, "dnfr_frozen,product_frozen"), {}))
     J.append((f"nbf_dps_s{s}", False, PY + [f"{ROOT}/dnfr/nbfnet.py", "het_DpS", str(s)],
               {"NBF_BATCH": "8", "NBF_EPOCHS": "150", "DNFR_RESULTS": f"{ROOT}/results2/nbf"}))
+for s in range(5, 10):
+    J.append((f"ctd4_v2_s{s}", True, rt(CTD, s, "dnfr2"), {}))
 for s in range(0, 3):
-    J.append((f"prof_dps_s{s}", False, PY + [f"{ROOT}/dnfr/profile_lbfgs.py", "het_DpS", str(s),
-                                             "-5,-3,-2,-1.5,-1,-0.5,-0.25,0,0.1,0.25"],
-              {"DNFR_RESULTS": f"{ROOT}/results2/prof_ext"}))
+    c, e = PROF("het_DpS", s, "-5,-2,-1,-0.5,-0.25,0,0.25"); J.append((f"prof_dps_s{s}", False, c, e))
+# priority 3: the validation-selected fixed p and the shared p on all CtD splits; AnyBURL on all CtD splits
+for s in range(5, 10):
+    J.append((f"ctd4_fix_s{s}", True, rt(CTD, s, "fixp_m2,fixp_m1,fixp_m05"), {}))
 for s in range(3, 10):
-    J.append((f"ctd4_ovl_s{s}", True, rt(CTD, s, "dnfr_overlap"), {}))
-# priority 4: AnyBURL on all CtD splits
+    J.append((f"ctd4_sh_s{s}", True, rt(CTD, s, "dnfr_shared"), {}))
 J.append(("anyburl_ctd", False, PY + [f"{ROOT}/dnfr/anyburl_run.py", CTD, "--seeds", "3,4,5,6,7,8,9",
                                       "--jar", f"{ROOT}/tools/AnyBURL-23-1.jar"], {"DNFR_RESULTS": f"{ROOT}/results2/anyburl"}))
 
@@ -93,7 +88,7 @@ if __name__ == "__main__":
         os.makedirs(d, exist_ok=True)
         if os.path.exists(f"{d}/DONE") or not claim(d):
             continue
-        env = dict(os.environ, NT="1", **env_x)
+        env = dict(os.environ, NT=os.environ.get("QNT", "1"), **env_x)
         env.setdefault("DNFR_RESULTS", d)
         if "DNFR_RESULTS" not in env_x:
             env["DNFR_RESULTS"] = d

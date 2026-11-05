@@ -25,7 +25,10 @@ FAMILY = [  # (a, b): the comparisons that enter the Holm family of a task
     ("fixp_val", "dnfr"), ("fixp_val", "product"),
 ]
 # separate Holm family: the learned-operator GNN against the main path methods and completion (reviewer M7)
-FAMILY_NBF = [("nbfnet", "dnfr"), ("nbfnet", "dwpc_lr"), ("nbfnet", "softimpute"), ("nbfnet", "product")]
+FAMILY_NBF = [("nbfnet", "dnfr"), ("nbfnet", "dwpc_lr"), ("nbfnet", "softimpute"), ("nbfnet", "product"),
+              ("nbfnet_tuned", "dnfr"), ("nbfnet_tuned", "dwpc_lr")]
+# descriptive checks outside the confirmatory families (no Holm adjustment, no verdict used in the text)
+DESCR = [("dnfr_ic_sd", "dnfr"), ("dnfr_ic_sd", "dnfr_ic")]
 RESTARTS = {"dnfr2": ["dnfr2", "dnfr2_r1", "dnfr2_r2"], "dnfr_gumbel": ["dnfr_gumbel", "dnfr_gumbel_r1", "dnfr_gumbel_r2"]}
 FREE = ["dnfr_free_pm2", "dnfr_free", "dnfr_free_pp05"]
 FREE_INIT = {"dnfr_free_pm2": -2.0, "dnfr_free": -0.1, "dnfr_free_pp05": 0.5}
@@ -55,6 +58,19 @@ def merge(task):
         a = json.load(open(f))
         if a["seed"] in runs:
             runs[a["seed"]]["methods"]["nbfnet"] = a["metrics"]; runs[a["seed"]]["ranks"]["nbfnet"] = a["ranks"]
+    # NBFNet with a 2 x 2 grid of learning rate and dimension, configuration chosen per split by validation MRR (M7)
+    for R in runs.values():
+        cfg = {"d32_lr5e-3": R["methods"].get("nbfnet")}
+        for f in glob.glob(f"{ROOT}/results2/nbf/nbfnet_{task}_d*_lr*_seed{R['seed']}.json"):
+            a = json.load(open(f)); c = os.path.basename(f)[len(f"nbfnet_{task}_"):].rsplit("_seed", 1)[0]
+            cfg[c] = dict(a["metrics"], ranks=a["ranks"])
+        if R["methods"].get("nbfnet"):
+            cfg["d32_lr5e-3"] = dict(R["methods"]["nbfnet"], ranks=R["ranks"]["nbfnet"])
+        cfg = {k: v for k, v in cfg.items() if v}
+        if len(cfg) >= 4:
+            best = max(cfg, key=lambda k: cfg[k]["valid_MRR"])
+            R["methods"]["nbfnet_tuned"] = {k: v for k, v in cfg[best].items() if k != "ranks"} | {"chosen": best}
+            R["ranks"]["nbfnet_tuned"] = cfg[best]["ranks"]
     # validation-selected fixed t-norm (shared p chosen per split on validation MRR among the grid values run)
     for R in runs.values():
         cand = [m for m in GRID if m in R["methods"] and m in R["ranks"]]
@@ -101,6 +117,16 @@ def verdict(v):
     if ph is not None and ph < 0.05 and (v["bs95"][0] > 0 or v["bs95"][1] < 0) and np.sign(v["bs95"][0]) == np.sign(v["delta"]):
         return "different"
     return "inconclusive"
+
+
+def verdict_rule2(v):
+    """Rule of the second revision: equivalent if the 90% corrected-t interval lies inside the margin; different if the
+    unadjusted 95% corrected-t interval excludes zero (reviewer M6 asks for verdicts under both rules)."""
+    if v is None or v.get("p") is None:
+        return "untested"
+    if v["nb90"][0] > -EQ and v["nb90"][1] < EQ:
+        return "equivalent"
+    return "different" if (v["nb95"][0] > 0 or v["nb95"][1] < 0) else "inconclusive"
 
 
 def summary(runs):
@@ -158,12 +184,43 @@ def prior_summary(pc):
     return out
 
 
-def profile_summary(pl):
-    rows = [d for k, d in pl.items() if "hkg_DpS" in k]
+def curvature_at(ps, L):
+    """Second derivative of the profile at its minimum from the three grid points around it (non-uniform central
+    difference); at an end of the grid, from the three points nearest that end (a one-sided estimate)."""
+    i = int(np.argmin(L)); j = min(max(i, 1), len(ps) - 2)
+    h1, h2 = ps[j] - ps[j - 1], ps[j + 1] - ps[j]
+    return float(2 * (h1 * L[j + 1] - (h1 + h2) * L[j] + h2 * L[j - 1]) / (h1 * h2 * (h1 + h2))), bool(0 < i < len(ps) - 1)
+
+
+def merged_profiles(task):
+    """Profile fits of the first run and of the extension (grid with p > 0), keeping the lower loss at each p."""
+    out = []
+    for f in sorted(glob.glob(f"{ROOT}/results/profile_lbfgs_{task}_seed*.json")) + \
+            [g for g in sorted(glob.glob(f"{ROOT}/results2/prof_ext/profile_lbfgs_{task}_seed*.json"))
+             if not os.path.exists(f"{ROOT}/results/{os.path.basename(g)}")]:
+        d = json.load(open(f)); rows = {r["p"]: r for r in d["rows"]}
+        g = f"{ROOT}/results2/prof_ext/{os.path.basename(f)}"
+        if os.path.exists(g) and g != f:
+            for r in json.load(open(g))["rows"]:
+                if r["p"] not in rows or r["loss"] < rows[r["p"]]["loss"]:
+                    rows[r["p"]] = dict(r, from_extension=True)
+        d["rows"] = [rows[p] for p in sorted(rows)]
+        ps = np.array([r["p"] for r in d["rows"]]); L = np.array([r["loss"] for r in d["rows"]])
+        d["p_min"] = float(ps[np.argmin(L)]); d["loss_range"] = float(L.max() - L.min())
+        d["d2L_dp2"], d["interior"] = curvature_at(ps, L)
+        d["loss_range_nonpos"] = float(L[ps <= 0].max() - L[ps <= 0].min())
+        out.append(d)
+    return out
+
+
+def profile_summary(pl, task="hkg_DpS"):
+    rows = merged_profiles(task)
     if not rows:
         return None
     out = dict(seeds=[d["seed"] for d in rows], p_min=[d["p_min"] for d in rows], curvature=[d["d2L_dp2"] for d in rows],
-               loss_range=[d["loss_range"] for d in rows])
+               interior=[d["interior"] for d in rows], loss_range=[d["loss_range"] for d in rows],
+               loss_range_nonpos=[d["loss_range_nonpos"] for d in rows], grid=[[r["p"] for r in d["rows"]] for d in rows],
+               rows=[d["rows"] for d in rows])
     by_p = {}
     for d in rows:
         L = np.array([r["loss"] for r in d["rows"]])
@@ -228,7 +285,13 @@ def main():
             hp = holm({k: v["p"] for k, v in F.items()})
             for k, v in F.items():
                 v["p_holm"] = hp.get(k); v["verdict"] = verdict(v); v["family"] = fam_name
+                v["verdict_rule2"] = verdict_rule2(v)
             S["paired"].update(F)
+        for a_, b_ in DESCR:
+            v = paired(runs, a_, b_)
+            if v:
+                v["family"] = "descr"; S["paired"][f"{a_}__{b_}"] = v
+        S["nbf_tuned_choice"] = collections.Counter(r["methods"]["nbfnet_tuned"]["chosen"] for r in runs if "nbfnet_tuned" in r["methods"])
         S["fixp_val_choice"] = collections.Counter(r["methods"]["fixp_val"]["chosen"] for r in runs if "fixp_val" in r["methods"])
         S["restarts"] = {k: restart_agreement(runs, v) for k, v in RESTARTS.items()}
         S["ops_single"] = collections.Counter(o for r in runs for o in r["extra"].get("ops_chosen", {}).get("dnfr2", []))
@@ -245,6 +308,7 @@ def main():
     out["profile_lbfgs"] = {os.path.basename(f): json.load(open(f)) for f in
                             sorted(set(glob.glob(f"{ROOT}/results2/profile_lbfgs_*.json")) | set(glob.glob(f"{ROOT}/results/profile_lbfgs_*.json")))}
     out["profile_summary"] = profile_summary(out["profile_lbfgs"])
+    out["profile_summary_dps"] = profile_summary(out["profile_lbfgs"], "het_DpS")
     out["explain3"] = {os.path.basename(f).split("_explain")[0]: json.load(open(f))["summary"]
                        for f in glob.glob(f"{ROOT}/results/*_explain_eval3.json")}
     out["ctd_valid_spread"] = valid_spread()

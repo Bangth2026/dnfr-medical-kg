@@ -10,7 +10,7 @@ NAMES = {"dnfr": "DNFR (learned p per metapath)", "dnfr2": "DNFR 2.0 (R1–R4)",
          "product_fixdeg": "Product, degree terms fixed (b = c = 0.4)",
          "dnfr_max": "DNFR, strongest path only", "dnfr_binary": "DNFR, edge weights ignored",
          "dwpc_lr": "DWPC + logistic regression", "dwpc_lr_full": "DWPC-LR + degree + prior", "anyburl": "AnyBURL (path rules)",
-         "nbfnet": "NBFNet (compact, CPU)",
+         "nbfnet": "NBFNet (compact, CPU)", "nbfnet_tuned": "NBFNet, tuned (2 × 2 grid, chosen on validation)",
          "popularity": "Popularity (training positives of the tail)", "prior": "Edge prior (degree-preserving permutations)",
          "svd": "Truncated SVD (rank chosen on validation)", "svd_rank3": "Rank-3 SVD", "softimpute": "Soft-thresholded SVD (Soft-Impute)",
          "kge_TransE": "TransE (untuned)", "kge_RotatE": "RotatE (untuned)",
@@ -20,8 +20,8 @@ NAMES = {"dnfr": "DNFR (learned p per metapath)", "dnfr2": "DNFR 2.0 (R1–R4)",
          "dnfr2_no_ic": "DNFR 2.0 without R3", "dnfr2_no_anneal": "DNFR 2.0 without R4",
          "fixp_m4": "Fixed p = −4", "fixp_m2": "Fixed p = −2", "fixp_m1": "Fixed p = −1", "fixp_m05": "Fixed p = −0.5",
          "fixp_05": "Fixed p = 0.5", "dnfr_frozen": "DNFR, memberships frozen", "product_frozen": "Product, memberships frozen"}
-R3T = ["het_CtD", "het_DpS", "hkg_DpS"]           # tasks on which the third-revision experiments were run
-ONLY_R3 = {"fixp_val", "nbfnet"}
+R3T = ["het_CtD", "het_DpS", "hkg_DpS"]           # tasks on which the refinements, fixed p and NBFNet were run
+ONLY_R3 = {"fixp_val", "nbfnet", "nbfnet_tuned"}
 
 
 def T(d, *a, **k):
@@ -81,7 +81,7 @@ def mean_any(t, m):
 def table2(d):
     groups = [("§Path methods, fixed or learned weighting of the same paths", ["dnfr", "dnfr2", "product", "hamacher", "fixp_val",
                                                                             "dwpc_lr", "dwpc_lr_full", "anyburl"]),
-              ("§Learned path operators", ["nbfnet"]),
+              ("§Learned path operators", ["nbfnet", "nbfnet_tuned"]),
               ("§Without paths", ["softimpute", "svd", "prior", "popularity"]),
               ("§Knowledge graph embeddings (untuned reference points)", ["kge_RotatE", "kge_TransE"])]
     rows = []
@@ -89,11 +89,12 @@ def table2(d):
         rows.append([g])
         for m in meths:
             rows.append([NAMES[m]] + [mrr_any(t, m) for t in TASKS])
-    T(d, "**Table 2.** Test MRR (mean ± SD over random splits) of DNFR, DNFR 2.0 and the baselines. Numbers in parentheses give "
+    T(d, "**Table 2.** Test MRR (mean ± SD over random splits) of DNFR, its variants and the baselines. Numbers in parentheses give "
          "the number of splits when it differs from that of DNFR (" + ", ".join(f"{nseeds(t, 'dnfr')}" for t in TASKS) + " splits on "
          "the four tasks). MRR is not comparable across columns, because the number of candidates differs (Table 1). Fixed p, "
          "selected on validation: one Schweizer–Sklar p chosen per split from a grid by validation MRR, trained with the protocol of "
-         "DNFR. The third-revision experiments (DNFR 2.0, fixed p, NBFNet) were not run on PrimeKG. Hits@k, intervals and every "
+         "DNFR. DNFR 2.0 (all four refinements of Section 3.3), the validation-selected fixed p and NBFNet were not run on PrimeKG. "
+         "Hits@k, intervals and every "
          "variant are in Supplementary Tables S1–S4.",
       ["Method"] + [TASK_LABEL[t] for t in TASKS], rows, widths=[2.07, 1.05, 1.05, 1.05, 1.05], size=8)
 
@@ -119,7 +120,8 @@ def table3(d):
     T(d, "**Table 3.** What each learned component adds. Each cell is the difference in test MRR between the model with the component "
          "and the model without it, averaged over the splits on which both were run, with its 95% paired bootstrap interval and the "
          "number of splits on which the difference was positive (out of the splits run). Verdicts under the rule of Section 3.6, "
-         "with Holm adjustment over the comparisons of panels A–C of each task: ≈ equivalent within ±0.01; † different; no mark, "
+         "with Holm adjustment within the family of component comparisons of each task (all panels; Section 3.6): ≈ equivalent "
+         "within ±0.01; † different; no mark, "
          "inconclusive. — not run or not applicable (Hetionet and PrimeKG edges carry no graded weight).",
       ["Component"] + [TASK_LABEL[t] for t in TASKS], rows, widths=[1.87, 1.1, 1.1, 1.1, 1.1], size=7.5)
 
@@ -144,12 +146,13 @@ def table4(d):
         rows.append([lab] if a is None else [lab] + [r3cell(r3p(t, a, b)) for t in R3T])
     T(d, "**Table 4.** The four refinements and a validation-selected fixed t-norm. Each cell gives the difference in test MRR, its "
          "95% paired bootstrap interval and the number of splits on which it was positive, out of the splits run. Verdicts as in "
-         "Table 3, with Holm adjustment over the comparisons of this table within each task. Not run on PrimeKG.",
+         "Table 3, with Holm adjustment within the family of refinement comparisons of each task (all rows of this table; "
+         "Section 3.6). DNFR 2.0 combines R1–R4. — not run. Not run on PrimeKG.",
       ["Comparison"] + [TASK_LABEL[t] for t in R3T], rows, widths=[2.07, 1.4, 1.4, 1.4], size=7.5)
 
 
-# ---------------------------------------------------------------- Table 5: identifiability of the operator
-def table5(d):
+# ---------------------------------------------------------------- Supplementary: identifiability of the operator
+def supp_identifiability(d, num):
     V = [("dnfr", "p₀ = −0.1, λ = 10⁻³ (default)"), ("dnfr_l2_0", "p₀ = −0.1, no penalty"), ("dnfr_pm2", "p₀ = −2, no penalty"),
          ("dnfr_pm1", "p₀ = −1, no penalty"), ("dnfr_pp05", "p₀ = 0.5, no penalty")]
     rows = [["§Bounded parameter p = 6σ(θ) − 5, default early stopping: test MRR; learned p, median [IQR]"]]
@@ -195,7 +198,7 @@ def table5(d):
     rs = RS["stopping"]
     rows.append(["Epoch of best validation MRR, DNFR (median)"] + [f"{ri(rs[t]['dnfr']['best_epoch']['median'])}"
                                                                 if t in rs and "dnfr" in rs[t] else "—" for t in TASKS])
-    T(d, "**Table 5.** Does training determine the t-norm? Restarts of the bounded parameterisation, an unbounded parameterisation, "
+    T(d, f"**Table S{num}.** Does training determine the t-norm? Restarts of the bounded parameterisation, an unbounded parameterisation, "
          "restarts of the discrete operator choice, and the value of a fixed shared p chosen on validation data. Numbers in "
          "parentheses give the number of splits when it differs from that of DNFR.",
       ["Setting"] + [TASK_LABEL[t] for t in TASKS], rows, widths=[1.67, 1.15, 1.15, 1.15, 1.15], size=7.5)
@@ -209,17 +212,28 @@ def np_median(x):
 def table_tail(d):
     tg = "_tail"
     meths = ["dnfr", "product", "hamacher", "dnfr_nodeg", "dwpc_lr", "dwpc_lr_full", "softimpute", "svd", "prior", "popularity"]
-    rows = []
+    rows = [[f"§A. Disease-centred split ({nseeds('het_CtD', 'dnfr', tg)} splits): every indication of a test disease held out; "
+             "ΔMRR is the method minus DNFR"]]
     for m in meths:
         s = summ("het_CtD", m, tg)
         if s is None:
             continue
         rows.append([NAMES[m], mrr("het_CtD", m, sd=False, mark_n=False), mrr("het_CtD", m, tg), f3(s["H10"]["mean"]),
                      "—" if m == "dnfr" else cell(_neg(pr("het_CtD", "dnfr", m, tg)), verdict=False)])
-    T(d, f"**Table 6.** Hetionet compound–treats–disease with a disease-centred split ({nseeds('het_CtD', 'dnfr', tg)} splits): every "
-         "indication of a test disease is held out together. Random-split MRR from Table 2 for comparison. ΔMRR is the method minus "
-         "DNFR, with its 95% bootstrap interval and the number of splits on which it was positive.",
-      ["Method", "MRR, random split", "MRR, disease split", "Hits@10, disease split", "ΔMRR vs DNFR [95% CI], splits"], rows,
+    NT = R4.get("notgt")
+    if NT:
+        rows.append([f"§B. Random splits without the {R4['explain_dwpc']['het_CtD']['dnfr']['n_target_metapaths']} metapaths that "
+                     "contain the treats relation; ΔMRR is the model without them minus the model with them"])
+        for m in ("dnfr", "product", "dwpc_lr"):
+            a_ = NT["means"].get(m + "_notgt"); p_ = NT["paired"].get(f"{m}_notgt__{m}")
+            if not a_ or not a_["n"]:
+                continue
+            rows.append([NAMES[m], f3(NT["means"][m]["mean"]), f"{f3(a_['mean'])} ± {f3(a_['sd'])} ({a_['n']})", "—",
+                         r3cell(p_) if p_ else "—"])
+    T(d, "**Table 5.** Hetionet compound–treats–disease in two harder settings. Random-split MRR from Table 2 for comparison (in "
+         "panel B, over the same splits). Each Δ is given with its 95% bootstrap interval and the number of splits on which it "
+         "was positive; in panel B, verdicts as in Table 3 (Holm adjustment within the panel).",
+      ["Method", "MRR, random split", "MRR, harder setting", "Hits@10, harder setting", "ΔMRR [95% CI], splits"], rows,
       widths=[2.0, 0.85, 1.05, 0.85, 1.52], size=8)
 
 
@@ -236,6 +250,10 @@ def table_expl(d):
     ts = [t for t in ("het_CtD", "het_DpS", "hkg_DpS") if t in E]
     g = lambda t, k: E[t][k]
     e3 = lambda t, k, f=pct: f(E3[t][k]) if t in E3 and E3[t].get(k) is not None else "—"
+    XD = R4.get("explain_dwpc", {})
+    dw = lambda t, k, f=pct: f(XD[t]["dwpc"][k]) if t in XD and XD[t]["dwpc"].get(k) is not None else "—"
+    dn = lambda t, k, f=pct: f(XD[t]["dnfr"][k]) if t in XD and XD[t]["dnfr"].get(k) is not None else "—"
+    pct1 = lambda x: f"{100 * x:.1f}%"
     rows = [["§Concision (all evaluated test pairs; medians)"],
             ["Test pairs evaluated (top-10 hits)"] + [f"{g(t, 'n_eval')} ({g(t, 'n_hits10')})" for t in ts],
             ["Paths per pair"] + [f"{g(t, 'n_paths_median'):.0f}" for t in ts],
@@ -249,23 +267,37 @@ def table_expl(d):
             ["Pairs whose three leading paths share a fact"] + [pct(E2[t]["top3_share_edge"]) if t in E2 else "—" for t in ts],
             ["Share of the leading fact: summed path shares"] + [e3(t, "top_edge_double_median") for t in ts],
             ["Share of the leading fact: Shapley value"] + [e3(t, "top_edge_shapley_median") for t in ts],
+            ["Same leading fact by Shapley value and by summed share"] + [dn(t, "same_shapley_summed") for t in ts],
+            ["DWPC-LR: share of the leading fact (proportional allocation)"] + [dw(t, "top_edge_share_median") for t in ts],
+            ["DWPC-LR: facts covering 50% of its positive attribution"] + [dw(t, "k50_edges_median", lambda x: f"{x:.0f}") for t in ts],
+            ["Same leading fact in DNFR (Shapley) and DWPC-LR"] + [
+                f"{pct(XD[t]['dwpc']['same_lead_as_dnfr'])} ({XD[t]['dwpc']['n_both']})" if t in XD else "—" for t in ts],
             ["§Deletion within the pair (top-10 hits that stay in the top 10)"],
             ["3 leading paths / 3 random paths deleted"] + [f"{pct(g(t, 'del_top3_keep10'))} / {pct(g(t, 'del_rand3_keep10'))}" for t in ts],
             ["Random paths with the share of the top 3 deleted"] + [pct(E2[t]["stay_top10"]["matched3"]) if t in E2 else "—" for t in ts],
             ["§Fact-level counterfactual (one fact removed from the graph; competing tails re-scored)"],
-            ["Fact with the largest Shapley share"] + [e3(t, "stay_top10_edge_top_sh") for t in ts],
-            ["Fact with the largest summed path share"] + [pct(E2[t]["stay_top10"]["edge_top"]) if t in E2 else "—" for t in ts],
-            ["Random fact on the pair's paths"] + [pct(E2[t]["stay_top10"]["edge_rand"]) if t in E2 else "—" for t in ts]]
+            ["DNFR: fact with the largest Shapley share"] + [e3(t, "stay_top10_edge_top_sh") for t in ts],
+            ["DNFR: random fact on the pair's paths"] + [pct(E2[t]["stay_top10"]["edge_rand"]) if t in E2 else "—" for t in ts],
+            ["DWPC-LR: its leading fact / a random fact on its paths"] + [
+                f"{pct(XD[t]['dwpc']['stay_top10_cf_top'])} / {pct(XD[t]['dwpc']['stay_top10_cf_random'])}" if t in XD else "—"
+                for t in ts]]
     if "het_CtD" in E3 and E3["het_CtD"].get("lead_class"):
         lc = E3["het_CtD"]["lead_class"]
-        rows.append(["§Leading metapath of correct top-10 predictions (drug repurposing)"])
-        rows.append(["Mechanistic (through a target gene) / associative / other"] + [
+        rows.append(["§Drug repurposing: metapath classes of correct top-10 predictions"])
+        rows.append(["Leading metapath: mechanistic (target gene) / associative / other"] + [
             f"{pct(lc['gene'])} / {pct(lc['associative'])} / {pct(lc['other'])}" if t == "het_CtD" else "—" for t in ts])
-    T(d, "**Table 7.** Quantitative evaluation of path explanations on the seed-0 split. Evidence is −log(1 − P) above the leak, "
+        if "het_CtD" in XD:
+            sh = XD["het_CtD"]["dnfr"]["share_mean"]
+            rows.append(["Share of the evidence: mechanistic / associative / other (mean)"] + [
+                f"{pct1(sh['gene'])} / {pct1(sh['associative'])} / {pct1(sh['other'])}" if t == "het_CtD" else "—" for t in ts])
+            rows.append(["Share of the evidence on metapaths through the treats relation (mean)"] + [
+                pct1(XD["het_CtD"]["dnfr"]["share_target_mean"]) if t == "het_CtD" else "—" for t in ts])
+    T(d, "**Table 6.** Quantitative evaluation of path explanations on the seed-0 split. Evidence is −log(1 − P) above the leak, "
          "which the paths share exactly. Summed path shares count a fact once for every path through it; the Shapley value splits "
-         "each path's term equally among its facts (Section 3.6) and sums to the total. Deletion within the pair changes one score "
-         "with all others fixed; the fact-level counterfactual removes one fact from the graph and re-scores every candidate of the "
-         "same head, without retraining.",
+         "each path's term equally among its facts (Section 3.6) and sums to the total. DWPC-LR rows use its own correct top-10 "
+         "predictions and the attribution of Section 3.6. Deletion within the pair changes one score with all others fixed; the "
+         "fact-level counterfactual removes one fact from the graph and re-scores every candidate of the same head, without "
+         "retraining. Metapath classes are given for drug repurposing only, the one task with a mechanistic route.",
       [""] + [TASK_LABEL[t] for t in ts], rows, widths=[2.67, 1.2, 1.2, 1.2], size=8)
 
 
@@ -277,7 +309,7 @@ def table_examples(d):
         for p in e["paths"][:3]:
             rows.append([" → ".join(p["nodes"]), p["metapath"].replace("^-1", "⁻¹"), ", ".join(f"{x:.2f}" for x in p["mu"]),
                          f3(p["p"], 2), f"{100 * p['share']:.1f}%"])
-    T(d, "**Table 8.** Explanations for three correctly top-ranked test pairs (seed-0 models): the three paths with the largest share "
+    T(d, "**Table 7.** Explanations for three correctly top-ranked test pairs (seed-0 models): the three paths with the largest share "
          "of the evidence, with edge memberships μ, the learned t-norm parameter p of the metapath and the share of −log(1 − P). "
          "Metapaths use Hetionet's relation abbreviations, with ⁻¹ for a relation traversed against its direction (e.g. PCiC⁻¹: "
          "compound to pharmacologic class). The score is a ranking score, not a calibrated probability.",
@@ -364,24 +396,86 @@ def supp_long(d, num):
        "Test MRR, epoch 400", "Training loss, epoch 400"], rows, widths=[0.75, 1.15, 1.15, 0.7, 0.85, 0.82, 0.85], size=7.5)
 
 
-def supp_profile(d, num):
-    PS = R3.get("profile_summary")
+def supp_profile(d, num, key="profile_summary", label="the graded graph"):
+    PS = R3.get(key)
     if not PS:
-        return
+        return 0
     rows = []
     for p, b in sorted(PS["by_p"].items(), key=lambda kv: float(kv[0])):
         rows.append([p.replace("-", "−"), f"{1e3 * b['excess']:.2f}", "—" if b["dLdp"] is None else f"{1e3 * b['dLdp']:+.2f}".replace("-", "−"),
                      f3(b["valid"]), f3(b["test"])])
-    T(d, f"**Table S{num}.** Converged profile on the graded graph (means over {len(PS['seeds'])} splits): for each fixed shared p, "
-         "training loss in excess of the split's minimum (×10⁻³ nat), ∂L/∂p at the converged fit (×10⁻³), validation and test MRR.",
+    T(d, f"**Table S{num}.** Converged profile on {label} (means over {len(PS['seeds'])} splits): for each fixed shared p, "
+         "training loss in excess of the split's minimum (×10⁻³ nat), ∂L/∂p at the converged fit (×10⁻³), validation and test MRR. "
+         "Values p > 0 were fitted with warm starts from the fit at the product.",
       ["p", "Excess loss ×10⁻³", "∂L/∂p ×10⁻³", "Validation MRR", "Test MRR"], rows, widths=[0.8, 1.3, 1.3, 1.3, 1.3], size=8)
-    rows = [[str(r["seed"]), f"{r['threshold']:.1e}", f"[{r['p_lo']:g}, {r['p_hi']:g}]".replace("-", "−"), f"{r['p_argmin']:g}".replace("-", "−"),
-             f"{r['p_best_valid']:g}".replace("-", "−"), f3(r["test_at_valid_choice"]), f3(r["test_product"])] for r in PS["intervals"]]
-    T(d, f"**Table S{num + 1}.** Profile-likelihood style intervals for p on the graded graph, per split: values of p whose converged "
+    rows = [[str(r["seed"]), f"{r['threshold']:.1e}", f"[{r['p_lo']:g}, {r['p_hi']:g}]".replace("-", "−"),
+             f"{r['p_argmin']:g}".replace("-", "−"), f"{c:.3f}" + ("" if inter else " (end)"),
+             f"{r['p_best_valid']:g}".replace("-", "−"), f3(r["test_at_valid_choice"]), f3(r["test_product"])]
+            for r, c, inter in zip(PS["intervals"], PS["curvature"], PS["interior"])]
+    T(d, f"**Table S{num + 1}.** Profile-likelihood style intervals for p on {label}, per split: values of p whose converged "
          "training loss lies within χ²(0.95, 1)/(2N) of the minimum, treating N times the mean loss as a negative log-likelihood "
-         "[@raue2009]; the filtered softmax is not a likelihood of independent observations, so the intervals are descriptive.",
-      ["Split", "Threshold (nat)", "Interval for p", "p at minimum loss", "p chosen on validation", "Test MRR at that p",
-       "Test MRR, product"], rows, widths=[0.5, 0.9, 1.0, 0.9, 1.0, 0.95, 1.0], size=8)
+         "[@raue2009]; the filtered softmax is not a likelihood of independent observations, so the intervals are descriptive. "
+         "Curvature ∂²L/∂p² at the minimum from the three grid points around it; (end): the minimum lies at an end of the grid, "
+         "and the value is a one-sided estimate from the three points nearest that end.",
+      ["Split", "Threshold (nat)", "Interval for p", "p at minimum loss", "Curvature", "p chosen on validation",
+       "Test MRR at that p", "Test MRR, product"], rows, widths=[0.45, 0.8, 0.95, 0.75, 0.75, 0.85, 0.85, 0.85], size=8)
+    return 2
+
+
+def supp_rules(d, num):
+    """Verdicts under the current rule and under the rule of the earlier version (reviewer M6)."""
+    rows = []
+    def add(label, t, p):
+        if p is None:
+            return
+        v2 = p.get("verdict_rule2", "—")
+        rows.append([label, TASK_LABEL[t], f"{sg(p['delta'])} ({p['wins']}/{p['J']})", p.get("verdict") or "—", v2 or "—"])
+    for t in TASKS:
+        for a, b, lab in (("dnfr", "dnfr_max", "Noisy-OR instead of the strongest path"),
+                          ("dnfr", "dnfr_nodeg", "Degree terms instead of none"),
+                          ("dnfr", "dnfr_fixdeg", "Learned instead of fixed degree terms"),
+                          ("dnfr", "product", "Learned p instead of the product"),
+                          ("dnfr", "hamacher", "Learned p instead of the Hamacher product"),
+                          ("dnfr", "dwpc_lr", "DNFR minus DWPC-LR")):
+            q = pr(t, a, b)
+            if q:
+                add(lab, t, dict(delta=q["delta_MRR"], wins=q["seed_wins"], J=q["seeds"], verdict=q.get("verdict"),
+                                 verdict_rule2=q.get("verdict_rule2")))
+    for t in R3T:
+        for a, b, lab in (("fixp_val", "product", "Fixed p (validation) minus the product"),
+                          ("dnfr2", "dnfr", "DNFR 2.0 minus DNFR"), ("dnfr_anneal", "dnfr", "R4 added to DNFR"),
+                          ("nbfnet", "dnfr", "NBFNet minus DNFR")):
+            add(lab, t, r3p(t, a, b))
+    NT = R4.get("notgt", {}).get("paired", {})
+    for m in ("dnfr", "dwpc_lr"):
+        if f"{m}_notgt__{m}" in NT:
+            add(f"{NAMES[m].split(' (')[0]} without treats metapaths minus with", "het_CtD", NT[f"{m}_notgt__{m}"])
+    T(d, f"**Table S{num}.** Verdicts for the comparisons on which the Highlights and the Conclusion rest, under the rule of "
+         "Section 3.6 and under the rule of the earlier version of this analysis (different when the unadjusted 95% corrected-t "
+         "interval excludes zero; equivalent when the 90% corrected-t interval lies inside ±0.01). Δ is the mean difference in "
+         "test MRR, with the number of splits on which it was positive.",
+      ["Comparison", "Task", "Δ (splits > 0)", "Verdict, current rule", "Verdict, earlier rule"], rows,
+      widths=[2.4, 1.05, 1.0, 0.95, 0.95], size=7.5)
+
+
+def supp_hamacher(d, num):
+    H = R4.get("hamacher_ctd") or []
+    rows = [[str(h["seed"]), f3(h["hamacher"]), f3(h["product"]), f3(h["dnfr"]),
+             "—" if h.get("loss_hamacher") is None else f"{h['loss_hamacher']:.3f}",
+             "—" if h.get("loss_product") is None else f"{h['loss_product']:.3f}",
+             "—" if h.get("best_epoch") is None else str(h["best_epoch"])] for h in H]
+    T(d, f"**Table S{num}.** Fixed Hamacher product on Hetionet compound–treats–disease, per split: test MRR of the Hamacher product, "
+         "the product and DNFR, the training loss at the last logged epoch (read from the run logs, available for the runs made "
+         "after the second version of this analysis), and the epoch of the best validation MRR of the Hamacher run.",
+      ["Split", "Hamacher MRR", "Product MRR", "DNFR MRR", "Hamacher final loss", "Product final loss", "Best epoch"], rows,
+      widths=[0.5, 0.9, 0.9, 0.9, 1.0, 1.0, 0.8], size=8)
+    E = R4.get("time_per_epoch_ctd") or []
+    rows = [[str(e["seed"]), f"{e['dnfr_s']:.0f}", str(e["epochs"]), f"{e['s_per_epoch']:.1f}",
+             "—" if e.get("dwpc_s") is None else f"{e['dwpc_s']:.1f}"] for e in E]
+    T(d, f"**Table S{num + 1}.** Time of one DNFR run and of DWPC-LR on Hetionet compound–treats–disease, per split. Splits 0–2 "
+         "come from an earlier batch whose thread setting was not recorded in the result files (the code default is two threads); "
+         "the other splits ran with one thread while a second job shared the two-core machine.",
+      ["Split", "DNFR time (s)", "Epochs", "Seconds per epoch", "DWPC-LR time (s)"], rows, widths=[0.6, 1.1, 0.8, 1.2, 1.2], size=8)
 
 
 def supp_prior(d, num):

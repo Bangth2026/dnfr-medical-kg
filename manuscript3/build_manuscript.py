@@ -1,4 +1,4 @@
-"""Build the third-revision manuscript and its supplementary material (.docx) from the statistics files.
+"""Build the manuscript and its supplementary material (.docx) from the statistics files.
 Usage: python3 manuscript3/build_manuscript.py [out_dir]"""
 import os, sys, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -9,17 +9,17 @@ import ms_front, ms_text
 CONTRIBUTIONS = [
     "A controlled component analysis on four tasks from three medical graphs that separates path aggregation, degree-aware and "
     "evidence-aware edge memberships and the t-norm, with fixed and validation-selected t-norms, frozen memberships and a fixed "
-    "DWPC-like discount trained under the same protocol, and a decision rule for equivalence and difference fixed before the "
-    "analyses added in this revision.",
-    "A test of four refinements of the model (overlap-aware aggregation, a discrete operator choice, an information-content hub "
-    "discount and membership annealing), each added alone and removed from their combination, DNFR 2.0. None improved accuracy "
-    "detectably, and the learned parameters show why.",
+    "DWPC-like discount trained under the same protocol, and one decision rule for equivalence and difference applied to every "
+    "comparison.",
     "An identifiability analysis of the t-norm parameter that separates structural redundancy between memberships and operator from "
-    "practical non-identifiability by the training objective, using restarts, an unbounded parameterisation and a converged "
-    "profile, and shows that validation-based selection recovers what end-to-end learning misses.",
-    "A comparison with degree-weighted path counts, AnyBURL, a compact NBFNet, low-rank completion and degree-only baselines under "
-    "leave-dyad-out random and disease-centred splits, and an evaluation of path explanations with an exact edge-level Shapley "
-    "attribution and fact-level counterfactuals, with the implementation, tests and all result files released.",
+    "practical non-identifiability by the training objective, using restarts, an unbounded parameterisation and converged "
+    "profiles on two graphs, and shows that validation-based selection recovers what end-to-end learning misses.",
+    "A comparison with degree-weighted path counts, AnyBURL, NBFNet, low-rank completion and degree-only baselines under "
+    "leave-dyad-out random and disease-centred splits and without the metapaths through the target relation, which shows how much "
+    "of the drug-repurposing accuracy rests on known indications.",
+    "An evaluation of path explanations with an exact edge-level Shapley attribution and fact-level counterfactuals, compared with "
+    "the same attribution for degree-weighted path counts, and a test of four refinements of the model, with the implementation, "
+    "tests and all result files released.",
 ]
 
 
@@ -47,9 +47,9 @@ def build(outdir):
     ms_text.conclusion(d)
     ms_text.declarations(d)
     ms_text.references(d)
-    out = os.path.join(outdir, "Manuscript_AIM_DNFR_rev3.docx"); d.save(out)
+    out = os.path.join(outdir, "Manuscript_AIM_DNFR_rev4.docx"); d.save(out)
     s = new_document(); ms_text.supplement(s)
-    outs = os.path.join(outdir, "Supplementary_AIM_DNFR_rev3.docx"); s.save(outs)
+    outs = os.path.join(outdir, "Supplementary_AIM_DNFR_rev4.docx"); s.save(outs)
     from docx import Document
     txt = [p.text for p in Document(out).paragraphs]
     i = txt.index("Abstract"); j = next(k for k in range(i, len(txt)) if txt[k].startswith("Keywords"))

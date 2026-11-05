@@ -112,6 +112,9 @@ def set_verdicts(family):
             v["verdict"] = "inconclusive" if v.get("p") is not None or v["seeds"] > 1 else None
             continue
         inside = lambda lo, hi: lo > -EQ_MARGIN and hi < EQ_MARGIN
+        # rule of the second revision, kept for the comparison of verdicts under both rules (reviewer M6)
+        v["verdict_rule2"] = ("equivalent" if inside(v["nb_ci90_lo"], v["nb_ci90_hi"]) else
+                              "different" if (v["nb_ci95_lo"] > 0 or v["nb_ci95_hi"] < 0) else "inconclusive")
         if inside(v["nb_ci90_lo"], v["nb_ci90_hi"]) and inside(v["ci90_lo"], v["ci90_hi"]):
             v["verdict"] = "equivalent"
         elif v["p_holm"] is not None and v["p_holm"] < 0.05 and (
