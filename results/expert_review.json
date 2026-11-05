@@ -1,0 +1,128 @@
+{
+ "het_DpS": {
+  "n_pairs": 25,
+  "n_paths": 75,
+  "relations_correct": {
+   "n": 75,
+   "share": 0.5333333333333333
+  },
+  "relations_wrong": {
+   "n": 75,
+   "share": 0.12
+  },
+  "rationale": {
+   "M": {
+    "n": 75,
+    "share": 0.4266666666666667
+   },
+   "A": {
+    "n": 75,
+    "share": 0.44
+   },
+   "I": {
+    "n": 75,
+    "share": 0.13333333333333333
+   }
+  },
+  "mechanistic_by_position": {
+   "1": {
+    "n": 25,
+    "share": 0.6
+   },
+   "2": {
+    "n": 25,
+    "share": 0.36
+   },
+   "3": {
+    "n": 25,
+    "share": 0.32
+   }
+  },
+  "mechanistic_gene_or_anatomy": {
+   "n": 7,
+   "share": 0.0
+  },
+  "mechanistic_disease_only": {
+   "n": 68,
+   "share": 0.47058823529411764
+  },
+  "pair_plausible": {
+   "n": 25,
+   "share": 0.88
+  },
+  "wrong_paths": {
+   "n_no": 9,
+   "n_dla": 7,
+   "mu_mid": 0.136,
+   "mu_yes": 0.4585
+  },
+  "usefulness": {
+   "n": 25,
+   "mean": 2.96,
+   "median": 3
+  }
+ },
+ "hkg_DpS": {
+  "n_pairs": 25,
+  "n_paths": 75,
+  "relations_correct": {
+   "n": 75,
+   "share": 0.6
+  },
+  "relations_wrong": {
+   "n": 75,
+   "share": 0.13333333333333333
+  },
+  "rationale": {
+   "M": {
+    "n": 75,
+    "share": 0.28
+   },
+   "A": {
+    "n": 75,
+    "share": 0.4666666666666667
+   },
+   "I": {
+    "n": 75,
+    "share": 0.25333333333333335
+   }
+  },
+  "mechanistic_by_position": {
+   "1": {
+    "n": 25,
+    "share": 0.24
+   },
+   "2": {
+    "n": 25,
+    "share": 0.36
+   },
+   "3": {
+    "n": 25,
+    "share": 0.24
+   }
+  },
+  "mechanistic_gene_or_anatomy": {
+   "n": 0,
+   "share": null
+  },
+  "mechanistic_disease_only": {
+   "n": 75,
+   "share": 0.28
+  },
+  "pair_plausible": {
+   "n": 25,
+   "share": 0.8
+  },
+  "wrong_paths": {
+   "n_no": 10,
+   "n_dla": 0,
+   "mu_mid": NaN,
+   "mu_yes": 0.03
+  },
+  "usefulness": {
+   "n": 25,
+   "mean": 2.64,
+   "median": 3
+  }
+ }
+}

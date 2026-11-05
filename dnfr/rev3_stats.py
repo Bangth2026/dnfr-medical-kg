@@ -327,5 +327,5 @@ if __name__ == "__main__":
             if m in S["summary"]:
                 s = S["summary"][m]; print(f"  {m:16s} {s['mean']:.3f} ± {s['sd']:.3f} (n={s['n']})")
         for k, v in S["paired"].items():
-            print(f"  {k:32s} Δ={v['delta']:+.4f} J={v['J']} wins={v['wins']} p_holm={v['p_holm']} -> {v['verdict']}")
+            print(f"  {k:32s} Δ={v['delta']:+.4f} J={v['J']} wins={v['wins']} p_holm={v.get('p_holm')} -> {v['verdict']}")
         print("  restarts", {k: (v and v['all_same_mean']) for k, v in S["restarts"].items()}, "fixp_val", dict(S["fixp_val_choice"]))

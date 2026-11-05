@@ -6,6 +6,7 @@ association between the rationale and the metapath class (paths through a gene o
 import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import OUT
+import numpy as np
 
 
 def main():
@@ -37,6 +38,11 @@ def main():
             mechanistic_gene_or_anatomy=share([norm(r[6]) for r in paths if gene(r)], "m"),
             mechanistic_disease_only=share([norm(r[6]) for r in paths if not gene(r)], "m"),
             pair_plausible=share(pl, "yes"),
+            wrong_paths=dict(n_no=sum(1 for r in paths if norm(r[5]) == "no"),
+                             n_dla=sum(1 for r in paths if norm(r[5]) == "no" and key[r[0]]["metapath"].startswith("DlA-DlA")),
+                             mu_mid=float(np.median([key[r[0]]["mu"][1] for r in paths if norm(r[5]) == "no"
+                                                     and key[r[0]]["metapath"].startswith("DlA-DlA")] or [np.nan])),
+                             mu_yes=float(np.median([min(key[r[0]]["mu"]) for r in paths if norm(r[5]) == "yes"] or [np.nan]))),
             usefulness=dict(n=len(us), mean=(sum(us) / len(us)) if us else None,
                             median=(sorted(us)[len(us) // 2]) if us else None))
     json.dump(out, open(f"{OUT}/expert_review.json", "w"), indent=1)

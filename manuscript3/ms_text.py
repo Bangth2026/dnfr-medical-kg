@@ -642,18 +642,36 @@ def results(dc):
             for x in k:
                 v = v[x]
             return v
-        P_(dc, "The second author, who is trained in clinical psychology, rated "
-               + joinand([f"{XR[t]['n_paths']} paths of {XR[t]['n_pairs']} correctly ranked pairs on {SH(t)}" for t in ("het_DpS", "hkg_DpS")])
-               + " without seeing the model's scores (Section 3.6). Every relation on the path agreed with biomedical knowledge for "
-               + joinand([pct(r(t, "relations_correct", "share")) for t in ("het_DpS", "hkg_DpS")])
-               + " of the rated paths. A path offered a mechanistic rationale, a shared cause, pathway or organ system, for "
-               + joinand([pct(r(t, "rationale", "M", "share")) for t in ("het_DpS", "hkg_DpS")])
-               + ", an associative one only for " + joinand([pct(r(t, "rationale", "A", "share")) for t in ("het_DpS", "hkg_DpS")])
-               + ", and was irrelevant or misleading for " + joinand([pct(r(t, "rationale", "I", "share")) for t in ("het_DpS", "hkg_DpS")])
-               + ". The median usefulness of the three leading paths to a clinician judging the prediction was "
-               + joinand([f"{r(t, 'usefulness', 'median')} of 5" for t in ("het_DpS", "hkg_DpS")])
-               + ". One rater, who is also an author, cannot establish clinical validity; the assessment shows what kind of "
-               "rationale the explanations offer, not how often clinicians would accept it.")
+        H, G = "het_DpS", "hkg_DpS"
+        XRN = XR[H].get("wrong_paths")
+        sh = lambda t, *k: pct(r(t, *k, "share"))
+        uns = lambda t: pct(1 - r(t, "relations_correct", "share") - r(t, "relations_wrong", "share"))
+        P_(dc, f"The second author, a doctoral candidate in clinical psychology, rated {XR[H]['n_paths']} paths of "
+               f"{XR[H]['n_pairs']} correctly ranked pairs on Hetionet disease–symptom and {XR[G]['n_paths']} paths of "
+               f"{XR[G]['n_pairs']} pairs on the graded graph without seeing the model's scores (Section 3.6). Every relation on the "
+               f"path agreed with biomedical knowledge for {sh(H, 'relations_correct')} of the paths on Hetionet and "
+               f"{sh(G, 'relations_correct')} on the graded graph; at least one relation was judged wrong for "
+               f"{sh(H, 'relations_wrong')} and {sh(G, 'relations_wrong')}, and the rest ({uns(H)} and {uns(G)}) could not be judged "
+               "with confidence. On Hetionet, "
+               + (f"{XRN['n_dla']} of the {XRN['n_no']} paths judged wrong ran from the disease to an anatomical structure and "
+                  "back to an unrelated disease that localises there, and the model had already given the second edge a low "
+                  f"membership (median {XRN['mu_mid']:.2f}, against {XRN['mu_yes']:.2f} for the weakest edge of paths judged "
+                  "correct), so the explanation showed the weak link next to the fact. " if XRN else "")
+               + "
+               f"On Hetionet, {sh(H, 'rationale', 'M')} of the paths offered a mechanistic rationale, {sh(H, 'rationale', 'A')} an "
+               f"associative one only and {sh(H, 'rationale', 'I')} none; the leading path was mechanistic more often than the second "
+               f"and third ({sh(H, 'mechanistic_by_position', '1')} against {sh(H, 'mechanistic_by_position', '2')} and "
+               f"{sh(H, 'mechanistic_by_position', '3')}). On the graded graph, where every path runs from the disease through a "
+               f"symptom it shares with another disease, the shares were {sh(G, 'rationale', 'M')}, {sh(G, 'rationale', 'A')} and "
+               f"{sh(G, 'rationale', 'I')}, and the leading path was mechanistic for only {sh(G, 'mechanistic_by_position', '1')}. "
+               f"The rater judged {sh(H, 'pair_plausible')} and {sh(G, 'pair_plausible')} of the predicted pairs clinically "
+               "plausible, and the median usefulness of the three leading paths to a clinician judging a prediction was "
+               + (f"{r(H, 'usefulness', 'median')} of 5 on both tasks" if r(H, 'usefulness', 'median') == r(G, 'usefulness', 'median')
+                  else f"{r(H, 'usefulness', 'median')} and {r(G, 'usefulness', 'median')} of 5")
+               + f" (means {r(H, 'usefulness', 'mean'):.1f} and {r(G, 'usefulness', 'mean'):.1f}). The predictions were mostly "
+               "plausible; the explanations were often a reason to look further rather than a reason to believe. One rater, who is "
+               "also an author, cannot establish clinical validity: the assessment shows what kind of rationale the explanations "
+               "offer, not how often clinicians would accept it.")
 
     # ---------------- 4.8 cost
     heading(dc, "4.8 Computational cost", 2)
@@ -786,10 +804,16 @@ def discussion(dc):
         f"{len(DS['pkg_ind']['skipped'])} of {DS['pkg_ind']['metapaths_all']} metapaths on PrimeKG, mostly through drug–drug "
         "interactions and contraindications. These are the most hub-dominated metapaths, so the effect of hub discounting may be "
         "underestimated.",
-        "**No clinical evaluation of explanations.** The explanations were not rated by clinicians; Table 6 measures concision, "
-        "attribution and the dependence of the ranking on the facts shown, and the mechanistic classification is a structural check "
-        "against Hetionet's own gene relations, not a clinical judgement. A rating study with several clinicians on correct and "
-        "incorrect predictions, comparing DNFR's and DWPC-LR's explanations, is the next step.",
+        ("**A limited clinical evaluation of explanations.** One rater, a co-author trained in clinical psychology who knew the "
+         "aims of the study, assessed 150 paths of 50 correct disease–symptom predictions; drug repurposing was not rated, and the "
+         "mechanistic classification there is a structural check against Hetionet's own gene relations, not a clinical judgement. "
+         "With one rater no agreement can be estimated. A rating study with several clinicians, blinded to the hypothesis, on correct "
+         "and incorrect predictions and comparing DNFR's and DWPC-LR's explanations, is the next step."
+         if XREV else
+         "**No clinical evaluation of explanations.** The explanations were not rated by clinicians; Table 6 measures concision, "
+         "attribution and the dependence of the ranking on the facts shown, and the mechanistic classification is a structural check "
+         "against Hetionet's own gene relations, not a clinical judgement. A rating study with several clinicians on correct and "
+         "incorrect predictions, comparing DNFR's and DWPC-LR's explanations, is the next step."),
         "**Scores are not probabilities,** and DNFR's score P orders candidates without being calibrated.",
         "**Missing data are not random.** The sparsity analysis removed edges uniformly at random; in practice, less-studied genes and "
         "diseases lose more edges.",
@@ -831,7 +855,7 @@ def declarations(dc):
            "and the scripts that compute the statistics and figures and build this manuscript from the result files are available "
            f"under the MIT licence at https://github.com/Bangth2026/dnfr-medical-kg (release {RELEASE}).")
     P_(dc, "**CRediT author statement.** Truong Hai Bang: Conceptualization; Methodology; Software; Formal analysis; Data curation; "
-           "Visualization; Writing – original draft; Writing – review and editing. Van An Phan Thi (clinical psychology): "
+           "Visualization; Writing – original draft; Writing – review and editing. Van An Phan Thi (doctoral candidate in clinical psychology): "
            "Conceptualization (clinical framing of the prediction tasks, of the disease-centred split and of what an explanation "
            "should let a clinician check); Validation (a check that the relations on the explanation paths agree with biomedical "
            "knowledge, not only with the source graphs); "
