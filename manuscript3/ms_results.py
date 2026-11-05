@@ -484,7 +484,7 @@ def supp_prior(d, num):
            "hkg_DpS": "EHR graph (graded)"}
     rows = [[lab[t], f3(P[t]["popularity_MRR"]), f3(P[t]["prior100_MRR"]), f3(P[t]["prior1000_MRR"]), f3(P[t]["analytic_MRR"]),
              pct(P[t]["tie_any_prior100"]), pct(P[t]["tie_share_prior100"]), pct(P[t]["share_zero_true"])] for t in lab if t in P]
-    T(d, f"**Table S{num}.** Edge prior and popularity (reviewer comment M6), mean over splits. Prior with 100 and 1000 "
+    T(d, f"**Table S{num}.** Edge prior and popularity, mean over splits. Prior with 100 and 1000 "
          "degree-preserving permutations, and the analytical approximation of Zietz et al. [@zietz2024], which for a fixed head ranks "
          "tails in the same order as popularity. Ties: share of test queries whose true tail ties with another candidate, and mean "
          "share of tied candidates, under the 100-permutation prior. Zero prior: share of test queries whose true pair has prior 0.",
@@ -499,7 +499,7 @@ def supp_valid(d, num):
     rows = [[v["job"].split("_")[-1].replace("s", ""), str(v["n_ckpt"]), f3(v["best"]), f3(v["sd_all"]),
              "—" if v["sd_after_10"] is None else f3(v["sd_after_10"]), f3(v["range_top5"])] for v in V]
     T(d, f"**Table S{num}.** Validation MRR of DNFR across checkpoints (every five epochs) on Hetionet compound–treats–disease, which "
-         "has about 75 validation pairs (reviewer minor comment 6).",
+         "has about 75 validation pairs.",
       ["Split", "Checkpoints", "Best validation MRR", "SD, all checkpoints", "SD, from the third checkpoint", "Range of the five best"],
       rows, widths=[0.6, 0.9, 1.1, 1.1, 1.3, 1.27], size=8)
 
