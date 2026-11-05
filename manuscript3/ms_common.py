@@ -158,3 +158,5 @@ def C(text):
             i = j + 1
         return "[" + ",".join(parts) + "]"
     return re.sub(r"\[@([^\]]+)\]", rep, text)
+
+VC = json.load(open(f"{RES}/verify_clean.json")) if os.path.exists(f"{RES}/verify_clean.json") else {}

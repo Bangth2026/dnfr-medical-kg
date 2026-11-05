@@ -1,0 +1,2720 @@
+{
+ "het_DpS-01": {
+  "task": "het_DpS",
+  "query": [
+   "cervical cancer",
+   "Dysmenorrhea"
+  ],
+  "rank": 2.0,
+  "n_paths": 122
+ },
+ "het_DpS-01-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "cervical cancer",
+   "fallopian tube cancer",
+   "Dysmenorrhea"
+  ],
+  "mu": [
+   0.47,
+   0.86
+  ],
+  "p": -2.777,
+  "share": 0.195
+ },
+ "het_DpS-01-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "cervical cancer",
+   "uterine cancer",
+   "Dysmenorrhea"
+  ],
+  "mu": [
+   0.444,
+   0.821
+  ],
+  "p": -2.777,
+  "share": 0.181
+ },
+ "het_DpS-01-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "cervical cancer",
+   "ovarian cancer",
+   "Dysmenorrhea"
+  ],
+  "mu": [
+   0.412,
+   0.83
+  ],
+  "p": -2.777,
+  "share": 0.168
+ },
+ "het_DpS-02": {
+  "task": "het_DpS",
+  "query": [
+   "rheumatoid arthritis",
+   "Muscular Atrophy"
+  ],
+  "rank": 1.0,
+  "n_paths": 619
+ },
+ "het_DpS-02-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "rheumatoid arthritis",
+   "osteoarthritis",
+   "Muscular Atrophy"
+  ],
+  "mu": [
+   0.534,
+   0.849
+  ],
+  "p": -2.777,
+  "share": 0.155
+ },
+ "het_DpS-02-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "rheumatoid arthritis",
+   "systemic scleroderma",
+   "Muscular Atrophy"
+  ],
+  "mu": [
+   0.513,
+   0.834
+  ],
+  "p": -2.777,
+  "share": 0.147
+ },
+ "het_DpS-02-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "rheumatoid arthritis",
+   "ankylosing spondylitis",
+   "Muscular Atrophy"
+  ],
+  "mu": [
+   0.425,
+   0.849
+  ],
+  "p": -2.777,
+  "share": 0.121
+ },
+ "het_DpS-03": {
+  "task": "het_DpS",
+  "query": [
+   "intracranial aneurysm",
+   "Dizziness"
+  ],
+  "rank": 2.0,
+  "n_paths": 382
+ },
+ "het_DpS-03-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "intracranial aneurysm",
+   "brain cancer",
+   "Dizziness"
+  ],
+  "mu": [
+   0.58,
+   0.78
+  ],
+  "p": -2.777,
+  "share": 0.221
+ },
+ "het_DpS-03-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "intracranial aneurysm",
+   "meningioma",
+   "Dizziness"
+  ],
+  "mu": [
+   0.535,
+   0.806
+  ],
+  "p": -2.777,
+  "share": 0.207
+ },
+ "het_DpS-03-p3": {
+  "metapath": "DlA-DlA^-1-DpS",
+  "nodes": [
+   "intracranial aneurysm",
+   "basilar artery",
+   "panic disorder",
+   "Dizziness"
+  ],
+  "mu": [
+   0.952,
+   0.196,
+   0.855
+  ],
+  "p": -0.221,
+  "share": 0.014
+ },
+ "het_DpS-04": {
+  "task": "het_DpS",
+  "query": [
+   "anemia",
+   "Anoxia"
+  ],
+  "rank": 5.0,
+  "n_paths": 584
+ },
+ "het_DpS-04-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "anemia",
+   "chronic kidney failure",
+   "Anoxia"
+  ],
+  "mu": [
+   0.583,
+   0.847
+  ],
+  "p": -2.777,
+  "share": 0.392
+ },
+ "het_DpS-04-p2": {
+  "metapath": "DlA-DlA^-1-DpS",
+  "nodes": [
+   "anemia",
+   "splenic artery",
+   "liver cancer",
+   "Anoxia"
+  ],
+  "mu": [
+   0.947,
+   0.09,
+   0.855
+  ],
+  "p": -0.221,
+  "share": 0.011
+ },
+ "het_DpS-04-p3": {
+  "metapath": "DlA-DlA^-1-DpS",
+  "nodes": [
+   "anemia",
+   "cortex of kidney",
+   "kidney cancer",
+   "Anoxia"
+  ],
+  "mu": [
+   0.947,
+   0.088,
+   0.853
+  ],
+  "p": -0.221,
+  "share": 0.011
+ },
+ "het_DpS-05": {
+  "task": "het_DpS",
+  "query": [
+   "ocular cancer",
+   "Vision, Low"
+  ],
+  "rank": 7.0,
+  "n_paths": 320
+ },
+ "het_DpS-05-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "ocular cancer",
+   "brain cancer",
+   "Vision, Low"
+  ],
+  "mu": [
+   0.47,
+   0.78
+  ],
+  "p": -2.777,
+  "share": 0.131
+ },
+ "het_DpS-05-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "ocular cancer",
+   "meningioma",
+   "Vision, Low"
+  ],
+  "mu": [
+   0.426,
+   0.806
+  ],
+  "p": -2.777,
+  "share": 0.119
+ },
+ "het_DpS-05-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "ocular cancer",
+   "melanoma",
+   "Vision, Low"
+  ],
+  "mu": [
+   0.382,
+   0.84
+  ],
+  "p": -2.777,
+  "share": 0.107
+ },
+ "het_DpS-06": {
+  "task": "het_DpS",
+  "query": [
+   "Alzheimer's disease",
+   "Confusion"
+  ],
+  "rank": 2.0,
+  "n_paths": 581
+ },
+ "het_DpS-06-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "Alzheimer's disease",
+   "Creutzfeldt-Jakob disease",
+   "Confusion"
+  ],
+  "mu": [
+   0.718,
+   0.832
+  ],
+  "p": -2.777,
+  "share": 0.289
+ },
+ "het_DpS-06-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "Alzheimer's disease",
+   "Parkinson's disease",
+   "Confusion"
+  ],
+  "mu": [
+   0.648,
+   0.81
+  ],
+  "p": -2.777,
+  "share": 0.257
+ },
+ "het_DpS-06-p3": {
+  "metapath": "CpD^-1-CpD-DpS",
+  "nodes": [
+   "Alzheimer's disease",
+   "Quetiapine",
+   "bipolar disorder",
+   "Confusion"
+  ],
+  "mu": [
+   0.988,
+   0.994,
+   0.838
+  ],
+  "p": -0.113,
+  "share": 0.013
+ },
+ "het_DpS-07": {
+  "task": "het_DpS",
+  "query": [
+   "duodenum cancer",
+   "Vomiting"
+  ],
+  "rank": 1.0,
+  "n_paths": 363
+ },
+ "het_DpS-07-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "duodenum cancer",
+   "gallbladder cancer",
+   "Vomiting"
+  ],
+  "mu": [
+   0.432,
+   0.907
+  ],
+  "p": -2.777,
+  "share": 0.077
+ },
+ "het_DpS-07-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "duodenum cancer",
+   "celiac disease",
+   "Vomiting"
+  ],
+  "mu": [
+   0.418,
+   0.888
+  ],
+  "p": -2.777,
+  "share": 0.074
+ },
+ "het_DpS-07-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "duodenum cancer",
+   "esophageal cancer",
+   "Vomiting"
+  ],
+  "mu": [
+   0.392,
+   0.875
+  ],
+  "p": -2.777,
+  "share": 0.069
+ },
+ "het_DpS-08": {
+  "task": "het_DpS",
+  "query": [
+   "mediastinal cancer",
+   "Hoarseness"
+  ],
+  "rank": 1.0,
+  "n_paths": 281
+ },
+ "het_DpS-08-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "mediastinal cancer",
+   "tracheal cancer",
+   "Hoarseness"
+  ],
+  "mu": [
+   0.4,
+   0.891
+  ],
+  "p": -2.777,
+  "share": 0.094
+ },
+ "het_DpS-08-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "mediastinal cancer",
+   "esophageal cancer",
+   "Hoarseness"
+  ],
+  "mu": [
+   0.4,
+   0.847
+  ],
+  "p": -2.777,
+  "share": 0.093
+ },
+ "het_DpS-08-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "mediastinal cancer",
+   "thyroid cancer",
+   "Hoarseness"
+  ],
+  "mu": [
+   0.389,
+   0.866
+  ],
+  "p": -2.777,
+  "share": 0.09
+ },
+ "het_DpS-09": {
+  "task": "het_DpS",
+  "query": [
+   "head and neck cancer",
+   "Ophthalmoplegia"
+  ],
+  "rank": 1.0,
+  "n_paths": 520
+ },
+ "het_DpS-09-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "head and neck cancer",
+   "Graves' disease",
+   "Ophthalmoplegia"
+  ],
+  "mu": [
+   0.538,
+   0.848
+  ],
+  "p": -2.777,
+  "share": 0.135
+ },
+ "het_DpS-09-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "head and neck cancer",
+   "pharynx cancer",
+   "Ophthalmoplegia"
+  ],
+  "mu": [
+   0.429,
+   0.813
+  ],
+  "p": -2.777,
+  "share": 0.105
+ },
+ "het_DpS-09-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "head and neck cancer",
+   "ocular cancer",
+   "Ophthalmoplegia"
+  ],
+  "mu": [
+   0.378,
+   0.844
+  ],
+  "p": -2.777,
+  "share": 0.092
+ },
+ "het_DpS-10": {
+  "task": "het_DpS",
+  "query": [
+   "pancreatic cancer",
+   "Pain, Intractable"
+  ],
+  "rank": 10.0,
+  "n_paths": 658
+ },
+ "het_DpS-10-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "pancreatic cancer",
+   "pancreatitis",
+   "Pain, Intractable"
+  ],
+  "mu": [
+   0.501,
+   0.849
+  ],
+  "p": -2.777,
+  "share": 0.278
+ },
+ "het_DpS-10-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "pancreatic cancer",
+   "colon cancer",
+   "Pain, Intractable"
+  ],
+  "mu": [
+   0.373,
+   0.869
+  ],
+  "p": -2.777,
+  "share": 0.203
+ },
+ "het_DpS-10-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "pancreatic cancer",
+   "kidney cancer",
+   "Pain, Intractable"
+  ],
+  "mu": [
+   0.348,
+   0.842
+  ],
+  "p": -2.777,
+  "share": 0.188
+ },
+ "het_DpS-11": {
+  "task": "het_DpS",
+  "query": [
+   "brain cancer",
+   "Deafness"
+  ],
+  "rank": 5.0,
+  "n_paths": 514
+ },
+ "het_DpS-11-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "brain cancer",
+   "meningioma",
+   "Deafness"
+  ],
+  "mu": [
+   0.457,
+   0.81
+  ],
+  "p": -2.777,
+  "share": 0.142
+ },
+ "het_DpS-11-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "brain cancer",
+   "ocular cancer",
+   "Deafness"
+  ],
+  "mu": [
+   0.433,
+   0.847
+  ],
+  "p": -2.777,
+  "share": 0.136
+ },
+ "het_DpS-11-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "brain cancer",
+   "peripheral nervous system neoplasm",
+   "Deafness"
+  ],
+  "mu": [
+   0.371,
+   0.808
+  ],
+  "p": -2.777,
+  "share": 0.114
+ },
+ "het_DpS-12": {
+  "task": "het_DpS",
+  "query": [
+   "systemic scleroderma",
+   "Arthralgia"
+  ],
+  "rank": 2.0,
+  "n_paths": 341
+ },
+ "het_DpS-12-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "systemic scleroderma",
+   "systemic lupus erythematosus",
+   "Arthralgia"
+  ],
+  "mu": [
+   0.494,
+   0.805
+  ],
+  "p": -2.777,
+  "share": 0.171
+ },
+ "het_DpS-12-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "systemic scleroderma",
+   "rheumatoid arthritis",
+   "Arthralgia"
+  ],
+  "mu": [
+   0.494,
+   0.784
+  ],
+  "p": -2.777,
+  "share": 0.169
+ },
+ "het_DpS-12-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "systemic scleroderma",
+   "psoriasis",
+   "Arthralgia"
+  ],
+  "mu": [
+   0.479,
+   0.816
+  ],
+  "p": -2.777,
+  "share": 0.166
+ },
+ "het_DpS-13": {
+  "task": "het_DpS",
+  "query": [
+   "liver cancer",
+   "Cachexia"
+  ],
+  "rank": 1.0,
+  "n_paths": 652
+ },
+ "het_DpS-13-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "liver cancer",
+   "stomach cancer",
+   "Cachexia"
+  ],
+  "mu": [
+   0.368,
+   0.834
+  ],
+  "p": -2.777,
+  "share": 0.117
+ },
+ "het_DpS-13-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "liver cancer",
+   "colon cancer",
+   "Cachexia"
+  ],
+  "mu": [
+   0.358,
+   0.869
+  ],
+  "p": -2.777,
+  "share": 0.114
+ },
+ "het_DpS-13-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "liver cancer",
+   "pancreatic cancer",
+   "Cachexia"
+  ],
+  "mu": [
+   0.358,
+   0.844
+  ],
+  "p": -2.777,
+  "share": 0.114
+ },
+ "het_DpS-14": {
+  "task": "het_DpS",
+  "query": [
+   "Parkinson's disease",
+   "Reflex, Abnormal"
+  ],
+  "rank": 2.0,
+  "n_paths": 373
+ },
+ "het_DpS-14-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "Parkinson's disease",
+   "amyotrophic lateral sclerosis",
+   "Reflex, Abnormal"
+  ],
+  "mu": [
+   0.634,
+   0.834
+  ],
+  "p": -2.777,
+  "share": 0.242
+ },
+ "het_DpS-14-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "Parkinson's disease",
+   "Gilles de la Tourette syndrome",
+   "Reflex, Abnormal"
+  ],
+  "mu": [
+   0.562,
+   0.843
+  ],
+  "p": -2.777,
+  "share": 0.214
+ },
+ "het_DpS-14-p3": {
+  "metapath": "DlA-DlA^-1-DpS",
+  "nodes": [
+   "Parkinson's disease",
+   "cerebellar nuclear complex",
+   "Gilles de la Tourette syndrome",
+   "Reflex, Abnormal"
+  ],
+  "mu": [
+   0.953,
+   0.202,
+   0.843
+  ],
+  "p": -0.221,
+  "share": 0.014
+ },
+ "het_DpS-15": {
+  "task": "het_DpS",
+  "query": [
+   "gestational diabetes",
+   "Birth Weight"
+  ],
+  "rank": 6.0,
+  "n_paths": 89
+ },
+ "het_DpS-15-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "gestational diabetes",
+   "type 1 diabetes mellitus",
+   "Birth Weight"
+  ],
+  "mu": [
+   0.654,
+   0.843
+  ],
+  "p": -2.777,
+  "share": 0.422
+ },
+ "het_DpS-15-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "gestational diabetes",
+   "type 2 diabetes mellitus",
+   "Birth Weight"
+  ],
+  "mu": [
+   0.531,
+   0.858
+  ],
+  "p": -2.777,
+  "share": 0.341
+ },
+ "het_DpS-15-p3": {
+  "metapath": "DlA-DlA^-1-DpS",
+  "nodes": [
+   "gestational diabetes",
+   "umbilical artery",
+   "type 1 diabetes mellitus",
+   "Birth Weight"
+  ],
+  "mu": [
+   0.934,
+   0.085,
+   0.843
+  ],
+  "p": -0.221,
+  "share": 0.01
+ },
+ "het_DpS-16": {
+  "task": "het_DpS",
+  "query": [
+   "Crohn's disease",
+   "Pain"
+  ],
+  "rank": 1.0,
+  "n_paths": 983
+ },
+ "het_DpS-16-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "Crohn's disease",
+   "psoriatic arthritis",
+   "Pain"
+  ],
+  "mu": [
+   0.495,
+   0.915
+  ],
+  "p": -2.777,
+  "share": 0.226
+ },
+ "het_DpS-16-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "Crohn's disease",
+   "ankylosing spondylitis",
+   "Pain"
+  ],
+  "mu": [
+   0.425,
+   0.878
+  ],
+  "p": -2.777,
+  "share": 0.19
+ },
+ "het_DpS-16-p3": {
+  "metapath": "DlA-DlA^-1-DpS",
+  "nodes": [
+   "Crohn's disease",
+   "lumbar vertebra",
+   "degenerative disc disease",
+   "Pain"
+  ],
+  "mu": [
+   0.939,
+   0.136,
+   0.904
+  ],
+  "p": -0.221,
+  "share": 0.011
+ },
+ "het_DpS-17": {
+  "task": "het_DpS",
+  "query": [
+   "panic disorder",
+   "Bulimia"
+  ],
+  "rank": 5.0,
+  "n_paths": 106
+ },
+ "het_DpS-17-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "panic disorder",
+   "alcohol dependence",
+   "Bulimia"
+  ],
+  "mu": [
+   0.598,
+   0.796
+  ],
+  "p": -2.777,
+  "share": 0.23
+ },
+ "het_DpS-17-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "panic disorder",
+   "endogenous depression",
+   "Bulimia"
+  ],
+  "mu": [
+   0.598,
+   0.782
+  ],
+  "p": -2.777,
+  "share": 0.229
+ },
+ "het_DpS-17-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "panic disorder",
+   "bipolar disorder",
+   "Bulimia"
+  ],
+  "mu": [
+   0.578,
+   0.804
+  ],
+  "p": -2.777,
+  "share": 0.223
+ },
+ "het_DpS-18": {
+  "task": "het_DpS",
+  "query": [
+   "refractive error",
+   "Choroid Hemorrhage"
+  ],
+  "rank": 2.0,
+  "n_paths": 122
+ },
+ "het_DpS-18-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "refractive error",
+   "age related macular degeneration",
+   "Choroid Hemorrhage"
+  ],
+  "mu": [
+   0.68,
+   0.811
+  ],
+  "p": -2.777,
+  "share": 0.322
+ },
+ "het_DpS-18-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "refractive error",
+   "glaucoma",
+   "Choroid Hemorrhage"
+  ],
+  "mu": [
+   0.648,
+   0.8
+  ],
+  "p": -2.777,
+  "share": 0.305
+ },
+ "het_DpS-18-p3": {
+  "metapath": "DlA-DlA^-1-DpS",
+  "nodes": [
+   "refractive error",
+   "corneal endothelium",
+   "age related macular degeneration",
+   "Choroid Hemorrhage"
+  ],
+  "mu": [
+   0.94,
+   0.151,
+   0.811
+  ],
+  "p": -0.221,
+  "share": 0.012
+ },
+ "het_DpS-19": {
+  "task": "het_DpS",
+  "query": [
+   "obesity",
+   "Body Weight"
+  ],
+  "rank": 1.0,
+  "n_paths": 1024
+ },
+ "het_DpS-19-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "obesity",
+   "polycystic ovary syndrome",
+   "Body Weight"
+  ],
+  "mu": [
+   0.594,
+   0.893
+  ],
+  "p": -2.777,
+  "share": 0.16
+ },
+ "het_DpS-19-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "obesity",
+   "hypertension",
+   "Body Weight"
+  ],
+  "mu": [
+   0.57,
+   0.855
+  ],
+  "p": -2.777,
+  "share": 0.151
+ },
+ "het_DpS-19-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "obesity",
+   "type 2 diabetes mellitus",
+   "Body Weight"
+  ],
+  "mu": [
+   0.531,
+   0.878
+  ],
+  "p": -2.777,
+  "share": 0.141
+ },
+ "het_DpS-20": {
+  "task": "het_DpS",
+  "query": [
+   "esophageal cancer",
+   "Cachexia"
+  ],
+  "rank": 8.0,
+  "n_paths": 518
+ },
+ "het_DpS-20-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "esophageal cancer",
+   "stomach cancer",
+   "Cachexia"
+  ],
+  "mu": [
+   0.397,
+   0.834
+  ],
+  "p": -2.777,
+  "share": 0.18
+ },
+ "het_DpS-20-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "esophageal cancer",
+   "pancreatic cancer",
+   "Cachexia"
+  ],
+  "mu": [
+   0.387,
+   0.844
+  ],
+  "p": -2.777,
+  "share": 0.175
+ },
+ "het_DpS-20-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "esophageal cancer",
+   "lung cancer",
+   "Cachexia"
+  ],
+  "mu": [
+   0.378,
+   0.826
+  ],
+  "p": -2.777,
+  "share": 0.17
+ },
+ "het_DpS-21": {
+  "task": "het_DpS",
+  "query": [
+   "bipolar disorder",
+   "Auditory Perceptual Disorders"
+  ],
+  "rank": 4.0,
+  "n_paths": 208
+ },
+ "het_DpS-21-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "bipolar disorder",
+   "schizophrenia",
+   "Auditory Perceptual Disorders"
+  ],
+  "mu": [
+   0.602,
+   0.768
+  ],
+  "p": -2.777,
+  "share": 0.23
+ },
+ "het_DpS-21-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "bipolar disorder",
+   "alcohol dependence",
+   "Auditory Perceptual Disorders"
+  ],
+  "mu": [
+   0.55,
+   0.779
+  ],
+  "p": -2.777,
+  "share": 0.212
+ },
+ "het_DpS-21-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "bipolar disorder",
+   "attention deficit hyperactivity disorder",
+   "Auditory Perceptual Disorders"
+  ],
+  "mu": [
+   0.529,
+   0.782
+  ],
+  "p": -2.777,
+  "share": 0.205
+ },
+ "het_DpS-22": {
+  "task": "het_DpS",
+  "query": [
+   "liver cancer",
+   "Nausea"
+  ],
+  "rank": 1.0,
+  "n_paths": 1007
+ },
+ "het_DpS-22-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "liver cancer",
+   "stomach cancer",
+   "Nausea"
+  ],
+  "mu": [
+   0.368,
+   0.86
+  ],
+  "p": -2.777,
+  "share": 0.103
+ },
+ "het_DpS-22-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "liver cancer",
+   "colon cancer",
+   "Nausea"
+  ],
+  "mu": [
+   0.358,
+   0.891
+  ],
+  "p": -2.777,
+  "share": 0.101
+ },
+ "het_DpS-22-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "liver cancer",
+   "pancreatic cancer",
+   "Nausea"
+  ],
+  "mu": [
+   0.358,
+   0.869
+  ],
+  "p": -2.777,
+  "share": 0.101
+ },
+ "het_DpS-23": {
+  "task": "het_DpS",
+  "query": [
+   "schizophrenia",
+   "Hyperkinesis"
+  ],
+  "rank": 4.0,
+  "n_paths": 374
+ },
+ "het_DpS-23-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "schizophrenia",
+   "Gilles de la Tourette syndrome",
+   "Hyperkinesis"
+  ],
+  "mu": [
+   0.562,
+   0.812
+  ],
+  "p": -2.777,
+  "share": 0.206
+ },
+ "het_DpS-23-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "schizophrenia",
+   "bipolar disorder",
+   "Hyperkinesis"
+  ],
+  "mu": [
+   0.562,
+   0.804
+  ],
+  "p": -2.777,
+  "share": 0.205
+ },
+ "het_DpS-23-p3": {
+  "metapath": "CpD^-1-CpD-DpS",
+  "nodes": [
+   "schizophrenia",
+   "Risperidone",
+   "conduct disorder",
+   "Hyperkinesis"
+  ],
+  "mu": [
+   0.997,
+   0.984,
+   0.871
+  ],
+  "p": -0.113,
+  "share": 0.012
+ },
+ "het_DpS-24": {
+  "task": "het_DpS",
+  "query": [
+   "germ cell cancer",
+   "Abdomen, Acute"
+  ],
+  "rank": 2.0,
+  "n_paths": 558
+ },
+ "het_DpS-24-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "germ cell cancer",
+   "fallopian tube cancer",
+   "Abdomen, Acute"
+  ],
+  "mu": [
+   0.389,
+   0.9
+  ],
+  "p": -2.777,
+  "share": 0.079
+ },
+ "het_DpS-24-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "germ cell cancer",
+   "adrenal gland cancer",
+   "Abdomen, Acute"
+  ],
+  "mu": [
+   0.376,
+   0.869
+  ],
+  "p": -2.777,
+  "share": 0.076
+ },
+ "het_DpS-24-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "germ cell cancer",
+   "uterine cancer",
+   "Abdomen, Acute"
+  ],
+  "mu": [
+   0.364,
+   0.871
+  ],
+  "p": -2.777,
+  "share": 0.073
+ },
+ "het_DpS-25": {
+  "task": "het_DpS",
+  "query": [
+   "peripheral nervous system neoplasm",
+   "Paralysis"
+  ],
+  "rank": 2.0,
+  "n_paths": 677
+ },
+ "het_DpS-25-p1": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "peripheral nervous system neoplasm",
+   "malignant glioma",
+   "Paralysis"
+  ],
+  "mu": [
+   0.505,
+   0.811
+  ],
+  "p": -2.777,
+  "share": 0.087
+ },
+ "het_DpS-25-p2": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "peripheral nervous system neoplasm",
+   "spinal cancer",
+   "Paralysis"
+  ],
+  "mu": [
+   0.46,
+   0.851
+  ],
+  "p": -2.777,
+  "share": 0.079
+ },
+ "het_DpS-25-p3": {
+  "metapath": "DrD-DpS",
+  "nodes": [
+   "peripheral nervous system neoplasm",
+   "brain cancer",
+   "Paralysis"
+  ],
+  "mu": [
+   0.442,
+   0.797
+  ],
+  "p": -2.777,
+  "share": 0.075
+ },
+ "hkg_DpS-01": {
+  "task": "hkg_DpS",
+  "query": [
+   "atopic dermatitis",
+   "anxiety"
+  ],
+  "rank": 3.0,
+  "n_paths": 135
+ },
+ "hkg_DpS-01-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "atopic dermatitis",
+   "dry skin",
+   "psychosis",
+   "anxiety"
+  ],
+  "mu": [
+   0.194,
+   0.133,
+   0.84
+  ],
+  "p": -0.56,
+  "share": 0.544
+ },
+ "hkg_DpS-01-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "atopic dermatitis",
+   "skin rash",
+   "bed bug bite",
+   "anxiety"
+  ],
+  "mu": [
+   0.937,
+   0.005,
+   0.623
+  ],
+  "p": -0.56,
+  "share": 0.044
+ },
+ "hkg_DpS-01-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "atopic dermatitis",
+   "acute episodes",
+   "asthma",
+   "anxiety"
+  ],
+  "mu": [
+   0.192,
+   0.005,
+   0.364
+  ],
+  "p": -0.56,
+  "share": 0.035
+ },
+ "hkg_DpS-02": {
+  "task": "hkg_DpS",
+  "query": [
+   "stomach flu",
+   "lower abdominal pain"
+  ],
+  "rank": 2.0,
+  "n_paths": 128
+ },
+ "hkg_DpS-02-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "stomach flu",
+   "watery diarrhea",
+   "diverticulitis",
+   "lower abdominal pain"
+  ],
+  "mu": [
+   0.517,
+   0.037,
+   0.451
+  ],
+  "p": -0.56,
+  "share": 0.117
+ },
+ "hkg_DpS-02-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "stomach flu",
+   "watery diarrhea",
+   "celiac disease",
+   "lower abdominal pain"
+  ],
+  "mu": [
+   0.517,
+   0.067,
+   0.113
+  ],
+  "p": -0.56,
+  "share": 0.114
+ },
+ "hkg_DpS-02-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "stomach flu",
+   "upper abdominal pain",
+   "celiac disease",
+   "lower abdominal pain"
+  ],
+  "mu": [
+   0.036,
+   0.13,
+   0.113
+  ],
+  "p": -0.56,
+  "share": 0.056
+ },
+ "hkg_DpS-03": {
+  "task": "hkg_DpS",
+  "query": [
+   "post traumatic stress disorder",
+   "falling"
+  ],
+  "rank": 1.0,
+  "n_paths": 143
+ },
+ "hkg_DpS-03-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "post traumatic stress disorder",
+   "paranoia",
+   "bipolar disorder",
+   "falling"
+  ],
+  "mu": [
+   0.106,
+   0.069,
+   0.191
+  ],
+  "p": -0.56,
+  "share": 0.04
+ },
+ "hkg_DpS-03-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "post traumatic stress disorder",
+   "thoughts of suicide",
+   "major depression",
+   "falling"
+  ],
+  "mu": [
+   0.588,
+   0.044,
+   0.073
+  ],
+  "p": -0.56,
+  "share": 0.033
+ },
+ "hkg_DpS-03-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "post traumatic stress disorder",
+   "hearing voices",
+   "bipolar disorder",
+   "falling"
+  ],
+  "mu": [
+   0.124,
+   0.045,
+   0.191
+  ],
+  "p": -0.56,
+  "share": 0.033
+ },
+ "hkg_DpS-04": {
+  "task": "hkg_DpS",
+  "query": [
+   "hiv/aids",
+   "diarrhea"
+  ],
+  "rank": 1.0,
+  "n_paths": 383
+ },
+ "hkg_DpS-04-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "hiv/aids",
+   "fast breathing",
+   "pneumonia",
+   "diarrhea"
+  ],
+  "mu": [
+   0.059,
+   0.015,
+   0.204
+  ],
+  "p": -0.56,
+  "share": 0.056
+ },
+ "hkg_DpS-04-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "hiv/aids",
+   "fast breathing",
+   "sepsis",
+   "diarrhea"
+  ],
+  "mu": [
+   0.059,
+   0.011,
+   0.339
+  ],
+  "p": -0.56,
+  "share": 0.047
+ },
+ "hkg_DpS-04-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "hiv/aids",
+   "difficulty swallowing",
+   "mono",
+   "diarrhea"
+  ],
+  "mu": [
+   0.134,
+   0.006,
+   0.657
+  ],
+  "p": -0.56,
+  "share": 0.038
+ },
+ "hkg_DpS-05": {
+  "task": "hkg_DpS",
+  "query": [
+   "lupus",
+   "acute episodes"
+  ],
+  "rank": 8.0,
+  "n_paths": 96
+ },
+ "hkg_DpS-05-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "lupus",
+   "joint pain",
+   "sickle cell anemia",
+   "acute episodes"
+  ],
+  "mu": [
+   0.197,
+   0.02,
+   0.266
+  ],
+  "p": -0.56,
+  "share": 0.168
+ },
+ "hkg_DpS-05-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "lupus",
+   "joint pain",
+   "rheumatoid arthritis",
+   "acute episodes"
+  ],
+  "mu": [
+   0.197,
+   0.014,
+   0.266
+  ],
+  "p": -0.56,
+  "share": 0.128
+ },
+ "hkg_DpS-05-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "lupus",
+   "joint pain",
+   "gout",
+   "acute episodes"
+  ],
+  "mu": [
+   0.197,
+   0.009,
+   0.749
+  ],
+  "p": -0.56,
+  "share": 0.095
+ },
+ "hkg_DpS-06": {
+  "task": "hkg_DpS",
+  "query": [
+   "borderline personality disorder",
+   "confusion"
+  ],
+  "rank": 1.0,
+  "n_paths": 90
+ },
+ "hkg_DpS-06-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "borderline personality disorder",
+   "thoughts of suicide",
+   "psychosis",
+   "confusion"
+  ],
+  "mu": [
+   0.588,
+   0.027,
+   0.485
+  ],
+  "p": -0.56,
+  "share": 0.068
+ },
+ "hkg_DpS-06-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "borderline personality disorder",
+   "thoughts of suicide",
+   "post traumatic stress disorder",
+   "confusion"
+  ],
+  "mu": [
+   0.588,
+   0.041,
+   0.088
+  ],
+  "p": -0.56,
+  "share": 0.058
+ },
+ "hkg_DpS-06-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "borderline personality disorder",
+   "impulsivity",
+   "drug withdrawal",
+   "confusion"
+  ],
+  "mu": [
+   0.03,
+   0.189,
+   0.342
+  ],
+  "p": -0.56,
+  "share": 0.055
+ },
+ "hkg_DpS-07": {
+  "task": "hkg_DpS",
+  "query": [
+   "rhabdomyolysis",
+   "lethargy"
+  ],
+  "rank": 9.0,
+  "n_paths": 172
+ },
+ "hkg_DpS-07-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "rhabdomyolysis",
+   "muscle pain",
+   "kidney infection",
+   "lethargy"
+  ],
+  "mu": [
+   0.303,
+   0.118,
+   0.11
+  ],
+  "p": -0.56,
+  "share": 0.113
+ },
+ "hkg_DpS-07-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "rhabdomyolysis",
+   "dark urine",
+   "hepatitis a",
+   "lethargy"
+  ],
+  "mu": [
+   0.494,
+   0.037,
+   0.49
+  ],
+  "p": -0.56,
+  "share": 0.097
+ },
+ "hkg_DpS-07-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "rhabdomyolysis",
+   "blood in urine",
+   "bladder cancer",
+   "lethargy"
+  ],
+  "mu": [
+   0.104,
+   0.048,
+   0.446
+  ],
+  "p": -0.56,
+  "share": 0.072
+ },
+ "hkg_DpS-08": {
+  "task": "hkg_DpS",
+  "query": [
+   "stomach ulcer",
+   "vomiting"
+  ],
+  "rank": 1.0,
+  "n_paths": 275
+ },
+ "hkg_DpS-08-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "stomach ulcer",
+   "indigestion",
+   "acid reflux",
+   "vomiting"
+  ],
+  "mu": [
+   0.054,
+   0.129,
+   0.687
+  ],
+  "p": -0.56,
+  "share": 0.084
+ },
+ "hkg_DpS-08-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "stomach ulcer",
+   "bowel obstruction",
+   "colon cancer",
+   "vomiting"
+  ],
+  "mu": [
+   0.044,
+   0.095,
+   0.882
+  ],
+  "p": -0.56,
+  "share": 0.067
+ },
+ "hkg_DpS-08-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "stomach ulcer",
+   "bowel obstruction",
+   "crohn's disease",
+   "vomiting"
+  ],
+  "mu": [
+   0.044,
+   0.087,
+   0.913
+  ],
+  "p": -0.56,
+  "share": 0.064
+ },
+ "hkg_DpS-09": {
+  "task": "hkg_DpS",
+  "query": [
+   "sickle cell anemia",
+   "nausea"
+  ],
+  "rank": 5.0,
+  "n_paths": 161
+ },
+ "hkg_DpS-09-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "sickle cell anemia",
+   "chest pain worsened by breathing",
+   "angina",
+   "nausea"
+  ],
+  "mu": [
+   0.188,
+   0.042,
+   0.795
+  ],
+  "p": -0.56,
+  "share": 0.083
+ },
+ "hkg_DpS-09-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "sickle cell anemia",
+   "rib pain",
+   "concussion",
+   "nausea"
+  ],
+  "mu": [
+   0.162,
+   0.027,
+   0.951
+  ],
+  "p": -0.56,
+  "share": 0.056
+ },
+ "hkg_DpS-09-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "sickle cell anemia",
+   "rib pain",
+   "esophageal cancer",
+   "nausea"
+  ],
+  "mu": [
+   0.162,
+   0.025,
+   0.915
+  ],
+  "p": -0.56,
+  "share": 0.053
+ },
+ "hkg_DpS-10": {
+  "task": "hkg_DpS",
+  "query": [
+   "cervical radiculopathy",
+   "tenderness"
+  ],
+  "rank": 2.0,
+  "n_paths": 163
+ },
+ "hkg_DpS-10-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "cervical radiculopathy",
+   "pins and needles",
+   "sciatica",
+   "tenderness"
+  ],
+  "mu": [
+   0.356,
+   0.03,
+   0.277
+  ],
+  "p": -0.56,
+  "share": 0.092
+ },
+ "hkg_DpS-10-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "cervical radiculopathy",
+   "shoulder pain",
+   "arthritis",
+   "tenderness"
+  ],
+  "mu": [
+   0.888,
+   0.014,
+   0.37
+  ],
+  "p": -0.56,
+  "share": 0.058
+ },
+ "hkg_DpS-10-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "cervical radiculopathy",
+   "arm pain",
+   "fibromyalgia",
+   "tenderness"
+  ],
+  "mu": [
+   0.838,
+   0.013,
+   0.289
+  ],
+  "p": -0.56,
+  "share": 0.051
+ },
+ "hkg_DpS-11": {
+  "task": "hkg_DpS",
+  "query": [
+   "lupus",
+   "swelling"
+  ],
+  "rank": 5.0,
+  "n_paths": 117
+ },
+ "hkg_DpS-11-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "lupus",
+   "joint pain",
+   "rheumatoid arthritis",
+   "swelling"
+  ],
+  "mu": [
+   0.197,
+   0.014,
+   0.714
+  ],
+  "p": -0.56,
+  "share": 0.13
+ },
+ "hkg_DpS-11-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "lupus",
+   "joint pain",
+   "arthritis",
+   "swelling"
+  ],
+  "mu": [
+   0.197,
+   0.012,
+   0.814
+  ],
+  "p": -0.56,
+  "share": 0.115
+ },
+ "hkg_DpS-11-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "lupus",
+   "joint pain",
+   "gout",
+   "swelling"
+  ],
+  "mu": [
+   0.197,
+   0.009,
+   0.956
+  ],
+  "p": -0.56,
+  "share": 0.087
+ },
+ "hkg_DpS-12": {
+  "task": "hkg_DpS",
+  "query": [
+   "cataracts",
+   "depression"
+  ],
+  "rank": 1.0,
+  "n_paths": 147
+ },
+ "hkg_DpS-12-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "cataracts",
+   "vision loss",
+   "migraine",
+   "depression"
+  ],
+  "mu": [
+   0.126,
+   0.02,
+   0.471
+  ],
+  "p": -0.56,
+  "share": 0.118
+ },
+ "hkg_DpS-12-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "cataracts",
+   "slow heart rate",
+   "heart attack",
+   "depression"
+  ],
+  "mu": [
+   0.077,
+   0.019,
+   0.362
+  ],
+  "p": -0.56,
+  "share": 0.093
+ },
+ "hkg_DpS-12-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "cataracts",
+   "slow heart rate",
+   "pulmonary hypertension",
+   "depression"
+  ],
+  "mu": [
+   0.077,
+   0.023,
+   0.144
+  ],
+  "p": -0.56,
+  "share": 0.09
+ },
+ "hkg_DpS-13": {
+  "task": "hkg_DpS",
+  "query": [
+   "multiple sclerosis",
+   "back pain"
+  ],
+  "rank": 5.0,
+  "n_paths": 202
+ },
+ "hkg_DpS-13-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "multiple sclerosis",
+   "leg numbness",
+   "thoracic radiculopathy",
+   "back pain"
+  ],
+  "mu": [
+   0.054,
+   0.242,
+   0.991
+  ],
+  "p": -0.56,
+  "share": 0.116
+ },
+ "hkg_DpS-13-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "multiple sclerosis",
+   "leg numbness",
+   "sciatica",
+   "back pain"
+  ],
+  "mu": [
+   0.054,
+   0.118,
+   0.98
+  ],
+  "p": -0.56,
+  "share": 0.087
+ },
+ "hkg_DpS-13-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "multiple sclerosis",
+   "burning sensation",
+   "shingles",
+   "back pain"
+  ],
+  "mu": [
+   0.029,
+   0.052,
+   0.395
+  ],
+  "p": -0.56,
+  "share": 0.036
+ },
+ "hkg_DpS-14": {
+  "task": "hkg_DpS",
+  "query": [
+   "sciatica",
+   "severe pain"
+  ],
+  "rank": 9.0,
+  "n_paths": 69
+ },
+ "hkg_DpS-14-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "sciatica",
+   "lower extremity pain",
+   "sickle cell anemia",
+   "severe pain"
+  ],
+  "mu": [
+   0.041,
+   0.273,
+   0.247
+  ],
+  "p": -0.56,
+  "share": 0.213
+ },
+ "hkg_DpS-14-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "sciatica",
+   "pins and needles",
+   "cervical radiculopathy",
+   "severe pain"
+  ],
+  "mu": [
+   0.044,
+   0.08,
+   0.204
+  ],
+  "p": -0.56,
+  "share": 0.142
+ },
+ "hkg_DpS-14-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "sciatica",
+   "flank pain",
+   "kidney stone",
+   "severe pain"
+  ],
+  "mu": [
+   0.075,
+   0.021,
+   0.124
+  ],
+  "p": -0.56,
+  "share": 0.081
+ },
+ "hkg_DpS-15": {
+  "task": "hkg_DpS",
+  "query": [
+   "seasonal allergies",
+   "sore throat"
+  ],
+  "rank": 2.0,
+  "n_paths": 97
+ },
+ "hkg_DpS-15-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "seasonal allergies",
+   "eye redness",
+   "pink eye",
+   "sore throat"
+  ],
+  "mu": [
+   0.109,
+   0.546,
+   0.728
+  ],
+  "p": -0.56,
+  "share": 0.115
+ },
+ "hkg_DpS-15-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "seasonal allergies",
+   "sneezing",
+   "upper respiratory infection",
+   "sore throat"
+  ],
+  "mu": [
+   0.172,
+   0.179,
+   0.879
+  ],
+  "p": -0.56,
+  "share": 0.101
+ },
+ "hkg_DpS-15-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "seasonal allergies",
+   "sinus pressure",
+   "sinusitis",
+   "sore throat"
+  ],
+  "mu": [
+   0.129,
+   0.199,
+   0.455
+  ],
+  "p": -0.56,
+  "share": 0.075
+ },
+ "hkg_DpS-16": {
+  "task": "hkg_DpS",
+  "query": [
+   "appendicitis",
+   "diarrhea"
+  ],
+  "rank": 1.0,
+  "n_paths": 280
+ },
+ "hkg_DpS-16-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "appendicitis",
+   "pelvic pain",
+   "endometriosis",
+   "diarrhea"
+  ],
+  "mu": [
+   0.15,
+   0.027,
+   0.817
+  ],
+  "p": -0.56,
+  "share": 0.048
+ },
+ "hkg_DpS-16-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "appendicitis",
+   "dull pain",
+   "kidney stone",
+   "diarrhea"
+  ],
+  "mu": [
+   0.048,
+   0.138,
+   0.132
+  ],
+  "p": -0.56,
+  "share": 0.047
+ },
+ "hkg_DpS-16-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "appendicitis",
+   "vaginal discharge",
+   "ovarian cyst",
+   "diarrhea"
+  ],
+  "mu": [
+   0.087,
+   0.033,
+   0.777
+  ],
+  "p": -0.56,
+  "share": 0.046
+ },
+ "hkg_DpS-17": {
+  "task": "hkg_DpS",
+  "query": [
+   "kidney stone",
+   "infection"
+  ],
+  "rank": 1.0,
+  "n_paths": 159
+ },
+ "hkg_DpS-17-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "kidney stone",
+   "groin pain",
+   "epididymitis",
+   "infection"
+  ],
+  "mu": [
+   0.109,
+   0.241,
+   0.861
+  ],
+  "p": -0.56,
+  "share": 0.155
+ },
+ "hkg_DpS-17-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "kidney stone",
+   "testicle pain",
+   "epididymitis",
+   "infection"
+  ],
+  "mu": [
+   0.049,
+   0.716,
+   0.861
+  ],
+  "p": -0.56,
+  "share": 0.113
+ },
+ "hkg_DpS-17-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "kidney stone",
+   "frequent urge to urinate",
+   "kidney infection",
+   "infection"
+  ],
+  "mu": [
+   0.055,
+   0.082,
+   0.699
+  ],
+  "p": -0.56,
+  "share": 0.057
+ },
+ "hkg_DpS-18": {
+  "task": "hkg_DpS",
+  "query": [
+   "aneurysm",
+   "dizziness"
+  ],
+  "rank": 1.0,
+  "n_paths": 164
+ },
+ "hkg_DpS-18-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "aneurysm",
+   "severe headache",
+   "migraine",
+   "dizziness"
+  ],
+  "mu": [
+   0.075,
+   0.04,
+   0.769
+  ],
+  "p": -0.56,
+  "share": 0.09
+ },
+ "hkg_DpS-18-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "aneurysm",
+   "ache",
+   "middle ear infection",
+   "dizziness"
+  ],
+  "mu": [
+   0.067,
+   0.027,
+   0.321
+  ],
+  "p": -0.56,
+  "share": 0.06
+ },
+ "hkg_DpS-18-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "aneurysm",
+   "severe headache",
+   "traumatic brain injury",
+   "dizziness"
+  ],
+  "mu": [
+   0.075,
+   0.021,
+   0.752
+  ],
+  "p": -0.56,
+  "share": 0.058
+ },
+ "hkg_DpS-19": {
+  "task": "hkg_DpS",
+  "query": [
+   "gastroparesis",
+   "anxiety"
+  ],
+  "rank": 5.0,
+  "n_paths": 233
+ },
+ "hkg_DpS-19-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "gastroparesis",
+   "abdominal tenderness",
+   "stomach flu",
+   "anxiety"
+  ],
+  "mu": [
+   0.031,
+   0.036,
+   0.12
+  ],
+  "p": -0.56,
+  "share": 0.081
+ },
+ "hkg_DpS-19-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "gastroparesis",
+   "pain in upper abdomen",
+   "gastritis",
+   "anxiety"
+  ],
+  "mu": [
+   0.524,
+   0.006,
+   0.281
+  ],
+  "p": -0.56,
+  "share": 0.049
+ },
+ "hkg_DpS-19-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "gastroparesis",
+   "crying",
+   "post traumatic stress disorder",
+   "anxiety"
+  ],
+  "mu": [
+   0.05,
+   0.006,
+   0.978
+  ],
+  "p": -0.56,
+  "share": 0.042
+ },
+ "hkg_DpS-20": {
+  "task": "hkg_DpS",
+  "query": [
+   "urinary tract infection",
+   "abdominal pain"
+  ],
+  "rank": 3.0,
+  "n_paths": 254
+ },
+ "hkg_DpS-20-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "urinary tract infection",
+   "urinary retention",
+   "bladder cancer",
+   "abdominal pain"
+  ],
+  "mu": [
+   0.382,
+   0.037,
+   0.507
+  ],
+  "p": -0.56,
+  "share": 0.07
+ },
+ "hkg_DpS-20-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "urinary tract infection",
+   "foul smelling urine",
+   "kidney infection",
+   "abdominal pain"
+  ],
+  "mu": [
+   0.03,
+   0.287,
+   0.715
+  ],
+  "p": -0.56,
+  "share": 0.059
+ },
+ "hkg_DpS-20-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "urinary tract infection",
+   "frequent urge to urinate",
+   "kidney infection",
+   "abdominal pain"
+  ],
+  "mu": [
+   0.053,
+   0.082,
+   0.715
+  ],
+  "p": -0.56,
+  "share": 0.058
+ },
+ "hkg_DpS-21": {
+  "task": "hkg_DpS",
+  "query": [
+   "ovarian cyst",
+   "fever"
+  ],
+  "rank": 1.0,
+  "n_paths": 210
+ },
+ "hkg_DpS-21-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "ovarian cyst",
+   "pain in lower abdomen",
+   "kidney infection",
+   "fever"
+  ],
+  "mu": [
+   0.217,
+   0.026,
+   0.961
+  ],
+  "p": -0.56,
+  "share": 0.065
+ },
+ "hkg_DpS-21-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "ovarian cyst",
+   "pain in lower abdomen",
+   "chlamydia",
+   "fever"
+  ],
+  "mu": [
+   0.217,
+   0.025,
+   0.522
+  ],
+  "p": -0.56,
+  "share": 0.058
+ },
+ "hkg_DpS-21-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "ovarian cyst",
+   "flank pain",
+   "kidney infection",
+   "fever"
+  ],
+  "mu": [
+   0.234,
+   0.021,
+   0.961
+  ],
+  "p": -0.56,
+  "share": 0.055
+ },
+ "hkg_DpS-22": {
+  "task": "hkg_DpS",
+  "query": [
+   "arrhythmia",
+   "shortness of breath"
+  ],
+  "rank": 1.0,
+  "n_paths": 124
+ },
+ "hkg_DpS-22-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "arrhythmia",
+   "chest tightness",
+   "anaphylaxis",
+   "shortness of breath"
+  ],
+  "mu": [
+   0.079,
+   0.01,
+   0.863
+  ],
+  "p": -0.56,
+  "share": 0.076
+ },
+ "hkg_DpS-22-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "arrhythmia",
+   "chest tightness",
+   "bronchitis",
+   "shortness of breath"
+  ],
+  "mu": [
+   0.079,
+   0.01,
+   0.846
+  ],
+  "p": -0.56,
+  "share": 0.072
+ },
+ "hkg_DpS-22-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "arrhythmia",
+   "chest tightness",
+   "angina",
+   "shortness of breath"
+  ],
+  "mu": [
+   0.079,
+   0.01,
+   0.92
+  ],
+  "p": -0.56,
+  "share": 0.072
+ },
+ "hkg_DpS-23": {
+  "task": "hkg_DpS",
+  "query": [
+   "chronic kidney disease",
+   "coughing"
+  ],
+  "rank": 1.0,
+  "n_paths": 227
+ },
+ "hkg_DpS-23-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "chronic kidney disease",
+   "fluid in the lungs",
+   "congestive heart failure",
+   "coughing"
+  ],
+  "mu": [
+   0.029,
+   0.041,
+   0.82
+  ],
+  "p": -0.56,
+  "share": 0.086
+ },
+ "hkg_DpS-23-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "chronic kidney disease",
+   "fluid in the lungs",
+   "pulmonary hypertension",
+   "coughing"
+  ],
+  "mu": [
+   0.029,
+   0.027,
+   0.514
+  ],
+  "p": -0.56,
+  "share": 0.066
+ },
+ "hkg_DpS-23-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "chronic kidney disease",
+   "kidney failure",
+   "congestive heart failure",
+   "coughing"
+  ],
+  "mu": [
+   0.381,
+   0.008,
+   0.82
+  ],
+  "p": -0.56,
+  "share": 0.056
+ },
+ "hkg_DpS-24": {
+  "task": "hkg_DpS",
+  "query": [
+   "alcoholism",
+   "sadness"
+  ],
+  "rank": 1.0,
+  "n_paths": 210
+ },
+ "hkg_DpS-24-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "alcoholism",
+   "thoughts of suicide",
+   "major depression",
+   "sadness"
+  ],
+  "mu": [
+   0.199,
+   0.044,
+   0.99
+  ],
+  "p": -0.56,
+  "share": 0.062
+ },
+ "hkg_DpS-24-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "alcoholism",
+   "thoughts of suicide",
+   "post traumatic stress disorder",
+   "sadness"
+  ],
+  "mu": [
+   0.199,
+   0.041,
+   0.989
+  ],
+  "p": -0.56,
+  "share": 0.059
+ },
+ "hkg_DpS-24-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "alcoholism",
+   "thoughts of suicide",
+   "psychosis",
+   "sadness"
+  ],
+  "mu": [
+   0.199,
+   0.027,
+   0.961
+  ],
+  "p": -0.56,
+  "share": 0.041
+ },
+ "hkg_DpS-25": {
+  "task": "hkg_DpS",
+  "query": [
+   "ovarian cyst",
+   "spotting"
+  ],
+  "rank": 1.0,
+  "n_paths": 41
+ },
+ "hkg_DpS-25-p1": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "ovarian cyst",
+   "vaginal bleeding",
+   "miscarriage",
+   "spotting"
+  ],
+  "mu": [
+   0.452,
+   0.099,
+   0.857
+  ],
+  "p": -0.56,
+  "share": 0.261
+ },
+ "hkg_DpS-25-p2": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "ovarian cyst",
+   "vaginal bleeding",
+   "ectopic pregnancy",
+   "spotting"
+  ],
+  "mu": [
+   0.452,
+   0.047,
+   0.784
+  ],
+  "p": -0.56,
+  "share": 0.135
+ },
+ "hkg_DpS-25-p3": {
+  "metapath": "DpS-DpS^-1-DpS",
+  "nodes": [
+   "ovarian cyst",
+   "vaginal discharge",
+   "miscarriage",
+   "spotting"
+  ],
+  "mu": [
+   0.322,
+   0.025,
+   0.857
+  ],
+  "p": -0.56,
+  "share": 0.071
+ }
+}

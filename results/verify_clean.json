@@ -1,0 +1,25 @@
+{
+ "commit": "0adaa66",
+ "branch": "revision3",
+ "script": "scripts/verify_clean.sh",
+ "task": "hkg_DpS",
+ "split": 0,
+ "python": "3.13.18",
+ "torch": "2.15.0+cpu",
+ "numpy": "2.5.3",
+ "wall_s": 311,
+ "rows": {
+  "dnfr": {
+   "released": 0.3204479726336222,
+   "rerun": 0.3204479726336222
+  },
+  "dnfr_max": {
+   "released": 0.23071512866136112,
+   "rerun": 0.23071512866136112
+  },
+  "dnfr_nodeg": {
+   "released": 0.27392723750993225,
+   "rerun": 0.27392723750993225
+  }
+ }
+}

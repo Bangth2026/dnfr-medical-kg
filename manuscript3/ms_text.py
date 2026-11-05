@@ -840,7 +840,11 @@ def declarations(dc):
            "authors approved the final manuscript and agree to be accountable for all aspects of the work.")
     P_(dc, "**Independent verification.** Without the AI system, the corresponding author (Truong Hai Bang) checked every result "
            "reported in this article, in the text, the tables, the figures and the supplementary material, against the released "
-           "result files.")
+           "result files."
+           + (" A re-run of DNFR, DNFR with the strongest path only and DNFR without degree terms on the first split of the graded "
+              "graph from a clean clone of the repository, in a fresh environment (scripts/verify_clean.sh), reproduced the released "
+              "test MRR to four decimals (" + ", ".join(f"{VC['rows'][v]['rerun']:.4f}" for v in ("dnfr", "dnfr_max", "dnfr_nodeg"))
+              + ")." if VC and all(abs(VC["rows"][v]["rerun"] - VC["rows"][v]["released"]) < 5e-5 for v in VC["rows"]) else ""))
     P_(dc, "**Declaration of generative AI and AI-assisted technologies in the manuscript preparation process.** During the preparation "
            "of this work the authors used Claude (Anthropic) to draft and edit the manuscript text and, as described in Section 3.6, "
            "to write and run the analysis code under the authors' direction. After using this tool, the authors reviewed and edited "
