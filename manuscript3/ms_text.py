@@ -702,7 +702,7 @@ def results(dc):
                      "what a path method recovers is association with known clinical uses. " if close else
                      ("Palliates therefore carried little of what remained, and removing it as well changed DNFR's accuracy by "
                       f"{sg(qa['delta'])} ({qa['verdict']}). " if cpd_small else
-                      "Removing palliates as well lowered the accuracy further, but not to the disease-centred level. ")))
+                      "Removing palliates as well lowered the accuracy further, but not to the disease-centred level. "))
                     + ("Once the treats metapaths were gone, most of DNFR's evidence ran through genes that the compound targets, "
                        f"yet its accuracy was {f3(mn2['dnfr_notgt']['mean'])} against {f3(mn2['dnfr']['mean'])} with them. "
                        "Mechanistic evidence is what the model falls back on when association with known indications is "
