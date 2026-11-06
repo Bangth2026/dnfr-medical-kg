@@ -77,13 +77,18 @@ def build(outdir):
                                + " an interior minimum" if ii else "no split has an interior minimum")
               + ("" if not ee else ", and " + joinand([f"split {iv[k]['seed']}" for k in ee]) + " still has its minimum at an end of "
                  "the grid"))([k for k in range(len(iv)) if PS["interior"][k]], [k for k in range(len(iv)) if not PS["interior"][k]])
+           + (f", although the loss differences that place these minima are smaller than the disagreement between fits from "
+              f"different starting points ({PS['max_chain_spread']:.4f} nats; see 'Precision of the profile' below)"
+              if PS.get("max_chain_spread") and max(PS["loss_range"]) < 2 * PS["max_chain_spread"] else "")
            + ". (3) The Łukasiewicz t-norm trained from the default initialisation lost "
-           f"{sg(-pr('hkg_DpS', 'dnfr', 'luk')['delta_MRR'])[1:]} in MRR, while the warm-started fit at the same operator was close "
-           "to the product. The failure is therefore one of initialisation (every path starts at strength zero and passes no "
-           "gradient), not a property of the data. Section 4.4 now says so, and adds that in the nilpotent range the loss and "
-           "held-out accuracy again pointed in different directions: the loss was lowest at p > 0 in "
-           f"{num(sum(1 for x in iv if x['p_argmin'] > 0))} of the three splits, while test MRR at p > 0 was not higher than at the "
-           "product.")
+           f"{sg(-pr('hkg_DpS', 'dnfr', 'luk')['delta_MRR'])[1:]} in MRR, while the warm-started fit at the same operator was within "
+           f"{max(rr[0]['test_MRR'] - rr[1]['test_MRR'] for _, rr in nil if 1 in rr):.3f} of the product. The failure is therefore "
+           "one of initialisation (every path starts at strength zero and passes no gradient), not a property of the data. "
+           "Section 4.4 now says so, and adds that in the nilpotent range the loss and held-out accuracy again pointed in "
+           f"different directions: the loss was lowest at p > 0 in {num(sum(1 for x in iv if x['p_argmin'] > 0))} of the three "
+           "splits, while test MRR at p > 0 was "
+           + ("never higher than at the product." if all(max(r["test_MRR"] for p_, r in rr.items() if p_ > 0) <= rr[0]["test_MRR"] + 1e-9
+                                                         for _, rr in nil) else "not consistently higher than at the product."))
     r(d, txt)
     ch(d, "Section 4.4 (the paragraph on the nilpotent end, rewritten); Figure 2 (merged grid, p = 1 marked); Supplementary Tables "
           "S7, S8 and S18 (new).")
@@ -94,14 +99,17 @@ def build(outdir):
          "p; limit the claim that selecting p on validation helps to the graded graph, and attribute the DpS gain to optimisation "
          "variability.")
     ivd = PSd["intervals"]
-    txt = ("(1) We extended the profile on Hetionet disease–symptom to p = −10 and −20 (warm starts in both directions). The loss "
-           "was now lowest at p = " + joinand([ptxt(x["p_argmin"]) for x in ivd]) + " in the three splits; over the whole grid it "
-           "varied by " + joinand([f"{x:.4f}" for x in PSd["loss_range"]]) + " nats, and test MRR by at most "
-           f"{max(x['test_range'] for x in ivd):.3f}. "
-           + ("The minimum moved below −5 in " + num(sum(1 for x in ivd if x["p_argmin"] < -5)) + " split"
-              + ("s" if sum(1 for x in ivd if x["p_argmin"] < -5) != 1 else "") + ", towards the minimum t-norm, but the profile "
-              "stays flat: the loss does not locate p on this graph either. " if any(x["p_argmin"] < -5 for x in ivd) else
-              "The minimum did not move below −5, so the earlier boundary minima were not an artefact of the grid. "))
+    nb5 = sum(1 for x in ivd if x["p_argmin"] < -5)
+    txt = ("(1) We extended the profile on Hetionet disease–symptom to p = −10 and −20, with a further chain started at p = −20 "
+           "and run through the whole grid. The loss was now lowest at p = " + joinand([ptxt(x["p_argmin"]) for x in ivd])
+           + " in the three splits; over the whole grid the profile varied by " + joinand([f"{x:.4f}" for x in PSd["loss_range"]])
+           + f" nats, fits at the same p from different chains differed by up to {PSd['max_chain_spread']:.4f} nats, and test MRR "
+           f"varied by at most {max(x['test_range'] for x in ivd):.3f}. "
+           + (("The minimum moved below −5 in " + num(nb5) + " split" + ("s" if nb5 != 1 else "") + ", towards the minimum "
+               "t-norm, " if nb5 else "The minimum did not move below −5, ")
+              + ("but the differences that place it are no larger than the optimisation error, so the loss does not locate p "
+                 "on this graph either. " if max(PSd["loss_range"]) <= 2 * PSd["max_chain_spread"] else
+                 "and the profile is resolved beyond the optimisation error there. ")))
     fv = r3p(H, "fixp_val", "product"); fr = (R3.get(H) or {}).get("fixp_val_rows") or []
     if fv:
         chd = (R3.get(H) or {}).get("fixp_val_choice") or {}
@@ -248,6 +256,21 @@ def build(outdir):
             "observation, not evidence that low memberships flag wrong edges.")
     r(d, txt)
     ch(d, "Sections 4.7 and 5.5; released blinded rating sheet and scripts.")
+
+    # ------------------------------------------------------------------ precision
+    if PS.get("max_chain_spread") is not None:
+        heading(d, "Precision of the profile (a finding of this revision)", 1)
+        para(d, "Extending the grids, we found that the L-BFGS fits at the same fixed p do not always reach the same optimum. The "
+                "loss is not convex in the memberships and metapath weights, and fits from different starting points (the up and "
+                "down sweeps of each chain, and the further chains we then ran from the product and from the far end of the grid) "
+                f"differed by up to {PS['max_chain_spread']:.4f} nats on the graded graph and "
+                f"{PSd.get('max_chain_spread', float('nan')):.4f} nats on Hetionet disease–symptom. The profile now takes, at each "
+                "p, the lowest loss over all chains, and Section 4.4 reports the disagreement between chains as the precision of the "
+                "profile (Tables S8 and S16). This does not change the conclusion that the training loss does not locate p, but it "
+                "changes its basis: the variation of the profile over p is of the same order as the optimisation error, so "
+                "differences in p smaller than that cannot be resolved, and the per-split minima and intervals should be read "
+                "with that precision. The number in the Abstract is the largest variation of the merged profile over p from −5 to "
+                "0, and the Abstract now gives the precision next to it.")
 
     # ------------------------------------------------------------------ minor
     heading(d, "Minor comments", 1)

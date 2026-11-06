@@ -193,8 +193,10 @@ def abstract(dc):
            + ("No refinement improved MRR detectably. " if not rc["pos_diff"] else
               f"{Num(len(rc['pos_diff']))} of {rc['n']} refinement tests showed a gain. ")
            + ("On the graded graph and on Hetionet disease–symptom" if two else "On the graded graph")
-           + f", the converged training loss varied by at most {lr:.3f} nats over t-norm "
-           "parameters from −5 to 0, and its minimiser differed between splits; a t-norm selected on validation data beat the fixed "
+           + f", the training loss varied by at most {lr:.3f} nats over t-norm parameters from −5 to 0"
+           + (", within the fits' precision," if lr <= 2 * max(PSh.get("max_chain_spread", 0), PSd.get("max_chain_spread", 0) if two else 0)
+              else ",")
+           + " and its minimiser differed between splits; a t-norm selected on validation data beat the fixed "
            f"product by {fv['delta']:.3f} on the graded graph. Degree-weighted path counts were at least as accurate as DNFR on "
            f"{num(len(dwpc_at_least()))} of four tasks.")
     if nd and XC:
