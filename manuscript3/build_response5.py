@@ -180,7 +180,14 @@ def build(outdir):
         if e2 and e2.get("share_mean"):
             txt += (f"With both relations removed, gene-only metapaths carried {pct1(e2['share_mean']['gene'])} of DNFR's evidence "
                     f"(median {pct1(e2['share_median']['gene'])}). ")
-        txt += "Section 4.5 and Table 5C report both results, and the text draws the conclusion that the numbers support."
+        if e1 and e1.get("share_mean") and e1["share_mean"]["cpd"] < 0.1:
+            txt += ("The reviewer's hypothesis was reasonable, but the data do not support it: palliates carried little of the "
+                    "evidence that remained after the treats ablation, and removing it as well changed DNFR's accuracy by "
+                    f"{sg(qa['delta'])} ({vt(qa)}). What remained ran mostly through genes that the compound targets, at an accuracy "
+                    f"of {f3(mn2['dnfr_notgt']['mean'])}. Mechanistic evidence is what the model falls back on when association with "
+                    "known indications is unavailable, and it supports a much lower accuracy than association does; this sharpens "
+                    "the reading of Section 4.5 in a different way from the one the reviewer anticipated. ")
+        txt += "Section 4.5 and Table 5C report both results."
     else:
         txt += pending("treats-and-palliates ablation")
     r(d, txt)

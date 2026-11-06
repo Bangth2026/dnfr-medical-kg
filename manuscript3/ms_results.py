@@ -421,20 +421,26 @@ def supp_profile(d, num, key="profile_summary", label="the graded graph"):
                      f3(b["valid"]), f3(b["test"])])
     T(d, f"**Table S{num}.** Converged profile on {label} (means over {len(PS['seeds'])} splits): for each fixed shared p, "
          "training loss in excess of the split's minimum (×10⁻³ nat), ∂L/∂p at the converged fit (×10⁻³), validation and test MRR. "
-         "Values p > 0 were fitted with warm starts from the fit at the product.",
+         "Each point is the lowest converged loss found at that p over all warm-start chains (sweeps up and down the grid, and "
+         "further chains started from the product or from the far end of the grid); the largest disagreement between chains is "
+         "given per split in the next table.",
       ["p", "Excess loss ×10⁻³", "∂L/∂p ×10⁻³", "Validation MRR", "Test MRR"], rows, widths=[0.8, 1.3, 1.3, 1.3, 1.3], size=8)
     rows = [[str(r["seed"]), f"{r['threshold']:.1e}", f"[{r['p_lo']:g}, {r['p_hi']:g}]".replace("-", "−"),
              f"{r['p_argmin']:g}".replace("-", "−"),
              f"{c:.3f}" if inter else "end; slope " + ("—" if r.get("slope_end") is None else f"{1e3 * r['slope_end']:+.2f}×10⁻³".replace("-", "−")),
-             f"{r['p_best_valid']:g}".replace("-", "−"), f3(r["test_at_valid_choice"]), f3(r["test_product"])]
-            for r, c, inter in zip(PS["intervals"], PS["curvature"], PS["interior"])]
+             f"{r['p_best_valid']:g}".replace("-", "−"), f3(r["test_at_valid_choice"]), f3(r["test_product"]),
+             f"{1e3 * max(cs.values()):.2f}"]
+            for r, c, inter, cs in zip(PS["intervals"], PS["curvature"], PS["interior"], PS.get("chain_spread") or [{0: 0}] * 3)]
     T(d, f"**Table S{num + 1}.** Profile-likelihood style intervals for p on {label}, per split: values of p whose converged "
          "training loss lies within χ²(0.95, 1)/(2N) of the minimum, treating N times the mean loss as a negative log-likelihood "
          "[@raue2009]; the filtered softmax is not a likelihood of independent observations, so the intervals are descriptive. "
          "Curvature ∂²L/∂p² at the minimum from the three grid points around it; where the minimum lies at an end of the grid a "
-         "curvature is not defined, and we give instead the slope ∂L/∂p of the converged fit at that end.",
+         "curvature is not defined, and we give instead the slope ∂L/∂p of the converged fit at that end. Largest spread between "
+         "chains: the largest difference, over the grid, between the losses of converged fits at the same p from different "
+         "warm-start chains, a measure of the precision of the profile.",
       ["Split", "Threshold (nat)", "Interval for p", "p at minimum loss", "Curvature", "p chosen on validation",
-       "Test MRR at that p", "Test MRR, product"], rows, widths=[0.45, 0.8, 0.95, 0.75, 0.75, 0.85, 0.85, 0.85], size=8)
+       "Test MRR at that p", "Test MRR, product", "Largest spread between chains ×10⁻³"], rows,
+      widths=[0.4, 0.75, 0.9, 0.7, 0.8, 0.75, 0.75, 0.75, 0.8], size=7.5)
     return 2
 
 

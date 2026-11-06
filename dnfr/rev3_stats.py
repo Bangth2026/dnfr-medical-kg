@@ -197,20 +197,26 @@ def merged_profiles(task):
     on the graded graph and Hetionet DpS; prof_ext2: p up to 1 and down to -20), keeping the lower loss at each p.
     The released copies are in results/; results2/ is where the jobs write them."""
     dirs = [f"{ROOT}/results"]
-    for name in ("prof_ext", "prof_ext2"):
+    for name in ("prof_ext", "prof_ext2", "prof_ext3"):
         d = next((x for x in (f"{ROOT}/results/{name}", f"{ROOT}/results2/{name}") if os.path.isdir(x)), None)
         if d:
             dirs.append(d)
     by_seed = {}
     for d in dirs:
         for f in sorted(glob.glob(f"{d}/profile_lbfgs_{task}_seed*.json")):
-            x = json.load(open(f)); b = by_seed.setdefault(x["seed"], dict(x, rows={}))
+            x = json.load(open(f)); b = by_seed.setdefault(x["seed"], dict(x, rows={}, all_losses={}))
             for r in x["rows"]:
+                # every converged fit at this p, from either sweep of every chain, to measure how far chains disagree
+                al = b["all_losses"].setdefault(r["p"], [])
+                al.append(r["loss"])
+                if r.get("loss_other_sweep") is not None:
+                    al.append(r["loss_other_sweep"])
                 if r["p"] not in b["rows"] or r["loss"] < b["rows"][r["p"]]["loss"]:
                     b["rows"][r["p"]] = dict(r, from_extension=d != dirs[0])
     out = []
     for seed in sorted(by_seed):
         d = by_seed[seed]; d["rows"] = [d["rows"][p] for p in sorted(d["rows"])]
+        d["chain_spread"] = {f"{p:g}": float(max(v) - min(v)) for p, v in sorted(d.pop("all_losses").items())}
         ps = np.array([r["p"] for r in d["rows"]]); L = np.array([r["loss"] for r in d["rows"]])
         d["p_min"] = float(ps[np.argmin(L)]); d["loss_range"] = float(L.max() - L.min())
         d["d2L_dp2"], d["interior"] = curvature_at(ps, L)
@@ -226,7 +232,9 @@ def profile_summary(pl, task="hkg_DpS"):
     out = dict(seeds=[d["seed"] for d in rows], p_min=[d["p_min"] for d in rows], curvature=[d["d2L_dp2"] for d in rows],
                interior=[d["interior"] for d in rows], loss_range=[d["loss_range"] for d in rows],
                loss_range_nonpos=[d["loss_range_nonpos"] for d in rows], grid=[[r["p"] for r in d["rows"]] for d in rows],
-               rows=[d["rows"] for d in rows])
+               rows=[d["rows"] for d in rows], chain_spread=[d["chain_spread"] for d in rows],
+               max_chain_spread=float(max(max(d["chain_spread"].values()) for d in rows)),
+               dirs=[os.path.basename(x) for x in ("results",)])
     by_p = {}
     for d in rows:
         L = np.array([r["loss"] for r in d["rows"]])

@@ -20,6 +20,14 @@ for s in range(10):
               {"DNFR_DROP_RELS": "CtD,CpD"}, []))
     if s < 3:
         c, e = PROF("het_DpS", s, "-20,-10,-5"); J.append((f"prof5_dps_s{s}", False, c, e, []))
+# round-5 check: further warm-start chains for the converged profiles, because fits at the same p from different
+# chains reached different local optima (DpS split 0: 4.700 against 4.730 at p = -5). DpS: a chain started cold at
+# p = -20 through the whole grid; graded graph: a chain started cold at the product and run downwards.
+PROF3 = lambda task, s, grid: (PY + [f"{ROOT}/dnfr/profile_lbfgs.py", task, str(s), grid], {"DNFR_RESULTS": f"{ROOT}/results2/prof_ext3"})
+for s in range(3):
+    c, e = PROF3("het_DpS", s, "-20,-10,-5,-2,-1,-0.5,-0.25,0,0.25"); J.append((f"prof6_dps_s{s}", False, c, e, []))
+for s in range(3):
+    c, e = PROF3("hkg_DpS", s, "0,-0.25,-0.5,-0.75,-1,-1.5,-2,-2.5,-3,-4,-5"); J.append((f"prof6_hkg_s{s}", False, c, e, []))
 # M4, Q4: evidence shares after each ablation (seed-0 models)
 J.append(("ev5_notgt", True, PY + [f"{ROOT}/dnfr/evidence_notgt.py", "_notgt", "CtD"], {"DNFR_RESULTS": f"{ROOT}/results"}, []))
 J.append(("ev5_notgtp", True, PY + [f"{ROOT}/dnfr/evidence_notgt.py", "_notgtp", "CtD,CpD"],
@@ -28,7 +36,7 @@ J.append(("ev5_notgtp", True, PY + [f"{ROOT}/dnfr/evidence_notgt.py", "_notgtp",
 
 if __name__ == "__main__":
     mode = sys.argv[1]; only = sys.argv[2] if len(sys.argv) > 2 else None
-    os.makedirs(f"{ROOT}/results2/prof_ext2", exist_ok=True)
+    os.makedirs(f"{ROOT}/results2/prof_ext2", exist_ok=True); os.makedirs(f"{ROOT}/results2/prof_ext3", exist_ok=True)
     done = lambda x: os.path.exists(f"{ROOT}/results2/jobs/{x}/DONE")
     failed = set()   # jobs that failed in this worker are not retried by it
 

@@ -571,6 +571,20 @@ def results(dc):
                       "minimiser may lie further towards the minimum t-norm; the narrow intervals there reflect the small threshold "
                       "rather than a well-located optimum.")([r for r in ivd if r["p_argmin"] <= min(PSd["grid"][0])])
                    + " Test MRR varied by at most " + f"{max(r['test_range'] for r in ivd):.3f}" + " across the grid in any split.")
+        sp_h, sp_d = PS.get("max_chain_spread"), (PSd or {}).get("max_chain_spread")
+        if sp_h is not None:
+            P_(dc, "**Precision of the profile.** The loss is not convex in the memberships and metapath weights, and L-BFGS "
+                   "fits at the same p from different starting points, the up and down sweeps through the grid and further chains "
+                   "started from the product or from the far end of the grid, ended in different local optima. Their losses "
+                   f"differed by up to {sp_h:.4f} nats on the graded graph"
+                   + (f" and {sp_d:.4f} nats on Hetionet disease–symptom" if sp_d is not None else "")
+                   + "; each point of the profile is the lowest loss found at that p (Supplementary Tables S7 and S15). "
+                   + ("The variation of the profile over p from −5 to 0 is of the same order as this optimisation error, so the "
+                      "profile cannot resolve differences in p that are smaller than it: the training loss does not locate p, "
+                      "and the intervals above are no more precise than the fits behind them."
+                      if max(PS["loss_range_nonpos"] + ((PSd or {}).get("loss_range_nonpos") or [])) <= 2 * max(sp_h, sp_d or 0)
+                      else "The variation of the profile over p is larger than this optimisation error, so the shape of the "
+                           "profile is resolved, although its individual points are local optima."))
         P_(dc, "Held-out accuracy was more informative than the loss. On the graded graph, validation MRR at the converged fits was "
                "highest at p = " + joinand([ptxt(r["p_best_valid"]) for r in iv]) + ", and test MRR at the value chosen on "
                "validation exceeded that of the product by " + joinand([sg(r["test_at_valid_choice"] - r["test_product"]) for r in iv])
@@ -678,20 +692,21 @@ def results(dc):
             txt += (f". That is {pct(min(max(ds2, 0), 1))} of the way from the random-split to the disease-centred accuracy. ")
         if e2 and e2.get("share_mean"):
             txt += (f"With both relations removed, gene-only metapaths carried {pct1(e2['share_mean']['gene'])} of DNFR's evidence "
-                    f"(median {pct1(e2['share_median']['gene'])}). ")
+                    f"(median {pct1(e2['share_median']['gene'])}) and associative metapaths, through similar compounds or "
+                    f"diseases, {pct1(e2['share_mean']['associative'])}. ")
         if NP and qa:
             close = ds2 > 0.8
-            gsmall = bool(e2 and e2.get("share_mean") and e2["share_mean"]["gene"] < 0.05)
-            txt += (("Removing palliates as well brought the accuracy close to the disease-centred level, which sharpens the "
-                     "reading above: on this graph most of what a path method recovers is association with known clinical uses. "
-                     if close else
-                     "Removing palliates as well lowered the accuracy further"
-                     + ("" if qa["verdict"] == "different" else " in its point estimate")
-                     + ", but not to the disease-centred level, so association through palliates explains part, not all, of what "
-                     "remains after the treats ablation. ")
-                    + ("Even then the mechanistic metapaths carried only a small share of the evidence, so the conclusion that "
-                       "genes carry much less of the signal holds after both relations are removed." if gsmall else
-                       "With both relations removed, the mechanistic metapaths carried a larger share of the evidence."))
+            cpd_small = bool(e1 and e1.get("share_mean") and e1["share_mean"]["cpd"] < 0.1)
+            gene_big = bool(e1 and e1.get("share_mean") and e1["share_mean"]["gene"] > 0.3)
+            txt += (("Removing palliates as well brought the accuracy close to the disease-centred level: on this graph most of "
+                     "what a path method recovers is association with known clinical uses. " if close else
+                     ("Palliates therefore carried little of what remained, and removing it as well changed DNFR's accuracy by "
+                      f"{sg(qa['delta'])} ({qa['verdict']}). " if cpd_small else
+                      "Removing palliates as well lowered the accuracy further, but not to the disease-centred level. ")))
+                    + ("Once the treats metapaths were gone, most of DNFR's evidence ran through genes that the compound targets, "
+                       f"yet its accuracy was {f3(mn2['dnfr_notgt']['mean'])} against {f3(mn2['dnfr']['mean'])} with them. "
+                       "Mechanistic evidence is what the model falls back on when association with known indications is "
+                       "unavailable, and on this graph it supports a much lower accuracy than association does." if gene_big else ""))
         P_(dc, txt)
     R.table_tail(dc)
 
