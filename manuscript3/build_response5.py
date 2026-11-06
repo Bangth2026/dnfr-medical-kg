@@ -73,8 +73,9 @@ def build(outdir):
            + joinand([f3(rr[1]["valid_MRR"]) for _, rr in nil if 1 in rr]) + " against "
            + joinand([f3(rr[0]["valid_MRR"]) for _, rr in nil if 1 in rr]) + ". The loss was now lowest at p = "
            + joinand([ptxt(x["p_argmin"]) for x in iv]) + "; "
-           + (lambda ii, ee: (joinand([f"split {iv[k]['seed']}" for k in ii]) + (" has" if len(ii) == 1 else " have")
-                               + " an interior minimum" if ii else "no split has an interior minimum")
+           + (lambda ii, ee: (("the minimum is interior in all three splits" if len(ii) == len(iv) else
+                                joinand([f"split {iv[k]['seed']}" for k in ii]) + (" has" if len(ii) == 1 else " have")
+                                + " an interior minimum") if ii else "no split has an interior minimum")
               + ("" if not ee else ", and " + joinand([f"split {iv[k]['seed']}" for k in ee]) + " still has its minimum at an end of "
                  "the grid"))([k for k in range(len(iv)) if PS["interior"][k]], [k for k in range(len(iv)) if not PS["interior"][k]])
            + (f", although the loss differences that place these minima are smaller than the disagreement between fits from "

@@ -184,7 +184,7 @@ def abstract(dc):
            "t-norm per metapath and a noisy-OR over paths. On drug repurposing (Hetionet, PrimeKG) and disease–symptom prediction "
            "(Hetionet; a graph learned from emergency-department records) we compared ablations, fixed and validation-selected "
            "t-norms, four refinements, NBFNet and simpler baselines under leave-dyad-out splits, profiled the t-norm parameter to "
-           "convergence, and attributed predictions to individual facts.")
+           "convergence and attributed predictions to facts.")
     r_max = [pr(t, "dnfr", "dnfr_max")["delta_MRR"] for t in TASKS if pr(t, "dnfr", "dnfr_max")]
     two = PSd and max(PSd["loss_range_nonpos"]) < 0.01
     lr = max(PSh["loss_range_nonpos"] + (PSd["loss_range_nonpos"] if two else []))
@@ -196,7 +196,7 @@ def abstract(dc):
            + f", the training loss varied by at most {lr:.3f} nats over t-norm parameters from −5 to 0"
            + (", within the fits' precision," if lr <= 2 * max(PSh.get("max_chain_spread", 0), PSd.get("max_chain_spread", 0) if two else 0)
               else ",")
-           + " and its minimiser differed between splits; a t-norm selected on validation data beat the fixed "
+           + " and its minimiser differed between splits; a validation-selected t-norm beat the fixed "
            f"product by {fv['delta']:.3f} on the graded graph. Degree-weighted path counts were at least as accurate as DNFR on "
            f"{num(len(dwpc_at_least()))} of four tasks.")
     if nd and XC:
@@ -685,8 +685,8 @@ def results(dc):
             qa, qb = q2.get("dnfr_notgtp__dnfr_notgt"), q2.get("dnfr_notgtp__dnfr")
             nb_ = (e2 or {}).get("n_dropped_metapaths")
             txt += ("Without the metapaths that contain treats or palliates"
-                    + (f" ({nb_} of {e2['n_metapaths']})" if nb_ else "")
-                    + f" (Table 5C, {qa['J'] if qa else qb['J']} random splits), DNFR reached {f3(mn2['dnfr_notgtp']['mean'])}"
+                    + (f" ({nb_} of {e2['n_metapaths']}; " if nb_ else " (")
+                    + f"Table 5C, {qa['J'] if qa else qb['J']} random splits), DNFR reached {f3(mn2['dnfr_notgtp']['mean'])}"
                     + (f", {dci3(qa)} relative to the treats ablation ({qa['verdict']})" if qa else ""))
             if mn2.get("dwpc_lr_notgtp"):
                 txt += f"; DWPC-LR reached {f3(mn2['dwpc_lr_notgtp']['mean'])} and the fixed product {f3(mn2['product_notgtp']['mean'])}"
@@ -893,8 +893,10 @@ def discussion(dc):
     P_(dc, "We asked which learned components of a neuro-fuzzy path reasoner matter for link prediction on medical knowledge graphs. "
            "Combining all paths by noisy-OR rather than keeping the best one, and discounting edges at hub nodes, carried the gains "
            "that the model had over its ablations. Both had the same sign on every split of every task on which they were tested; "
-           f"after adjustment for multiple comparisons, aggregation was supported on {num(len(dmax))} and hub discounting on "
-           f"{num(len(ddeg))} of the tasks, and the remaining differences, though large, were inconclusive with the splits we had. "
+           + (f"after adjustment for multiple comparisons, each was supported on {num(len(dmax))} of the four tasks," if len(dmax) == len(ddeg) else
+            f"after adjustment for multiple comparisons, aggregation was supported on {num(len(dmax))} of the four tasks and hub "
+            f"discounting on {num(len(ddeg))},")
+           + f" and the remaining differences, though large, were inconclusive with the splits we had. "
            "Learning the discount per relation "
            "helped on the graph with graded clinical evidence and not elsewhere. The t-norm, the most visibly neuro-fuzzy part of "
            "the model, gave no consistent gain when learned, and the training loss barely depends on it once the memberships are "
