@@ -56,6 +56,9 @@ VARIANTS = {
     # restarts of the Gumbel-softmax choice (same split, other random streams for initial noise)
     "dnfr2_r1":         dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="overlap", feat="ic", anneal=True, restart=1),
     "dnfr2_r2":         dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="overlap", feat="ic", anneal=True, restart=2),
+    # round-5 M3: the fixed Hamacher product from other initial memberships (degree discount b = c = 0.1 or 0.6)
+    "hamacher_b01":     dict(tnorm="hamacher", p_mode="shared", degree=True, agg="noisyor", b_init=0.1),
+    "hamacher_b06":     dict(tnorm="hamacher", p_mode="shared", degree=True, agg="noisyor", b_init=0.6),
     "dnfr_gumbel_r1":   dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="noisyor", restart=1),
     "dnfr_gumbel_r2":   dict(tnorm="gumbel", p_mode="per_mp", degree=True, agg="noisyor", restart=2),
     # third revision: t-norm parameter fixed and selected on validation data (grid; p = 0 is the product t-norm)
@@ -186,6 +189,11 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
             bad_mp = [i for i, m in enumerate(P["mps"]) if any(tr[3] == spec["rel"] for tr in m)]
             mask &= ~np.isin(P["mp"], bad_mp)
             print(f"dropped {len(bad_mp)} metapaths that contain {spec['rel']}; {int(mask.sum())} paths kept", flush=True)
+        if os.environ.get("DNFR_DROP_RELS"):   # round-5 M4: also drop metapaths through related relations (e.g. CpD)
+            rels = set(os.environ["DNFR_DROP_RELS"].split(","))
+            bad_mp = [i for i, m in enumerate(P["mps"]) if any(tr[3] in rels for tr in m)]
+            mask &= ~np.isin(P["mp"], bad_mp)
+            print(f"dropped {len(bad_mp)} metapaths that contain any of {sorted(rels)}; {int(mask.sum())} paths kept", flush=True)
         SD = {}
         def get_sd(overlap, feat):   # one SplitData per (aggregation, feature) setting, built when first needed
             k = (overlap, feat)

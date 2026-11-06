@@ -230,9 +230,19 @@ def table_tail(d):
                 continue
             rows.append([NAMES[m], f3(NT["means"][m]["mean"]), f"{f3(a_['mean'])} ± {f3(a_['sd'])} ({a_['n']})", "—",
                          r3cell(p_) if p_ else "—"])
-    T(d, "**Table 5.** Hetionet compound–treats–disease in two harder settings. Random-split MRR from Table 2 for comparison (in "
-         "panel B, over the same splits). Each Δ is given with its 95% bootstrap interval and the number of splits on which it "
-         "was positive; in panel B, verdicts as in Table 3 (Holm adjustment within the panel).",
+    NP = R4.get("notgtp")
+    if NP:
+        rows.append(["§C. Random splits without the metapaths that contain treats or palliates; ΔMRR is the model without "
+                     "both minus the model without treats only (panel B)"])
+        for m in ("dnfr", "product", "dwpc_lr"):
+            a_ = NP["means"].get(m + "_notgtp"); b_ = NP["means"].get(m + "_notgt"); p_ = NP["paired"].get(f"{m}_notgtp__{m}_notgt")
+            if not a_ or not a_["n"]:
+                continue
+            rows.append([NAMES[m], "—" if not b_ else f3(b_["mean"]), f"{f3(a_['mean'])} ± {f3(a_['sd'])} ({a_['n']})", "—",
+                         r3cell(p_) if p_ else "—"])
+    T(d, "**Table 5.** Hetionet compound–treats–disease in three harder settings. Random-split MRR from Table 2 for comparison (in "
+         "panel B, over the same splits; in panel C, the MRR of panel B). Each Δ is given with its 95% bootstrap interval and the number of splits on which it "
+         "was positive; in panels B and C, verdicts as in Table 3 (Holm adjustment within each panel).",
       ["Method", "MRR, random split", "MRR, harder setting", "Hits@10, harder setting", "ΔMRR [95% CI], splits"], rows,
       widths=[2.0, 0.85, 1.05, 0.85, 1.52], size=8)
 
@@ -288,16 +298,21 @@ def table_expl(d):
             f"{pct(lc['gene'])} / {pct(lc['associative'])} / {pct(lc['other'])}" if t == "het_CtD" else "—" for t in ts])
         if "het_CtD" in XD:
             sh = XD["het_CtD"]["dnfr"]["share_mean"]
-            rows.append(["Share of the evidence: mechanistic / associative / other (mean)"] + [
-                f"{pct1(sh['gene'])} / {pct1(sh['associative'])} / {pct1(sh['other'])}" if t == "het_CtD" else "—" for t in ts])
-            rows.append(["Share of the evidence on metapaths through the treats relation (mean)"] + [
-                pct1(XD["het_CtD"]["dnfr"]["share_target_mean"]) if t == "het_CtD" else "—" for t in ts])
+            md = XD["het_CtD"]["dnfr"]["share_median"]
+            rows.append(["Share of the evidence: mechanistic / associative / other, mean (median)"] + [
+                f"{pct1(sh['gene'])} ({pct1(md['gene'])}) / {pct1(sh['associative'])} ({pct1(md['associative'])}) / "
+                f"{pct1(sh['other'])} ({pct1(md['other'])})" if t == "het_CtD" else "—" for t in ts])
+            rows.append(["Share of the evidence on metapaths through the treats relation, mean (median)"] + [
+                f"{pct1(XD['het_CtD']['dnfr']['share_target_mean'])} ({pct1(XD['het_CtD']['dnfr']['share_target_median'])})"
+                if t == "het_CtD" else "—" for t in ts])
     T(d, "**Table 6.** Quantitative evaluation of path explanations on the seed-0 split. Evidence is −log(1 − P) above the leak, "
          "which the paths share exactly. Summed path shares count a fact once for every path through it; the Shapley value splits "
          "each path's term equally among its facts (Section 3.6) and sums to the total. DWPC-LR rows use its own correct top-10 "
          "predictions and the attribution of Section 3.6. Deletion within the pair changes one score with all others fixed; the "
          "fact-level counterfactual removes one fact from the graph and re-scores every candidate of the same head, without "
-         "retraining. Metapath classes are given for drug repurposing only, the one task with a mechanistic route.",
+         "retraining. Metapath classes are given for drug repurposing only, the one task with a mechanistic route. In \"Same leading "
+         "fact in DNFR (Shapley) and DWPC-LR\" the number in parentheses is the number of pairs in the top 10 of both models; in "
+         "\"Test pairs evaluated\" it is the number of top-10 hits.",
       [""] + [TASK_LABEL[t] for t in ts], rows, widths=[2.67, 1.2, 1.2, 1.2], size=8)
 
 
@@ -409,14 +424,15 @@ def supp_profile(d, num, key="profile_summary", label="the graded graph"):
          "Values p > 0 were fitted with warm starts from the fit at the product.",
       ["p", "Excess loss ×10⁻³", "∂L/∂p ×10⁻³", "Validation MRR", "Test MRR"], rows, widths=[0.8, 1.3, 1.3, 1.3, 1.3], size=8)
     rows = [[str(r["seed"]), f"{r['threshold']:.1e}", f"[{r['p_lo']:g}, {r['p_hi']:g}]".replace("-", "−"),
-             f"{r['p_argmin']:g}".replace("-", "−"), f"{c:.3f}" + ("" if inter else " (end)"),
+             f"{r['p_argmin']:g}".replace("-", "−"),
+             f"{c:.3f}" if inter else "end; slope " + ("—" if r.get("slope_end") is None else f"{1e3 * r['slope_end']:+.2f}×10⁻³".replace("-", "−")),
              f"{r['p_best_valid']:g}".replace("-", "−"), f3(r["test_at_valid_choice"]), f3(r["test_product"])]
             for r, c, inter in zip(PS["intervals"], PS["curvature"], PS["interior"])]
     T(d, f"**Table S{num + 1}.** Profile-likelihood style intervals for p on {label}, per split: values of p whose converged "
          "training loss lies within χ²(0.95, 1)/(2N) of the minimum, treating N times the mean loss as a negative log-likelihood "
          "[@raue2009]; the filtered softmax is not a likelihood of independent observations, so the intervals are descriptive. "
-         "Curvature ∂²L/∂p² at the minimum from the three grid points around it; (end): the minimum lies at an end of the grid, "
-         "and the value is a one-sided estimate from the three points nearest that end.",
+         "Curvature ∂²L/∂p² at the minimum from the three grid points around it; where the minimum lies at an end of the grid a "
+         "curvature is not defined, and we give instead the slope ∂L/∂p of the converged fit at that end.",
       ["Split", "Threshold (nat)", "Interval for p", "p at minimum loss", "Curvature", "p chosen on validation",
        "Test MRR at that p", "Test MRR, product"], rows, widths=[0.45, 0.8, 0.95, 0.75, 0.75, 0.85, 0.85, 0.85], size=8)
     return 2
@@ -450,11 +466,13 @@ def supp_rules(d, num):
     for m in ("dnfr", "dwpc_lr"):
         if f"{m}_notgt__{m}" in NT:
             add(f"{NAMES[m].split(' (')[0]} without treats metapaths minus with", "het_CtD", NT[f"{m}_notgt__{m}"])
-    T(d, f"**Table S{num}.** Verdicts for the comparisons on which the Highlights and the Conclusion rest, under the rule of "
-         "Section 3.6 and under the rule of the earlier version of this analysis (different when the unadjusted 95% corrected-t "
-         "interval excludes zero; equivalent when the 90% corrected-t interval lies inside ±0.01). Δ is the mean difference in "
-         "test MRR, with the number of splits on which it was positive.",
-      ["Comparison", "Task", "Δ (splits > 0)", "Verdict, current rule", "Verdict, earlier rule"], rows,
+    T(d, f"**Table S{num}.** Sensitivity of the verdicts to the decision rule, for the comparisons on which the Highlights and "
+         "the Conclusion rest: verdicts under the rule of Section 3.6 and under a simpler rule (different when the unadjusted 95% "
+         "corrected-t interval excludes zero; equivalent when the 90% corrected-t interval lies inside ±0.01). An earlier version "
+         "of this analysis used the simpler rule; we replaced it because, with three splits, it accepted differences whose "
+         "bootstrap interval contained zero, and because it did not adjust for multiplicity. Δ is the mean difference in test MRR, "
+         "with the number of splits on which it was positive.",
+      ["Comparison", "Task", "Δ (splits > 0)", "Verdict, rule of Section 3.6", "Verdict, simpler rule"], rows,
       widths=[2.4, 1.05, 1.0, 0.95, 0.95], size=7.5)
 
 
@@ -517,3 +535,36 @@ def supp_nhanes(d, num):
          "predicted from its indirect paths in the 2013–2018 relation and compared with the relation measured in 2007–2012. Fixed rows "
          "reproduce the earlier analysis [@truong2026].",
       ["Composition", "Spearman ρ, held-out", "Spearman ρ, development", "MAE, held-out"], rows, widths=[3.0, 1.1, 1.1, 1.07], size=8)
+
+def supp_fixp_dps(d, num):
+    """Per-split validation-selected p against the product on Hetionet disease-symptom (round-5 M2, Q3)."""
+    PSd = R3.get("profile_summary_dps") or {}
+    conv = {s: next((r["test_MRR"] for r in rows if r["p"] == 0), None) for s, rows in zip(PSd.get("seeds", []), PSd.get("rows", []))}
+    lab = {"product": "0 (product)", "fixp_m4": "−4", "fixp_m2": "−2", "fixp_m1": "−1", "fixp_m05": "−0.5", "fixp_05": "0.5"}
+    rows = [[str(r["seed"]), f3(r["product"]), f3(r["product_valid"]), lab.get(r["chosen"], r["chosen"]), f3(r["chosen_test"]),
+             sg(r["chosen_test"] - r["product"]), "—" if conv.get(r["seed"]) is None else f3(conv[r["seed"]])]
+            for r in R3.get("het_DpS", {}).get("fixp_val_rows", [])]
+    T(d, f"**Table S{num}.** Validation-selected fixed p against the fixed product on Hetionet disease–symptom, per split: test and "
+         "validation MRR of the early-stopped product run, the grid value chosen on validation, its test MRR and the difference, and "
+         "the test MRR of the product fitted to convergence by L-BFGS (Section 4.4; profiled splits only).",
+      ["Split", "Product, test", "Product, validation", "p chosen", "Chosen p, test", "Difference", "Product, converged"], rows,
+      widths=[0.5, 0.9, 1.0, 0.9, 0.9, 0.85, 1.0], size=8)
+
+
+def supp_nilpotent(d, num):
+    """Warm-started converged fits at p >= 0 on the graded graph, per split (round-5 M1, Q1)."""
+    PS = R3.get("profile_summary") or {}
+    rows = []
+    for sd_, rr in zip(PS.get("seeds", []), PS.get("rows", [])):
+        L0 = min(r["loss"] for r in rr)
+        for r in rr:
+            if r["p"] >= 0:
+                rows.append([str(sd_), f"{r['p']:g}", f"{1e3 * (r['loss'] - L0):.2f}",
+                             "—" if r["dLdp"] is None else f"{1e3 * r['dLdp']:+.2f}".replace("-", "−"), f3(r["valid_MRR"]), f3(r["test_MRR"])])
+    if not rows:
+        return
+    T(d, f"**Table S{num}.** Converged fits at p ≥ 0 on the graded graph, per split. Fits at p > 0 were started from the converged "
+         "fit at the product (p = 0) and, in a second sweep, from the neighbouring grid value; the lower loss is kept. Excess "
+         "loss is relative to the split's minimum over the whole grid (×10⁻³ nat); p = 1 is the Łukasiewicz t-norm.",
+      ["Split", "p", "Excess loss ×10⁻³", "∂L/∂p ×10⁻³", "Validation MRR", "Test MRR"], rows,
+      widths=[0.6, 0.6, 1.2, 1.2, 1.2, 1.2], size=8)

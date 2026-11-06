@@ -47,10 +47,13 @@ def main():
                                       s_per_epoch=r["methods"]["dnfr"]["time_s"] / r["methods"]["dnfr"]["epochs"],
                                       dwpc_s=r["methods"]["dwpc_lr"].get("time_s"))
                                  for r in runs if "dnfr" in r["methods"] and "dwpc_lr" in r["methods"]]
-    # ablation without metapaths that contain the target relation (runs of the tagged file, paired with the full graph)
-    _, nt = merge("het_CtD_notgt")
+    # ablations without metapaths that contain the target relation (_notgt), or treats or palliates (_notgtp, round 5),
+    # runs of the tagged files paired with the full graph
     full = {r["seed"]: r for r in runs}
-    if nt:
+    def ablation(tag, suf, extra_pairs=()):
+        _, nt = merge(f"het_CtD{tag}")
+        if not nt:
+            return None
         comb = []
         for r in nt:
             f = full.get(r["seed"])
@@ -59,25 +62,64 @@ def main():
             R = dict(seed=r["seed"], n_train=r["n_train"], n_test=r["n_test"], methods={}, ranks={})
             for m in ("dnfr", "product", "dwpc_lr"):
                 if m in r["ranks"]:
-                    R["ranks"][m + "_notgt"] = r["ranks"][m]; R["methods"][m + "_notgt"] = r["methods"][m]
+                    R["ranks"][m + suf] = r["ranks"][m]; R["methods"][m + suf] = r["methods"][m]
                 if m in f["ranks"]:
                     R["ranks"][m] = f["ranks"][m]; R["methods"][m] = f["methods"][m]
             comb.append(R)
+        return nt, comb
+    def family(comb, pairs, name):
         fam = {}
-        for a, b in (("dnfr_notgt", "dnfr"), ("product_notgt", "product"), ("dwpc_lr_notgt", "dwpc_lr"),
-                     ("dnfr_notgt", "dwpc_lr_notgt"), ("dnfr_notgt", "product_notgt")):
+        for a, b in pairs:
             v = paired(comb, a, b)
             if v:
                 fam[f"{a}__{b}"] = v
         hp = holm({k: v["p"] for k, v in fam.items()})
         for k, v in fam.items():
-            v["p_holm"] = hp.get(k); v["verdict"] = verdict(v); v["verdict_rule2"] = verdict_rule2(v); v["family"] = "notgt"
-        means = {m: dict(mean=float(np.mean([r["methods"][m]["MRR"] for r in comb if m in r["methods"]])),
-                         sd=float(np.std([r["methods"][m]["MRR"] for r in comb if m in r["methods"]], ddof=1)) if len(comb) > 1 else 0.0,
-                         n=sum(1 for r in comb if m in r["methods"]))
-                 for m in ("dnfr_notgt", "product_notgt", "dwpc_lr_notgt", "dnfr", "product", "dwpc_lr")}
-        out["notgt"] = dict(paired=fam, means=means, paths_kept=[r.get("paths_kept") for r in nt],
-                            splits=[r["seed"] for r in comb])
+            v["p_holm"] = hp.get(k); v["verdict"] = verdict(v); v["verdict_rule2"] = verdict_rule2(v); v["family"] = name
+        return fam
+    def means_of(comb, ms):
+        return {m: dict(mean=float(np.mean([r["methods"][m]["MRR"] for r in comb if m in r["methods"]])),
+                        sd=float(np.std([r["methods"][m]["MRR"] for r in comb if m in r["methods"]], ddof=1))
+                        if sum(1 for r in comb if m in r["methods"]) > 1 else 0.0,
+                        n=sum(1 for r in comb if m in r["methods"]))
+                for m in ms if any(m in r["methods"] for r in comb)}
+    A1 = ablation("_notgt", "_notgt")
+    if A1:
+        nt, comb = A1
+        fam = family(comb, (("dnfr_notgt", "dnfr"), ("product_notgt", "product"), ("dwpc_lr_notgt", "dwpc_lr"),
+                            ("dnfr_notgt", "dwpc_lr_notgt"), ("dnfr_notgt", "product_notgt")), "notgt")
+        out["notgt"] = dict(paired=fam, means=means_of(comb, ("dnfr_notgt", "product_notgt", "dwpc_lr_notgt", "dnfr", "product", "dwpc_lr")),
+                            paths_kept=[r.get("paths_kept") for r in nt], splits=[r["seed"] for r in comb])
+    A2 = ablation("_notgtp", "_notgtp")
+    if A2:
+        nt2, comb2 = A2
+        if A1:   # add the treats-only ablation of the same split, to test what removing palliates adds
+            by = {r["seed"]: r for r in A1[1]}
+            for R in comb2:
+                for k in ("dnfr_notgt", "product_notgt", "dwpc_lr_notgt"):
+                    if R["seed"] in by and k in by[R["seed"]]["methods"]:
+                        R["methods"][k] = by[R["seed"]]["methods"][k]; R["ranks"][k] = by[R["seed"]]["ranks"][k]
+        fam2 = family(comb2, (("dnfr_notgtp", "dnfr"), ("dnfr_notgtp", "dnfr_notgt"), ("product_notgtp", "product_notgt"),
+                              ("dwpc_lr_notgtp", "dwpc_lr_notgt"), ("dnfr_notgtp", "dwpc_lr_notgtp")), "notgtp")
+        out["notgtp"] = dict(paired=fam2, means=means_of(comb2, ("dnfr_notgtp", "product_notgtp", "dwpc_lr_notgtp", "dnfr_notgt",
+                                                                "product_notgt", "dwpc_lr_notgt", "dnfr", "product", "dwpc_lr")),
+                             paths_kept=[r.get("paths_kept") for r in nt2], splits=[r["seed"] for r in comb2])
+    # evidence shares after each ablation (seed-0 models), from evidence_notgt.py
+    out["evidence_ablation"] = {}
+    for tag in ("_notgt", "_notgtp"):
+        for d_ in (f"{ROOT}/results", f"{ROOT}/results2/jobs/ctd5_notgtp_s0"):
+            f = f"{d_}/het_CtD{tag}_evidence.json"
+            if os.path.exists(f):
+                out["evidence_ablation"][tag] = {k: v for k, v in json.load(open(f)).items() if k != "records"}; break
+    # round-5 M3: the fixed Hamacher product on split 3 from other initial memberships
+    hr = []
+    for v in ("hamacher_b01", "hamacher_b06"):
+        lv = final_losses("het_CtD", v)
+        for r in runs:
+            if v in r["methods"]:
+                hr.append(dict(variant=v, b_init=float(v[-2:]) / 10, seed=r["seed"], mrr=r["methods"][v]["MRR"],
+                               loss=lv.get(r["seed"]), best_epoch=r["methods"][v].get("best_epoch"), epochs=r["methods"][v].get("epochs")))
+    out["hamacher_restarts"] = hr
     out["explain_dwpc"] = {}
     for t in ("het_CtD", "het_DpS", "hkg_DpS"):
         f = f"{ROOT}/results/{t}_explain_dwpc.json"

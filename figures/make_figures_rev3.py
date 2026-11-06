@@ -13,7 +13,9 @@ plt.rcParams.update({"font.size": 8.5, "axes.spines.top": False, "axes.spines.ri
 ST = json.load(open(f"{R}/rev3_stats.json"))
 
 # ---- Figure 2: converged profile ----
-prof = [v for k, v in sorted(ST.get("profile_lbfgs", {}).items()) if "hkg_DpS" in k]
+# merged profile (first grid and the warm-started extensions up to p = 1), one entry per split
+_PS = ST.get("profile_summary") or {}
+prof = [dict(seed=s, rows=r) for s, r in zip(_PS.get("seeds", []), _PS.get("rows", []))]
 if prof:
     fig, ax = plt.subplots(1, 3, figsize=(10.2, 2.9))
     for d in prof:
@@ -25,7 +27,7 @@ if prof:
         ax[1].plot(p, g * 1e3, "-o", ms=3, lw=1, label=lab)
         ax[2].plot(p, te, "-o", ms=3, lw=1, label=lab)
     for a in ax:
-        for x in (-1, 0):
+        for x in (-1, 0, 1):
             a.axvline(x, color="#aaaaaa", lw=0.7, ls="--", zorder=0)
         a.set_xlabel("fixed t-norm parameter p")
     ax[1].axhline(0, color="#555555", lw=0.6)

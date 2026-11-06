@@ -11,6 +11,10 @@ XS = json.load(open(f"{RES}/extra_stats.json"))
 R3 = json.load(open(f"{RES}/rev3_stats.json")) if os.path.exists(f"{RES}/rev3_stats.json") else {}
 R4 = json.load(open(f"{RES}/rev4_stats.json")) if os.path.exists(f"{RES}/rev4_stats.json") else {}
 XREV = json.load(open(f"{RES}/expert_review.json")) if os.path.exists(f"{RES}/expert_review.json") else {}
+XREV2 = json.load(open(f"{RES}/expert_review2.json")) if os.path.exists(f"{RES}/expert_review2.json") else {}
+if XREV2:   # short description of the second rater from the 'Rater' sheet: qualification and specialty
+    _r = {k.split(" /")[0].strip().lower(): v for k, v in (XREV2.get("rater") or {}).items()}
+    XREV2["rater_desc"] = ", ".join(str(_r[k]) for k in ("qualification", "specialty") if _r.get(k)) or "a physician"
 PC = json.load(open(f"{RES}/prior_check.json")) if os.path.exists(f"{RES}/prior_check.json") else {}
 
 TASKS = ["het_CtD", "het_DpS", "pkg_ind", "hkg_DpS"]
@@ -38,6 +42,10 @@ def ri(x):
     """round half up (epochs)"""
     import math
     return int(math.floor(x + 0.5))
+
+
+def pct1(x):
+    return f"{100 * x:.1f}%"
 
 
 def pct(x):

@@ -160,12 +160,12 @@ P_RAW0 = math.log(4.9 / 1.1)  # p0 = 6*4.9/6 - 5 = -0.1
 class DNFR(torch.nn.Module):
     def __init__(self, n_trav, n_mp, tnorm="ss", p_mode="per_mp", degree=True, agg="noisyor", use_weight=True,
                  p_init=-0.1, fixed_deg=None, freeze_mem=False, learn_p=True, p_param="sigmoid", anneal=False,
-                 beta_init=1.0, ops=("product", "min", "hamacher"), feat="degree"):
+                 beta_init=1.0, ops=("product", "min", "hamacher"), feat="degree", b_init=0.3):
         """p_init: initial t-norm parameter. fixed_deg: if a number, b_r = c_r = fixed_deg for every relation
         (not learned; DWPC-style damping). freeze_mem: keep a, b, c, g at their initial values."""
         super().__init__()
         learn_deg = degree and fixed_deg is None and not freeze_mem
-        b0 = 0.0 if not degree else (0.3 if fixed_deg is None else float(fixed_deg))
+        b0 = 0.0 if not degree else (float(b_init) if fixed_deg is None else float(fixed_deg))
         self.g = torch.nn.Parameter(torch.full((n_trav,), 1.0 if use_weight else 0.0), requires_grad=use_weight and not freeze_mem)
         self.a = torch.nn.Parameter(torch.full((n_trav,), 1.0), requires_grad=not freeze_mem)
         self.b = torch.nn.Parameter(torch.full((n_trav,), b0), requires_grad=learn_deg)
@@ -173,6 +173,7 @@ class DNFR(torch.nn.Module):
         self.w_raw = torch.nn.Parameter(torch.full((n_mp,), -3.0))
         n_p = n_mp if p_mode == "per_mp" else 1
         self.p_param = p_param
+        self.p_hi = 0.95   # upper clip of the free parameterisation; the converged profile sets 1.0 to reach Lukasiewicz
         p_raw0 = math.log((p_init + 5) / (1 - p_init)) if p_param == "sigmoid" else float(p_init)  # p = 6 sigmoid(theta) - 5
         self.register_buffer("p_raw0", torch.tensor(p_raw0), persistent=False)
         self.p_raw = torch.nn.Parameter(torch.full((n_p,), p_raw0), requires_grad=(tnorm == "ss" and learn_p))
@@ -214,7 +215,7 @@ class DNFR(torch.nn.Module):
 
     def p(self):
         if self.p_param == "free":
-            return torch.clamp(self.p_raw, -20.0, 0.95)
+            return torch.clamp(self.p_raw, -20.0, self.p_hi)
         return 6 * torch.sigmoid(self.p_raw) - 5
 
     def p_of(self, mi):

@@ -193,24 +193,28 @@ def curvature_at(ps, L):
 
 
 def merged_profiles(task):
-    # the released copy of the profile extension is results/prof_ext; results2/prof_ext is where the jobs write it
-    EXT = next((d for d in (f"{ROOT}/results/prof_ext", f"{ROOT}/results2/prof_ext") if os.path.isdir(d)), "")
-    """Profile fits of the first run and of the extension (grid with p > 0), keeping the lower loss at each p."""
+    """Converged profile fits per split, merged over the first run (results/) and the grid extensions (prof_ext: p > 0
+    on the graded graph and Hetionet DpS; prof_ext2: p up to 1 and down to -20), keeping the lower loss at each p.
+    The released copies are in results/; results2/ is where the jobs write them."""
+    dirs = [f"{ROOT}/results"]
+    for name in ("prof_ext", "prof_ext2"):
+        d = next((x for x in (f"{ROOT}/results/{name}", f"{ROOT}/results2/{name}") if os.path.isdir(x)), None)
+        if d:
+            dirs.append(d)
+    by_seed = {}
+    for d in dirs:
+        for f in sorted(glob.glob(f"{d}/profile_lbfgs_{task}_seed*.json")):
+            x = json.load(open(f)); b = by_seed.setdefault(x["seed"], dict(x, rows={}))
+            for r in x["rows"]:
+                if r["p"] not in b["rows"] or r["loss"] < b["rows"][r["p"]]["loss"]:
+                    b["rows"][r["p"]] = dict(r, from_extension=d != dirs[0])
     out = []
-    for f in sorted(glob.glob(f"{ROOT}/results/profile_lbfgs_{task}_seed*.json")) + \
-            [g for g in sorted(glob.glob(f"{EXT}/profile_lbfgs_{task}_seed*.json"))
-             if not os.path.exists(f"{ROOT}/results/{os.path.basename(g)}")]:
-        d = json.load(open(f)); rows = {r["p"]: r for r in d["rows"]}
-        g = f"{EXT}/{os.path.basename(f)}"
-        if os.path.exists(g) and g != f:
-            for r in json.load(open(g))["rows"]:
-                if r["p"] not in rows or r["loss"] < rows[r["p"]]["loss"]:
-                    rows[r["p"]] = dict(r, from_extension=True)
-        d["rows"] = [rows[p] for p in sorted(rows)]
+    for seed in sorted(by_seed):
+        d = by_seed[seed]; d["rows"] = [d["rows"][p] for p in sorted(d["rows"])]
         ps = np.array([r["p"] for r in d["rows"]]); L = np.array([r["loss"] for r in d["rows"]])
         d["p_min"] = float(ps[np.argmin(L)]); d["loss_range"] = float(L.max() - L.min())
         d["d2L_dp2"], d["interior"] = curvature_at(ps, L)
-        d["loss_range_nonpos"] = float(L[ps <= 0].max() - L[ps <= 0].min())
+        d["loss_range_nonpos"] = float(L[(ps <= 0) & (ps >= -5)].max() - L[(ps <= 0) & (ps >= -5)].min())
         out.append(d)
     return out
 
@@ -242,6 +246,8 @@ def profile_summary(pl, task="hkg_DpS"):
         te = np.array([r["test_MRR"] for r in d["rows"]]); va = np.array([r["valid_MRR"] for r in d["rows"]])
         out["intervals"].append(dict(seed=d["seed"], threshold=float(thr), p_lo=float(inside.min()), p_hi=float(inside.max()),
                                      p_argmin=float(ps[np.argmin(L)]), p_best_valid=float(ps[np.argmax(va)]),
+                                     slope_end=d["rows"][int(np.argmin(L))]["dLdp"],
+                                     test_at_argmin=float(te[np.argmin(L)]), valid_at_argmin=float(va[np.argmin(L)]),
                                      p_best_test=float(ps[np.argmax(te)]), test_range=float(te.max() - te.min()),
                                      test_at_valid_choice=float(te[np.argmax(va)]), test_product=float(te[ps == 0][0])))
     out["max_abs_dLdp"] = float(max(abs(x) for b in by_p.values() for x in b["dLdp"]))
@@ -295,6 +301,10 @@ def main():
                 v["family"] = "descr"; S["paired"][f"{a_}__{b_}"] = v
         S["nbf_tuned_choice"] = collections.Counter(r["methods"]["nbfnet_tuned"]["chosen"] for r in runs if "nbfnet_tuned" in r["methods"])
         S["fixp_val_choice"] = collections.Counter(r["methods"]["fixp_val"]["chosen"] for r in runs if "fixp_val" in r["methods"])
+        S["fixp_val_rows"] = [dict(seed=r["seed"], product=r["methods"]["product"]["MRR"],
+                                   product_valid=r["methods"]["product"].get("valid_MRR"), chosen=r["methods"]["fixp_val"]["chosen"],
+                                   chosen_test=r["methods"]["fixp_val"]["MRR"]) for r in runs
+                              if "fixp_val" in r["methods"] and "product" in r["methods"]]
         S["restarts"] = {k: restart_agreement(runs, v) for k, v in RESTARTS.items()}
         S["ops_single"] = collections.Counter(o for r in runs for o in r["extra"].get("ops_chosen", {}).get("dnfr2", []))
         S["beta"] = {m: [r["extra"]["beta"][m] for r in runs if m in r["extra"].get("beta", {})]

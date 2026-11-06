@@ -73,6 +73,7 @@ def fit(p, warm=None, max_outer=60):
     else:
         m = DNFR(len(ctx["trav"]), len(ctx["P"]["mps"]), tnorm="ss", p_mode="shared", degree=True, agg="noisyor",
                  p_init=p, learn_p=False, p_param="free")
+    m.p_hi = 1.0     # allow p = 1 (Lukasiewicz) on the profile grid
     if warm is not None:
         st = {k: v for k, v in warm.items() if "p_raw" not in k}
         m.load_state_dict(st, strict=False)
