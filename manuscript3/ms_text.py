@@ -8,7 +8,7 @@ from ms_results import r3p, r3sum, mean_any, R3T
 
 P_ = lambda d, t, **k: para(d, C(t), **k)
 RELEASE = "v5.0"                      # code release for this version of the article (to be published with it)
-ZENODO_VERSION = ""                   # "version v5.0: https://doi.org/...; " once the Zenodo version exists
+ZENODO_VERSION = "version v5.0: https://doi.org/10.5281/zenodo.23998418; "
 E = XS["explain_eval"]; E2 = RS["explain2"]; L = RS.get("long", {})
 E3 = R3.get("explain3", {}); PS = R3.get("profile_summary") or {}
 ADD = [("dnfr_overlap", "R1"), ("dnfr_gumbel", "R2"), ("dnfr_ic", "R3"), ("dnfr_anneal", "R4")]
