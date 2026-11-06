@@ -47,9 +47,9 @@ def build(outdir):
     ms_text.conclusion(d)
     ms_text.declarations(d)
     ms_text.references(d)
-    out = os.path.join(outdir, "Manuscript_AIM_DNFR_rev5.docx"); d.save(out)
+    out = os.path.join(outdir, "Manuscript_AIM_DNFR.docx"); d.save(out)
     s = new_document(); ms_text.supplement(s)
-    outs = os.path.join(outdir, "Supplementary_AIM_DNFR_rev5.docx"); s.save(outs)
+    outs = os.path.join(outdir, "Supplementary_AIM_DNFR.docx"); s.save(outs)
     from docx import Document
     txt = [p.text for p in Document(out).paragraphs]
     i = txt.index("Abstract"); j = next(k for k in range(i, len(txt)) if txt[k].startswith("Keywords"))

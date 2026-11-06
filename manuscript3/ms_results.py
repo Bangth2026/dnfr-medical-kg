@@ -474,9 +474,9 @@ def supp_rules(d, num):
             add(f"{NAMES[m].split(' (')[0]} without treats metapaths minus with", "het_CtD", NT[f"{m}_notgt__{m}"])
     T(d, f"**Table S{num}.** Sensitivity of the verdicts to the decision rule, for the comparisons on which the Highlights and "
          "the Conclusion rest: verdicts under the rule of Section 3.6 and under a simpler rule (different when the unadjusted 95% "
-         "corrected-t interval excludes zero; equivalent when the 90% corrected-t interval lies inside ±0.01). An earlier version "
-         "of this analysis used the simpler rule; we replaced it because, with three splits, it accepted differences whose "
-         "bootstrap interval contained zero, and because it did not adjust for multiplicity. Δ is the mean difference in test MRR, "
+         "corrected-t interval excludes zero; equivalent when the 90% corrected-t interval lies inside ±0.01). We use the "
+         "rule of Section 3.6 because, with three splits, the simpler rule accepts differences whose bootstrap interval contains "
+         "zero, and it does not adjust for multiplicity. Δ is the mean difference in test MRR, "
          "with the number of splits on which it was positive.",
       ["Comparison", "Task", "Δ (splits > 0)", "Verdict, rule of Section 3.6", "Verdict, simpler rule"], rows,
       widths=[2.4, 1.05, 1.0, 0.95, 0.95], size=7.5)
