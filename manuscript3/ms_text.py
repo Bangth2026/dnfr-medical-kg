@@ -986,7 +986,8 @@ def discussion(dc):
           "than medicine who knew the aims of the study, assessed 150 paths of 50 correct disease–symptom predictions. "
           + (f"A second, medically trained rater assessed 40 pairs, half of them incorrect; two raters on a few dozen pairs give "
              "only a rough estimate of agreement and discrimination. " if XREV2 else
-             "Without a second rater no agreement can be estimated, and with correct predictions only no discrimination. ")
+             "Without a second rater no agreement can be estimated, and with correct predictions only no discrimination; a blinded "
+             "sheet that mixes correct and incorrect predictions, and the script that scores it, are released for that purpose. ")
           + "Drug repurposing was not rated, and the mechanistic classification there is a structural check against Hetionet's own "
           "gene relations, not a clinical judgement. A rating study with several physicians, blinded to the hypothesis, on correct "
           "and incorrect predictions and comparing DNFR's and DWPC-LR's explanations, is the next step.")

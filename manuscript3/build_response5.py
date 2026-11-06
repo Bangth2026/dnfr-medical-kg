@@ -51,7 +51,9 @@ def build(outdir):
     para(d, "The editor may also note that in the fourth version the only clinical assessment was performed by an author. "
             + (f"In this version a second rater, {X2['rater_desc']}, who is not an author and did not know the hypothesis, rated a "
                "blinded sheet that mixes correct and incorrect predictions (M6). The physician is thanked in the Acknowledgements "
-               "and is not an author." if X2 else pending("second rater: description and role")))
+               "and is not an author." if X2 else
+               "This remains so. We were not able to recruit an independent physician rater within this revision, and the article "
+               "now states plainly what a single author-rater trained in clinical psychology can and cannot show (M6)."))
 
     # ------------------------------------------------------------------ major
     heading(d, "Major comments", 1)
@@ -223,11 +225,22 @@ def build(outdir):
                 + ". Sections 3.6 and 4.7 describe the design and the results; the sheet, the key and both sets of ratings are "
                 "released. ")
     else:
-        txt += pending("second rater: agreement and discrimination")
+        txt += ("We prepared the second rating the reviewer described: a blinded sheet of 40 disease–symptom pairs, 10 of the "
+                "first rater's correct pairs per task (drawn with a fixed seed, shown with the same paths) and 10 incorrect top-10 "
+                "predictions per task, shuffled and renumbered so that neither order nor identifier reveals which pairs are "
+                "correct. We were not able to have it rated by an independent physician within this revision, and we did not want "
+                "to report agreement or discrimination from a rating whose independence we could not document. The sheet and the "
+                "script that generates it are released (dnfr/expert_sheet2.py; the key that identifies the correct pairs is kept "
+                "in a separate file, so that a rater can be given the sheet alone), together with the script that computes κ and "
+                "discrimination from a filled sheet. Section 4.7 now says that, with one rater and correct predictions only, the "
+                "assessment estimates neither agreement nor discrimination, and Section 5.5 lists a rating study with several "
+                "physicians on correct and incorrect predictions as the next step. We have kept the claims drawn from the "
+                "assessment to what one rater can show: the kind of rationale the explanations offer, not how often clinicians "
+                "would accept it. ")
     txt += ("(3) The sentence on the low-membership second edge now reads that with one rater and so few paths this is an "
             "observation, not evidence that low memberships flag wrong edges.")
     r(d, txt)
-    ch(d, "Sections 3.6, 4.7, 5.5; Acknowledgements; released rating sheets.")
+    ch(d, "Sections 4.7 and 5.5; released blinded rating sheet and scripts.")
 
     # ------------------------------------------------------------------ minor
     heading(d, "Minor comments", 1)

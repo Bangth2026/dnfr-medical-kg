@@ -41,10 +41,11 @@ def cover_letter():
             "split, and an ablation of the metapaths through both the treats and the palliates relations. We corrected the sign "
             "error, which came from the script that builds the text, and limited the claim about selecting the t-norm on validation "
             "data to the graph on which the evidence supports it.")
-    para(d, "For the clinical assessment we added a second rater, a physician who is not an author and who rated a blinded sheet "
-            "mixing correct and incorrect predictions, so that agreement and discrimination can be reported. On authorship, we "
-            "confirm in the response letter that the second author's earlier CRediT statement was incomplete, and we describe which "
-            "of her contributions are new.")
+    para(d, "For the clinical assessment we could not recruit an independent physician rater within this revision. The article now "
+            "states the limits of a single author-rater trained in clinical psychology, who rated correct predictions only, and we "
+            "release a blinded sheet that mixes correct and incorrect predictions for a future rating. On authorship, we confirm in "
+            "the response letter that the second author's earlier CRediT statement was incomplete, and we describe which of her "
+            "contributions are new.")
     para(d, "The response letter answers each point and gives every number it cites from the released result files. The code, "
             f"results and the scripts that build the manuscript are released as {MT.RELEASE} of "
             "https://github.com/Bangth2026/dnfr-medical-kg and archived at Zenodo. The manuscript has not been published and is not "
