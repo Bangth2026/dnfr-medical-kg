@@ -126,6 +126,20 @@ def notgt_drop():
     return (NT.get("paired") or {}).get("dnfr_notgt__dnfr")
 
 
+def ctd_split_note():
+    """Parenthetical on the variants that have fewer compound–treats–disease splits than DNFR (Section 5.5)."""
+    nc = nseeds("het_CtD", "dnfr")
+    small = sorted(x for x in ({nseeds("het_CtD", v) for v in ("hamacher", "dnfr_fixdeg", "dnfr_shared", "dnfr_frozen",
+                                                                 "product_frozen") if nseeds("het_CtD", v)}
+                               | {r3p("het_CtD", v, "dnfr")["J"] for v in ("dnfr2", "fixp_val", "dnfr_overlap", "dnfr_gumbel",
+                                                                          "dnfr_ic", "dnfr_anneal") if r3p("het_CtD", v, "dnfr")})
+                   if x < nc)
+    if not small:
+        return ""
+    k = num(small[0]) if small[0] == small[-1] else f"between {num(small[0])} and {num(small[-1])}"
+    return f" ({k} for some variants, as the tables mark)"
+
+
 def dwpc_at_least():
     """Tasks on which DNFR minus DWPC-LR is not positive under the rule (DWPC-LR at least as accurate)."""
     return [t for t in TASKS if pr(t, "dnfr", "dwpc_lr") and not (
@@ -174,12 +188,12 @@ def abstract(dc):
     r_max = [pr(t, "dnfr", "dnfr_max")["delta_MRR"] for t in TASKS if pr(t, "dnfr", "dnfr_max")]
     two = PSd and max(PSd["loss_range_nonpos"]) < 0.01
     lr = max(PSh["loss_range_nonpos"] + (PSd["loss_range_nonpos"] if two else []))
-    txt = (f"**Results:** Aggregating all paths instead of the strongest one raised mean reciprocal rank (MRR) by "
+    txt = (f"**Results:** Aggregating all paths rather than the strongest raised mean reciprocal rank (MRR) by "
            f"{min(r_max):.2f}–{max(r_max):.2f}, and hub discounting had the same sign on every split. "
            + ("No refinement improved MRR detectably. " if not rc["pos_diff"] else
               f"{Num(len(rc['pos_diff']))} of {rc['n']} refinement tests showed a gain. ")
            + ("On the graded graph and on Hetionet disease–symptom" if two else "On the graded graph")
-           + f", with everything else fitted to convergence, the training loss varied by at most {lr:.3f} nats over t-norm "
+           + f", the converged training loss varied by at most {lr:.3f} nats over t-norm "
            "parameters from −5 to 0, and its minimiser differed between splits; a t-norm selected on validation data beat the fixed "
            f"product by {fv['delta']:.3f} on the graded graph. Degree-weighted path counts were at least as accurate as DNFR on "
            f"{num(len(dwpc_at_least()))} of four tasks.")
@@ -276,9 +290,22 @@ def results(dc):
     if tu:
         txt += (f"The configuration tuned on validation data among four reached {m('hkg_DpS','nbfnet_tuned')} on the graded graph "
                 f"(minus DNFR {dci3(tu)}, {vtxt(tu)}; minus DWPC-LR {sg(tuw['delta'])}, {vtxt(tuw)}). ")
-    txt += ("A learned operator for path extension and aggregation, with about ten thousand parameters, thus did not differ "
-            "detectably from DNFR on these tasks and did not reach DWPC-LR. It was not run on the drug-repurposing graphs, whose "
-            "size exceeds what our CPU implementation can train in reasonable time.")
+    nb_dif = [t for t in nbt if nb[t].get("verdict") == "different"]
+    nb_ahead = [t for t in nbt if t not in nb_dif and nb[t]["delta"] > 0 and nb[t]["wins"] >= 0.8 * nb[t]["J"]]
+    w_below = [t for t in nbt if nw[t]["delta"] < 0 and nw[t].get("verdict") == "different"]
+    w_other = [t for t in nbt if t not in w_below]
+    txt += ("A learned operator for path extension and aggregation, with about ten thousand parameters, thus "
+            + ("did not differ from DNFR under our rule on either graph" if not nb_dif else
+               "differed from DNFR on " + joinand([SH(t) for t in nb_dif]))
+            + ("" if not nb_ahead else
+               "; on " + joinand([SH(t) for t in nb_ahead]) + " it was ahead on "
+               + joinand([f"{nb[t]['wins']} of {nb[t]['J']} splits" for t in nb_ahead])
+               + ", but the corrected test did not reach significance")
+            + ". Against DWPC-LR it was "
+            + joinand(([f"behind on {joinand([SH(t) for t in w_below])}"] if w_below else [])
+                      + ([f"not detectably different on {joinand([SH(t) for t in w_other])}"] if w_other else []))
+            + ". It was not run on the drug-repurposing graphs, whose size exceeds what our CPU implementation can train in "
+            "reasonable time.")
     P_(dc, txt)
 
     # ---------------- 4.2
@@ -324,15 +351,23 @@ def results(dc):
     if H:
         hm = min(H, key=lambda h: h["hamacher"] - h["product"])
         low = [h for h in H if h["hamacher"] - h["product"] < -0.05]
-        txt = (f"On compound–treats–disease the comparisons with the fixed Hamacher product depend on {num(len(low))} of "
-               f"{num(len(H))} splits (Supplementary Table S13). On split {hm['seed']} the Hamacher run reached an MRR of "
+        hi = [h for h in H if h not in low]
+        dh = lambda S, a, b: sum(h[a] - h[b] for h in S) / len(S)
+        txt = (f"On compound–treats–disease {num(len(low))} of {num(len(H))} splits {'weighs' if len(low) == 1 else 'weigh'} heavily in the comparisons with the "
+               f"fixed Hamacher product (Supplementary Table S13). On split {hm['seed']} the Hamacher run reached an MRR of "
                f"{f3(hm['hamacher'])} against {f3(hm['product'])} for the product")
         if hm.get("loss_hamacher") is not None and hm.get("loss_product") is not None:
             txt += (f", with a final training loss of {hm['loss_hamacher']:.2f} against {hm['loss_product']:.2f}: training did not "
                     "fail numerically, it stopped in a poorer optimum")
-        txt += (". We report the run as it is; without such splits the Hamacher product and the product would be closer, which "
-                "strengthens rather than weakens the conclusion that the operator matters little once the memberships are "
-                "learned.")
+        txt += ". We report the run as it is."
+        if low and hi:
+            txt += (f" Over all splits the Hamacher product was {abs(dh(H, 'hamacher', 'product')):.3f} below the product; without "
+                    + ("that split" if len(low) == 1 else "those splits")
+                    + f" it was {abs(dh(hi, 'hamacher', 'product')):.3f} below")
+            if all(h.get("dnfr") is not None for h in H):
+                txt += (f", and the difference between the learned p and the Hamacher product shrank from "
+                        f"{dh(H, 'dnfr', 'hamacher'):+.3f} to {dh(hi, 'dnfr', 'hamacher'):+.3f}")
+            txt += "."
         P_(dc, txt)
     fr = {t: pr(t, "dnfr_frozen", "product_frozen") for t in TASKS}; lm = {t: pr(t, "product", "product_frozen") for t in TASKS}
     P_(dc, "The t-norm mattered most when the memberships could not be learned. With memberships frozen at their initial values, "
@@ -476,7 +511,12 @@ def results(dc):
                    "the loss was lowest at p = " + joinand([ptxt(r["p_argmin"]) for r in ivd]) + ", with intervals "
                    + joinand([itv(r) for r in ivd]) + " (Supplementary Tables S15 and S16). "
                    + ("The same flatness therefore holds on a multi-relational graph." if max(PSd["loss_range_nonpos"]) < 0.01 else
-                      "The loss there constrained p more than on the graded graph."))
+                      "The loss there constrained p more than on the graded graph.")
+                   + (lambda e: "" if not e else
+                      f" In {num(len(e))} of the {num(len(ivd))} splits the minimum lay at the lower end of the grid, so the "
+                      "minimiser may lie further towards the minimum t-norm; the narrow intervals there reflect the small threshold "
+                      "rather than a well-located optimum.")([r for r in ivd if r["p_argmin"] <= min(PSd["grid"][0])])
+                   + " Test MRR varied by at most " + f"{max(r['test_range'] for r in ivd):.3f}" + " across the grid in any split.")
         P_(dc, "Held-out accuracy was more informative than the loss. On the graded graph, validation MRR at the converged fits was "
                "highest at p = " + joinand([ptxt(r["p_best_valid"]) for r in iv]) + ", and test MRR at the value chosen on "
                "validation exceeded that of the product by " + joinand([sg(r["test_at_valid_choice"] - r["test_product"]) for r in iv])
@@ -773,13 +813,10 @@ def discussion(dc):
         "text-mined \"resembles\" links. Path shares make such evidence visible, and an ablation of the metapaths through the target "
         "relation measures how much of the accuracy depends on it."]], numbered=True, start=1)
     heading(dc, "5.5 Limitations", 2)
-    small = sorted({nseeds("het_CtD", v) for v in ("hamacher", "dnfr_fixdeg", "dnfr_shared", "dnfr_frozen", "product_frozen")
-                    if nseeds("het_CtD", v)} | {r3p("het_CtD", v, "dnfr")["J"] for v in ("dnfr2", "fixp_val", "dnfr_overlap",
-                    "dnfr_gumbel", "dnfr_ic", "dnfr_anneal") if r3p("het_CtD", v, "dnfr")})
     nc = nseeds("het_CtD", "dnfr")
     bullets(dc, [C(x) for x in [
         f"**Splits and power.** The comparisons of Tables 2–4 used {num(nc)} splits on compound–treats–disease"
-        + (f" (between {num(small[0])} and {num(small[-1])} for some variants, as the tables mark)" if small and small[0] < nc else "")
+        + ctd_split_note()
         + ", ten on the two disease–symptom tasks and two on PrimeKG. With Holm adjustment within each family, differences of about "
         "0.02 to 0.04 MRR were often not supported even when their sign was the same on every split, and with ten splits the "
         "corrected 90% intervals still extend to about ±0.015, so equivalence within ±0.01 was rarely attainable. With two splits "

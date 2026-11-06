@@ -129,9 +129,14 @@ def build(outdir):
         if hm.get("loss_hamacher") is not None:
             txt += (f". Its final training loss was {hm['loss_hamacher']:.2f} against {hm['loss_product']:.2f}, and the run "
                     "finished without numerical errors, so it did not fail; it ended in a poorer optimum")
+        hi = [h for h in H4 if h not in low]
+        dh = lambda S, a, b: sum(h[a] - h[b] for h in S) / len(S)
         txt += (f". {Num(len(low))} of the {num(len(H4))} splits had a gap larger than 0.05. We kept the run, because excluding "
-                "it would select results after seeing them, and Section 4.2 now says that the Hamacher comparisons on this task "
-                "depend on it. ")
+                "it would select results after seeing them. Section 4.2 now reports how much it weighs: over all splits the "
+                f"Hamacher product was {abs(dh(H4, 'hamacher', 'product')):.3f} below the product, and without "
+                + ("that split" if len(low) == 1 else "those splits")
+                + f" {abs(dh(hi, 'hamacher', 'product')):.3f} below. " if low and hi else
+                f". {Num(len(low))} of the {num(len(H4))} splits had a gap larger than 0.05. ")
     vs = [("hamacher", "Hamacher"), ("dnfr_fixdeg", "fixed degree terms"), ("dnfr_shared", "shared p"),
           ("dnfr_frozen", "frozen memberships with learned p"), ("product_frozen", "frozen memberships with the product"),
           ("dnfr_anneal", "R4"), ("fixp_val", "validation-selected p"), ("dnfr2", "DNFR 2.0")]
@@ -141,13 +146,16 @@ def build(outdir):
     ab = r3sum(CTD, "anyburl")
     ov = nrun(CTD, "dnfr_overlap")
     txt += ("The add-one refinements R1–R3 and their leave-one-out versions inside DNFR 2.0 kept "
-            f"{ov} splits on this task. Each run takes 20 minutes or more with one thread on our hardware, and none of the three showed a "
-            "positive point estimate on any task, so we gave priority to R4 and to the variants on which the Highlights and the "
+            f"{ov} splits on this task. Each run takes 20 minutes or more with one thread on our hardware, and the largest point "
+            "estimate of any of the three on any task was "
+            + sg(max(r3p(t, v, "dnfr")["delta"] for t in R3T for v in ("dnfr_overlap", "dnfr_gumbel", "dnfr_ic")
+                     if r3p(t, v, "dnfr")))
+            + ", so we gave priority to R4 and to the variants on which the Highlights and the "
             "Conclusion rest. "
             + (f"AnyBURL now has {ab['n']} splits. " if ab else "")
             + "Table 2 still marks every cell whose number of splits differs from that of DNFR. (iii) The sentence in Section 5.5 "
-            "now reads: \"The comparisons of Tables 2–4 used ten splits on compound–treats–disease (between three and five for some "
-            "variants, as the tables mark)…\". It now agrees with the tables.")
+            f"now reads: \"The comparisons of Tables 2–4 used {num(nseeds(CTD, 'dnfr'))} splits on compound–treats–disease"
+            + MT.ctd_split_note() + "…\". It now agrees with the tables.")
     r(d, txt)
     ch(d, "Section 4.2 (new paragraph on the Hamacher split), Section 5.5; Tables 2–4; Supplementary Tables S13 and S14.")
 
@@ -202,6 +210,12 @@ def build(outdir):
                 + joinand([f"{x:.4f}" for x in PSd["loss_range_nonpos"]]) + " nats, the minimiser was at p = "
                 + joinand([ptxt(x["p_argmin"]) for x in ivd]) + " and the intervals were " + joinand([itv(x) for x in ivd])
                 + " (Supplementary Tables S15–S16). ")
+        edge = [x for x in ivd if x["p_argmin"] <= min(PSd["grid"][0])]
+        if edge:
+            txt += (f"In {num(len(edge))} of the {num(len(ivd))} splits the minimum lay at the lower end of the grid, so the "
+                    "minimiser may lie further towards the minimum t-norm, and the narrow intervals there reflect the small "
+                    "threshold rather than a well-located optimum. ")
+        txt += (f"Test MRR varied by at most {max(x['test_range'] for x in ivd):.3f} across the grid in any split. ")
         txt += ("The finding therefore holds on a multi-relational graph as well, and the Abstract, Highlights and Conclusion "
                 "name both graphs."
                 if MT.profile_flat("profile_summary_dps") is not None and MT.profile_flat("profile_summary_dps") < 0.01 else
@@ -281,9 +295,17 @@ def build(outdir):
     nb = {t: r3p(t, "nbfnet", "dnfr") for t in ("hkg_DpS", "het_DpS")}
     nbs = {t: r3sum(t, "nbfnet") for t in ("hkg_DpS", "het_DpS")}
     tu = r3p("hkg_DpS", "nbfnet_tuned", "dnfr"); tuw = r3p("hkg_DpS", "nbfnet_tuned", "dwpc_lr")
+    nw = {t: r3p(t, "nbfnet", "dwpc_lr") for t in ("hkg_DpS", "het_DpS")}
+    ahead = [t for t in nb if nb[t] and nb[t]["delta"] > 0 and nb[t]["wins"] >= 0.8 * nb[t]["J"] and nb[t].get("verdict") != "different"]
     txt = ("(i) The Highlights no longer mention NBFNet. Section 4.1 and the Discussion say that NBFNet did not differ "
            "detectably from DNFR. (ii) NBFNet now has "
-           + joinand([f"{nbs[t]['n']} splits on {SH(t)} (minus DNFR {dci3(nb[t])}, {vt(nb[t])})" for t in nb if nb[t]]) + ". ")
+           + joinand([f"{nbs[t]['n']} splits on {SH(t)} (minus DNFR {dci3(nb[t])}, {vt(nb[t])}; minus DWPC-LR "
+                      f"{sg(nw[t]['delta'])}, {vt(nw[t])})" for t in nb if nb[t]]) + ". ")
+    if ahead:
+        txt += ("With ten splits, NBFNet was ahead of DNFR on " + joinand([f"{nb[t]['wins']} of {nb[t]['J']} splits on {SH(t)}"
+                                                                          for t in ahead])
+                + ", but the Holm-corrected test did not reach significance; Section 4.1 reports this rather than calling the two "
+                "equivalent. ")
     if tu:
         txt += ("(iii) On the graded graph we ran the 2 × 2 grid of learning rate (5 × 10⁻³, 10⁻²) and dimension (32, 64) and "
                 f"kept the configuration with the best validation MRR on each split. Tuned NBFNet minus DNFR was {dci3(tu)} "

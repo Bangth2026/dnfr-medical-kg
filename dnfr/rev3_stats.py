@@ -193,13 +193,15 @@ def curvature_at(ps, L):
 
 
 def merged_profiles(task):
+    # the released copy of the profile extension is results/prof_ext; results2/prof_ext is where the jobs write it
+    EXT = next((d for d in (f"{ROOT}/results/prof_ext", f"{ROOT}/results2/prof_ext") if os.path.isdir(d)), "")
     """Profile fits of the first run and of the extension (grid with p > 0), keeping the lower loss at each p."""
     out = []
     for f in sorted(glob.glob(f"{ROOT}/results/profile_lbfgs_{task}_seed*.json")) + \
-            [g for g in sorted(glob.glob(f"{ROOT}/results2/prof_ext/profile_lbfgs_{task}_seed*.json"))
+            [g for g in sorted(glob.glob(f"{EXT}/profile_lbfgs_{task}_seed*.json"))
              if not os.path.exists(f"{ROOT}/results/{os.path.basename(g)}")]:
         d = json.load(open(f)); rows = {r["p"]: r for r in d["rows"]}
-        g = f"{ROOT}/results2/prof_ext/{os.path.basename(f)}"
+        g = f"{EXT}/{os.path.basename(f)}"
         if os.path.exists(g) and g != f:
             for r in json.load(open(g))["rows"]:
                 if r["p"] not in rows or r["loss"] < rows[r["p"]]["loss"]:
@@ -327,5 +329,5 @@ if __name__ == "__main__":
             if m in S["summary"]:
                 s = S["summary"][m]; print(f"  {m:16s} {s['mean']:.3f} ± {s['sd']:.3f} (n={s['n']})")
         for k, v in S["paired"].items():
-            print(f"  {k:32s} Δ={v['delta']:+.4f} J={v['J']} wins={v['wins']} p_holm={v.get('p_holm')} -> {v['verdict']}")
+            print(f"  {k:32s} Δ={v['delta']:+.4f} J={v['J']} wins={v['wins']} p_holm={v.get('p_holm')} -> {v.get('verdict', 'descriptive')}")
         print("  restarts", {k: (v and v['all_same_mean']) for k, v in S["restarts"].items()}, "fixp_val", dict(S["fixp_val_choice"]))
