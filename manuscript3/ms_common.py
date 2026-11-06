@@ -13,8 +13,13 @@ R4 = json.load(open(f"{RES}/rev4_stats.json")) if os.path.exists(f"{RES}/rev4_st
 XREV = json.load(open(f"{RES}/expert_review.json")) if os.path.exists(f"{RES}/expert_review.json") else {}
 XREV2 = json.load(open(f"{RES}/expert_review2.json")) if os.path.exists(f"{RES}/expert_review2.json") else {}
 if XREV2:   # short description of the second rater from the 'Rater' sheet: qualification and specialty
-    _r = {k.split(" /")[0].strip().lower(): v for k, v in (XREV2.get("rater") or {}).items()}
-    XREV2["rater_desc"] = ", ".join(str(_r[k]) for k in ("qualification", "specialty") if _r.get(k)) or "a physician"
+    _r = {k.split(" /")[0].strip().lower(): v for k, v in (XREV2.get("rater") or {}).items() if v}
+    if os.path.exists(f"{RES}/expert_review2_rater.json"):   # details given by the corresponding author; the sheet wins
+        _r = {k: v for k, v in json.load(open(f"{RES}/expert_review2_rater.json")).items() if k != "note"} | _r
+        XREV2["rater"] = {k.capitalize(): v for k, v in _r.items()}
+    XREV2["rater_desc"] = (f"a {_r['qualification']} in {_r['specialty']}" if _r.get("qualification") and _r.get("specialty")
+                           else "a physician")
+    XREV2["rater_ack"] = ", ".join(str(_r[k]) for k in ("name", "affiliation") if _r.get(k))
 PC = json.load(open(f"{RES}/prior_check.json")) if os.path.exists(f"{RES}/prior_check.json") else {}
 
 TASKS = ["het_CtD", "het_DpS", "pkg_ind", "hkg_DpS"]

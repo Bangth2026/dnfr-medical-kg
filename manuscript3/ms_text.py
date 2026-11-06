@@ -1059,10 +1059,10 @@ def declarations(dc):
     P_(dc, "**Declaration of competing interest.** The authors declare no known competing financial interests or personal relationships "
            "that could have appeared to influence the work reported in this paper.")
     if XREV2:
-        nm = {k.split(" /")[0].strip().lower(): v for k, v in (XREV2.get("rater") or {}).items()}
-        who = ", ".join(str(nm[k]) for k in ("name", "qualification", "specialty") if nm.get(k))
-        P_(dc, f"**Acknowledgements.** We thank {who or 'the physician who acted as second rater'} for rating the explanations "
-               "in the second clinical assessment (Section 4.7).")
+        who = XREV2.get("rater_ack")
+        P_(dc, (f"**Acknowledgements.** We thank Dr {who} for rating the explanations " if who else
+                "**Acknowledgements.** We thank the physician who acted as second rater for rating the explanations ")
+               + "in the second clinical assessment (Section 4.7).")
 
 
 def supp_refinements(dc):
