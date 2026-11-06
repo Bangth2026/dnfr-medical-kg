@@ -396,7 +396,7 @@ def build(outdir):
                 "Supplementary Tables S12–S16 are new (verdicts under both rules, the Hamacher split, run times, the profile on "
                 "Hetionet disease–symptom).",
                 f"Code and data of this version: release {MT.RELEASE} of https://github.com/Bangth2026/dnfr-medical-kg, archived "
-                "at Zenodo (all versions: https://doi.org/10.5281/zenodo.23879352)."])
+                "at Zenodo (" + MT.ZENODO_VERSION + "all versions: https://doi.org/10.5281/zenodo.23879352)."])
     para(d, "We hope that the revised manuscript addresses the reviewer's and the editor's concerns.", space_after=6)
     para(d, "Truong Hai Bang, on behalf of the authors", align="left")
     out = os.path.join(outdir, "Response_to_reviewer_rev4.docx"); d.save(out)
