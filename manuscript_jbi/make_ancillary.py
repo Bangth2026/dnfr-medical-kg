@@ -36,10 +36,17 @@ for t in [
  "the Statement of Significance, and two figures and six tables; further material is in the Supplementary material. The "
  "code, result files and a script that checks every number in the manuscript against the result files are released "
  "under the MIT licence as release v6.0-jbi of https://github.com/Bangth2026/dnfr-medical-kg and archived at Zenodo "
- "(https://doi.org/10.5281/zenodo.23879352). Earlier releases of the same repository accompanied previous versions of "
- "this manuscript. A related, not yet peer-reviewed analysis of a population fuzzy graph is cited as reference [25] and is "
- "not part of the evidence here. The work uses public data only, and the use of an AI system in preparing the code and "
+ "(https://doi.org/10.5281/zenodo.23879352); earlier releases of the same repository accompanied previous versions of "
+ "this manuscript. The work uses public data only, and the use of an AI system in preparing the code and "
  "the manuscript is declared in the manuscript.",
+ "Two disclosures about related submissions. First, an earlier version of this manuscript was under consideration at "
+ "Artificial Intelligence in Medicine and has been withdrawn; the present version was shortened and revised for this "
+ "journal. Second, in October 2026 we submitted to the Journal of Biomedical Informatics a different manuscript, "
+ "\"Testing t-norm choice on a population fuzzy graph of depressive symptoms and their correlates\" (JBI-S-26-06085), "
+ "which was not accepted. That study analysed a 24-concept fuzzy graph built from NHANES survey data; the present "
+ "manuscript uses different data (Hetionet, PrimeKG and a graph learned from emergency-department records), a different "
+ "model and different research questions, and cites the earlier analysis only as motivation (reference [25]), not as "
+ "evidence. We would be glad to provide that manuscript to the editors.",
  "The manuscript is original, has not been published and is not under consideration elsewhere. Both authors approved the "
  "submitted version, and we declare no competing interests.",
  ]:
