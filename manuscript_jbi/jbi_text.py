@@ -503,8 +503,8 @@ DECLARATIONS = [
 ("Data availability", "Hetionet v1.0 is available from its GitHub repository and PrimeKG from Harvard Dataverse "
  "(doi:10.7910/DVN/IXA7BM). The parsed health knowledge graph, the per-query ranks of every method on every split, the "
  "trained models, the path explanations, the clinical rating sheets and the statistics files from which every number in "
- "this paper is taken are deposited at Zenodo (all versions: https://doi.org/10.5281/zenodo.23879352; the release for "
- "this article is v6.0-jbi), with a script that downloads Hetionet and PrimeKG and checks them against the checksums of "
+ "this paper is taken are deposited at Zenodo (version v6.0-jbi: https://doi.org/10.5281/zenodo.24414386; all versions: "
+ "https://doi.org/10.5281/zenodo.23879352), with a script that downloads Hetionet and PrimeKG and checks them against the checksums of "
  "the files we used."),
 ("Code availability", "The implementation of DNFR and its refinements, the compact NBFNet and all baselines, the tests, "
  "and the scripts that compute the statistics and figures are available under the MIT licence at "
