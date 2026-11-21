@@ -12,6 +12,15 @@ DNFR scores a pair of entities by a noisy-OR over metapath-instantiated paths of
 
 Every number in the manuscript is read from `results/paper_stats.json`, `results/data_stats.json`, `results/extra_stats.json` and `results/revision_stats.json`, which `dnfr/aggregate.py`, `dnfr/dataset_stats.py`, `dnfr/extra.py` and `dnfr/revision_stats.py` compute from the per-task result files in `results/`. `manuscript/build_manuscript.py` builds the manuscript (.docx) from these files.
 
+## Revision v7.0-jbi (JBI review)
+
+`results_rev6/` holds the analyses added after review: DWPC controls trained with DNFR's filtered softmax and a linear
+non-negative DWPC (`*_ctl.json`, `*_explain_dwpc_nn.json`), single-metapath profiles (`profile_permp_het_DpS_seed0.json`),
+disease-centred splits 4–9, the compound-centred split and the disease-centred split without the treats metapaths
+(`het_CtD_tail*.json`, `het_CtD_head.json`), AnyBURL with 1000 s (`anyburl1000/`), and the statistics
+(`rev6_stats.json`, `rev6_compare.json`). `manuscript_jbi/rev6/` rebuilds the revised manuscript, supplement and
+response; see its README.
+
 ## Tasks
 
 | Task | Graph | Relation predicted | Splits |

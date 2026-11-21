@@ -13,3 +13,4 @@ results2/
 manuscript3/out/
 tools/
 data/anyburl/
+data/*.jar

@@ -1,0 +1,1663 @@
+{
+ "VER": "v7.0-jbi",
+ "ZEN_VER_DOI": "https://doi.org/10.5281/zenodo.23879352 (concept DOI)",
+ "CHANCE": {
+  "het_CtD": 0.04112000165806319,
+  "het_DpS": 0.01649138541518568,
+  "hkg_DpS": 0.02069317780541918
+ },
+ "T2_DWPC_SM": [
+  "DWPC, same features, filtered softmax",
+  "—",
+  "0.245 ± 0.015",
+  "—",
+  "0.331 ± 0.013"
+ ],
+ "T2_DWPC_NN": [
+  "Linear DWPC, non-negative coefficients, filtered softmax",
+  "—",
+  "0.249 ± 0.018",
+  "—",
+  "0.331 ± 0.013"
+ ],
+ "T2_RANDOM": [
+  "Uniformly random ranker (expected MRR)",
+  "0.041",
+  "0.016",
+  "0.0006",
+  "0.021"
+ ],
+ "CAP_T2": "**Table 2.** Test MRR (mean ± SD over random splits) of DNFR, its variants and the baselines. Numbers in parentheses give the number of splits when it differs from that of DNFR (10, 10, 2, 10 splits on the four tasks). MRR is not comparable across columns, because the number of candidates differs (Table 1); the last row gives the expected MRR of a uniformly random ranker under the same filtered protocol. Fixed p, selected on validation: one Schweizer–Sklar p chosen per split from a grid by validation MRR, trained with the protocol of DNFR. The two DWPC controls of Section 3.4 were run on the two disease–symptom tasks; on the graded graph, with one metapath, all DWPC models rank identically. DNFR + R1–R4, the validation-selected fixed p, NBFNet and the DWPC controls were not run on PrimeKG, which is descriptive (two splits). Untuned TransE and RotatE are in Supplementary Tables S1–S3. Hits@k, intervals and every variant are in Supplementary Tables S1–S4 and S23.",
+ "CAP_T3": "**Table 3.** What each learned component adds. Each cell is the difference in test MRR between the model with the component and the model without it, averaged over the splits on which both were run, with its 95% paired bootstrap interval and the number of splits on which the difference was positive (out of the splits run; a cell based on fewer splits than its column, such as 1/5, says so). Verdicts under the rule of Section 3.6, with Holm adjustment within the family of component comparisons of each task (all panels): ≈ equivalent within ±0.01; † different; no mark, inconclusive. — not run or not applicable (Hetionet and PrimeKG edges carry no graded weight).",
+ "T6_NN_SHARE": [
+  "Linear non-negative DWPC: share of the leading fact (exact Shapley value)",
+  "—",
+  "8%",
+  "4%"
+ ],
+ "T6_NN_K50": [
+  "Linear non-negative DWPC: facts covering 50% of its attribution",
+  "—",
+  "24",
+  "27"
+ ],
+ "T6_NN_CF": [
+  "Linear non-negative DWPC: its leading fact / a random fact on its paths",
+  "—",
+  "57% / 99%",
+  "82% / 96%"
+ ],
+ "CAP_T6": "**Table 6.** Quantitative evaluation of path explanations on the seed-0 split. Evidence is −log(1 − P) above the leak, which the paths share exactly. Summed path shares count a fact once for every path through it; the Shapley value splits each path's term equally among its facts (Section 3.6) and sums to the total. DWPC-LR rows use its own correct top-10 predictions and the attribution of Section 3.6; the linear non-negative DWPC rows use that model's correct top-10 predictions and its exact Shapley value (not run on compound–treats–disease). Deletion within the pair changes one score with all others fixed; the fact-level counterfactual removes one fact from the graph and re-scores every candidate of the same head, without retraining and with degrees held fixed. Metapath classes are given for drug repurposing only, the one task with a mechanistic route. In \"Same leading fact in DNFR (Shapley) and DWPC-LR\" the number in parentheses is the number of pairs in the top 10 of both models; in \"Test pairs evaluated\" it is the number of top-10 hits.",
+ "HL4": "Path counts matched DNFR in accuracy and, made non-negative, in exact attribution.",
+ "ABS_M2": "; trained with DNFR's objective they changed by +0.005, and a linear version with non-negative coefficients, as exactly attributable as DNFR, was 0.025 more accurate on Hetionet disease–symptom",
+ "RESP_M2_SUMMARY": "The objective explained little: trained with the filtered softmax, DWPC changed by +0.005 on Hetionet disease–symptom (equivalent within ±0.01). The linear non-negative DWPC reached 0.249 against 0.224 for DNFR (−0.025 for DNFR, different under our rule) and has an exact, non-negative attribution to facts. The \"difference in kind\" claim is withdrawn.",
+ "P_41_DWPC": "Among path methods, DWPC-LR was at least as accurate as DNFR on the three tasks with ten splits. On Hetionet drug repurposing DNFR minus DWPC-LR was +0.005 [−0.016, +0.025] (5/10 splits, inconclusive); on the two disease–symptom tasks DWPC-LR was ahead by 0.016 and 0.021, a difference under our rule on both. On PrimeKG DNFR was ahead by 0.070 [+0.056, +0.084] on two splits, too few for a verdict. Two controls separate the model from its training objective (Supplementary Table S23). Trained with DNFR's exact filtered softmax instead of sampled logistic regression, DWPC changed by +0.005 [+0.000, +0.008] on Hetionet disease–symptom (8/10 splits, equivalent), so the objective does not explain DNFR's deficit there. A linear model in the untransformed DWPC with non-negative coefficients, trained with the same softmax, reached 0.249 (+0.009 against DWPC-LR, inconclusive) and was ahead of DNFR by 0.025 [+0.019, +0.031] (10/10 splits, different); its optimum set 44% of the metapath coefficients to zero. On the graded graph, with one metapath, every increasing function of the single DWPC feature ranks the candidates identically, so all DWPC models gave DWPC-LR's MRR (0.331). We kept the damping of DWPC at 0.4, the value of Himmelstein et al. [1]; tuning it could only add to DWPC's accuracy. Degree and prior features did not help DWPC-LR. Completion of the target relation alone was far behind on Hetionet drug repurposing (Soft-Impute 0.262), came close on PrimeKG (0.627) and led on the dense graded graph (0.352 against 0.311 for DNFR), where a low-rank description should work well. AnyBURL was below DNFR and DWPC-LR wherever it ran<<ANYBURL_1000>>. The compact NBFNet, with about ten thousand parameters, did not differ from DNFR under our rule (graded graph −0.001 [−0.011, +0.009]; Hetionet disease–symptom +0.021 [+0.014, +0.029], ahead on 9 of 10 splits), and it was behind DWPC-LR on the graded graph (−0.022, different). Every path method was far above the chance level on every task.",
+ "_PM": [
+  {
+   "mp": "DrD-DpS",
+   "share": 0.5718467730962183,
+   "range": 2.620220184326172,
+   "gap": 0.010967254638671875,
+   "n_res": 6,
+   "n": 6,
+   "inside": [
+    -5.0,
+    -2.0
+   ],
+   "vrange": 0.004553198613694298,
+   "rows": [
+    [
+     -5.0,
+     0.0,
+     0.00095367431640625,
+     0.22001208203830652,
+     0.24606397690551265,
+     2
+    ],
+    [
+     -2.0,
+     0.6990432739257812,
+     0.010967254638671875,
+     0.2229553633447721,
+     0.24657621792867507,
+     2
+    ],
+    [
+     -1.0,
+     1.3184547424316406,
+     0.000476837158203125,
+     0.22371884727498104,
+     0.24626363352074834,
+     2
+    ],
+    [
+     -0.5,
+     1.8453598022460938,
+     0.0095367431640625,
+     0.2231113389073664,
+     0.24564021801015082,
+     2
+    ],
+    [
+     -0.25,
+     2.1986961364746094,
+     0.00286102294921875,
+     0.22456528065200082,
+     0.24536550957482742,
+     2
+    ],
+    [
+     0.0,
+     2.620220184326172,
+     0.0,
+     0.22455073316025304,
+     0.24499942246347992,
+     2
+    ]
+   ]
+  },
+  {
+   "mp": "DlA-DlA^-1-DpS",
+   "share": 0.3277288436035123,
+   "range": 0.9937286376953125,
+   "gap": 0.000476837158203125,
+   "n_res": 5,
+   "n": 6,
+   "inside": [
+    -5.0,
+    -2.0,
+    -1.0,
+    -0.5
+   ],
+   "vrange": 0.0013130149444423311,
+   "rows": [
+    [
+     -5.0,
+     0.0,
+     11.441707611083984,
+     0.22163299643052273,
+     0.25234424888981594,
+     2
+    ],
+    [
+     -2.0,
+     0.21791458129882812,
+     0.0,
+     0.22215719768056783,
+     0.25375185585151444,
+     2
+    ],
+    [
+     -1.0,
+     0.4134178161621094,
+     0.000476837158203125,
+     0.22177435197265805,
+     0.25359680663305884,
+     2
+    ],
+    [
+     -0.5,
+     0.6074905395507812,
+     0.000476837158203125,
+     0.22177675465891267,
+     0.2552586528080115,
+     2
+    ],
+    [
+     -0.25,
+     0.7638931274414062,
+     0.000476837158203125,
+     0.22294601137496506,
+     0.25513433217949943,
+     2
+    ],
+    [
+     0.0,
+     0.9937286376953125,
+     0.000476837158203125,
+     0.2228256758375759,
+     0.2533797199491857,
+     2
+    ]
+   ]
+  }
+ ],
+ "PERMP_SHARE2": "90%",
+ "PERMP_THIRD": "3.4%",
+ "P_44_PROFILE": "Figure 2 shows the converged profiles with the disagreement between optimisation chains. The largest spreads in Supplementary Tables S8 and S16 (up to 32.1 × 10⁻³ nat on Hetionet) came mostly from single chains that settled in a poorer basin at every p, not from imprecision of the profile itself: on the graded graph the two best chains agreed within 0.08 × 10⁻³ nat at 46 of 48 grid points, and on Hetionet disease–symptom within 0.10 × 10⁻³ nat at 16 of 18 points on splits 0 and 2 (Supplementary Table S21). On these resolved profiles the training loss did locate p within a split, but loosely: on the graded graph the points within the threshold χ²(0.95, 1)/(2N) = 0.65 × 10⁻³ nat were [−0.5, −0.25] on split 1, {0.5} on split 2 and, on split 0, two disjoint ranges, p ≤ −2.5 and 0.1 to 0.25, separated by a ridge near p = −0.25 that rose 5.1 × 10⁻³ nat; on Hetionet they were [−20, −10] and [−5, −1]. On Hetionet split 1 the two best chains disagreed by 3 to 11 × 10⁻³ nat at 8 of 9 points, more than the profile varied, so that profile could not be resolved at the precision we attained. Across splits the minimiser moved (graded graph 0.1, −0.25 and 0.5; Hetionet −20 and −2), which is sampling variability of a weakly curved objective rather than flatness within a split. Profiles of the two metapaths that carry most of DNFR's evidence on Hetionet disease–symptom, with the other 15 re-fitted, were resolved (the two sweeps agreed within 0.01 × 10⁻³ nat at all but one cold-started point; Supplementary Table S22) and only one-sided: for disease–resembles–disease–presents–symptom (57% of the evidence) the loss rose by 2.6 × 10⁻³ nat from p = −5 to the product, the points within the threshold were [−5, −2], and validation MRR varied by 0.005; for disease–localizes–anatomy–localizes–disease–presents–symptom (33% of the evidence) the loss rose by 1.0 × 10⁻³ nat from p = −5 to the product, the points within the threshold were [−5, −0.5], and validation MRR varied by 0.001. The loss thus prefers operators towards the minimum for these metapaths without fixing a value, and held-out accuracy hardly distinguishes them.",
+ "P_44_HELDOUT": "Held-out accuracy pointed elsewhere. On the graded graph, validation MRR at the converged fits peaked at p = −1.5, −2 and −1.5 (Figure 2C), where the training loss lay 1.2, 1.9 and 5.2 × 10⁻³ nat above its minimum, outside the threshold on every split; test MRR at the selected value exceeded that of the product by +0.014, +0.008 and +0.016. The data thus carry information about p that the training objective barely registers: the softmax loss averages over all candidates, whereas MRR depends on the order of the few top-ranked ones. This is a mismatch between the surrogate loss and the metric, not an absence of information, and it is why we profiled validation MRR, a ranking-aware criterion, beside the loss rather than a second likelihood. The Łukasiewicz t-norm, which lost 0.080 from the default initialisation because every path starts at strength zero, reached 0.312, 0.333 and 0.290 when started from the converged product (Supplementary Table S18). Per-metapath values from different starts were weakly correlated (median Spearman 0.44 on Hetionet disease–symptom), so learned per-metapath values should not be interpreted either.",
+ "T5_A_RANDOM": [
+  "Uniformly random ranker (expected)",
+  "0.041",
+  "0.041",
+  "0.075",
+  "—"
+ ],
+ "T5_A": [
+  [
+   "DNFR (learned p",
+   [
+    "0.599",
+    "0.079 ± 0.038 (4)",
+    "0.144",
+    "+0.003 [−0.005, +0.011] 2/4"
+   ]
+  ],
+  [
+   "Product t-norm (fixed)",
+   [
+    "0.602",
+    "0.078 ± 0.031",
+    "0.178",
+    "—"
+   ]
+  ],
+  [
+   "Hamacher product (fixed)",
+   [
+    "0.575",
+    "0.080 ± 0.050 (4)",
+    "0.229",
+    "+0.004 [−0.017, +0.027] 2/4"
+   ]
+  ],
+  [
+   "DNFR without degree",
+   [
+    "0.437",
+    "0.103 ± 0.051 (4)",
+    "0.268",
+    "+0.028 [+0.011, +0.044] 4/4"
+   ]
+  ],
+  [
+   "DWPC + logistic",
+   [
+    "0.594",
+    "0.084 ± 0.039",
+    "0.204",
+    "+0.006 [−0.002, +0.013] 5/10"
+   ]
+  ],
+  [
+   "DWPC-LR + degree",
+   [
+    "0.577",
+    "0.032 ± 0.012",
+    "0.053",
+    "−0.046 [−0.056, −0.037] 0/10†"
+   ]
+  ],
+  [
+   "Soft-thresholded",
+   [
+    "0.262",
+    "0.015 ± 0.001",
+    "0.000",
+    "−0.063 [−0.073, −0.054] 0/10†"
+   ]
+  ],
+  [
+   "Truncated SVD",
+   [
+    "0.278",
+    "0.020 ± 0.006",
+    "0.012",
+    "−0.058 [−0.069, −0.048] 0/10†"
+   ]
+  ],
+  [
+   "Edge prior",
+   [
+    "0.090",
+    "0.013 ± 0.000",
+    "0.000",
+    "−0.065 [−0.075, −0.056] 0/10†"
+   ]
+  ],
+  [
+   "Popularity",
+   [
+    "0.205",
+    "0.010 ± 0.000",
+    "0.000",
+    "−0.067 [−0.077, −0.058] 0/10†"
+   ]
+  ]
+ ],
+ "T5_A_TITLE": "A. Disease-centred split (10 splits; numbers in parentheses give fewer): every indication of a test disease held out; ΔMRR is the method minus the fixed product over the splits both were run on",
+ "ABS_TAIL": "0.08 (chance 0.04) but 0.27 for a model trained without them",
+ "T5_NEW_PANELS": [
+  {
+   "title": "D. Disease-centred split without the 33 metapaths that contain the treats relation (10 splits); ΔMRR is the model without them minus the model with them",
+   "rows": [
+    [
+     "Product t-norm (fixed)",
+     "0.078",
+     "0.273 ± 0.100",
+     "0.503",
+     "+0.195 [+0.176, +0.215] 10/10†"
+    ],
+    [
+     "DWPC + logistic regression",
+     "0.084",
+     "0.196 ± 0.060",
+     "0.406",
+     "+0.113 [+0.097, +0.129] 10/10†"
+    ]
+   ]
+  },
+  {
+   "title": "E. Compound-centred split (10 splits): every indication of a test compound held out; ΔMRR is the method minus the fixed product over the splits both were run on",
+   "rows": [
+    [
+     "Product t-norm (fixed)",
+     "0.602",
+     "0.568 ± 0.065",
+     "0.770",
+     "—"
+    ],
+    [
+     "DWPC + logistic regression",
+     "0.594",
+     "0.555 ± 0.063",
+     "0.761",
+     "−0.014 [−0.029, +0.003] 5/10"
+    ],
+    [
+     "DWPC-LR + degree + prior",
+     "0.577",
+     "0.537 ± 0.070",
+     "0.737",
+     "−0.032 [−0.050, −0.015] 2/10"
+    ],
+    [
+     "Soft-thresholded SVD (Soft-Impute)",
+     "0.262",
+     "0.031 ± 0.022",
+     "0.052",
+     "−0.537 [−0.569, −0.507] 0/10†"
+    ],
+    [
+     "Truncated SVD (rank chosen on validation)",
+     "0.278",
+     "0.037 ± 0.025",
+     "0.050",
+     "−0.532 [−0.564, −0.502] 0/10†"
+    ],
+    [
+     "Edge prior (degree-preserving permutations)",
+     "0.090",
+     "0.015 ± 0.000",
+     "0.000",
+     "−0.553 [−0.584, −0.523] 0/10†"
+    ],
+    [
+     "Popularity (training positives of the tail)",
+     "0.205",
+     "0.210 ± 0.025",
+     "0.461",
+     "−0.358 [−0.389, −0.330] 0/10†"
+    ],
+    [
+     "Uniformly random ranker (expected)",
+     "0.041",
+     "0.041",
+     "0.075",
+     "—"
+    ]
+   ]
+  }
+ ],
+ "CAP_T5": "**Table 5.** Hetionet compound–treats–disease in harder settings. Random-split MRR from Table 2 for comparison (in panel B, over the same splits; in panel C, the MRR of panel B; in panel D, the disease-centred MRR of the same model with all metapaths). Each Δ is given with its 95% bootstrap interval and the number of splits on which it was positive; verdicts as in Table 3 (Holm adjustment within each panel). The expected MRR and Hits@10 of a uniformly random ranker are given for the entity-centred splits; popularity can fall below chance there because every held-out disease has no training positive and all such candidates tie.",
+ "P_46_FACTS": "At the level of facts the picture is clearer. Summed path shares credited the leading fact with 45%, 25% and 28% of the evidence on the three tasks; its Shapley value was 16%, 12% and 9%, and half of the attribution lay on 7, 6 and 12 facts. The two criteria picked the same leading fact for 95%, 91% and 100% of pairs, so double counting changes how much a fact appears to carry more than which fact leads. Removing the leading fact from the graph left 85%, 60% and 76% of correct top-10 predictions in the top 10, against 100%, 99% and 99% for a random fact on the same paths. This counterfactual keeps degrees, and hence the memberships of neighbouring edges, fixed, as the Shapley decomposition does, and it measures how much the trained model depends on a fact, not what a model retrained without the fact would learn. DWPC-LR's counterfactuals were similarly faithful (87%, 55% and 82% against 100%, 99% and 96%), but its attribution is inexact and of mixed sign: on compound–treats–disease 31% of its positive attribution was offset by metapaths with negative coefficients (median). Both properties come from the asinh transform and the unconstrained coefficients, not from path counting. The linear non-negative DWPC model of Section 4.1 is a sum of non-negative path terms, each a unanimity game over its facts, so its edge-level Shapley value is exact and non-negative for the same reason as DNFR's. Its leading fact carried 8% of its attribution on Hetionet disease–symptom and half lay on 24 facts; removing its leading fact left 57% of its correct top-10 predictions in the top 10, against 99% for a random fact, and on the graded graph it coincides with DWPC-LR (Table 6). Exact, non-negative attribution to facts is therefore a property of additive path models with non-negative terms, not an advantage of fuzzy composition. On drug repurposing the leading metapath was associative for 100% of correct top-10 predictions (examples in Supplementary Table S19).",
+ "P_46_CLIN": "In the pilot clinical assessment (Supplementary Sections S6.2, S7 and S8.7), the first rater judged every relation on a path to agree with biomedical knowledge for 53% [42–64%] of paths on Hetionet and 60% [49–70%] on the graded graph. The physician's usefulness ratings separated correct from incorrect predictions only weakly (AUC 0.67, 95% CI 0.49–0.83), and his agreement with the first rater on the correctness of relations was moderate (κ = 0.40, 0.23–0.57). The explanations were more often a reason to look further than a reason to believe.",
+ "P_51": "Noisy-OR aggregation and hub discounting carried DNFR's gains over its ablations, with the same sign on every split of the three tasks with ten splits; a learned discount helped only with graded clinical evidence. The t-norm, the most visibly neuro-fuzzy part of the model, gave no consistent gain when learned. The training loss located its parameter only within wide or disjoint intervals, the location moved between splits, and it disagreed with the value that held-out accuracy preferred; validation selection helped where learning did not. As a predictor DNFR did not beat DWPC-LR on any task with ten splits, trailed completion on the graded graph and did not differ from a compact NBFNet, and the training objective did not explain its deficit against path counts. A linear path-count model with non-negative coefficients was more accurate than DNFR on Hetionet disease–symptom and has the same exact, non-negative attribution to facts. For accuracy and for exact attribution alike, then, simpler additive path models suffice on graphs like these; whether an exact fact-level attribution helps a clinician more than a metapath-level one is a question for a user study. On drug repurposing, paths through known indications carried almost all of the evidence on random splits, and when they were available in training they lowered accuracy for diseases without known treatments.",
+ "P_6": "In a controlled component analysis on three medical link-prediction tasks with ten splits each, the accuracy of differentiable neuro-fuzzy path reasoning came from noisy-OR aggregation and hub discounting, and four plausible refinements did not improve it. The training loss constrained the t-norm parameter only loosely, its optimum moved between splits and differed from the one held-out accuracy preferred, so the operator should be selected on validation data and not interpreted when learned. Degree-weighted path counts were at least as accurate, and a non-negative linear version of them offers the same exact attribution to facts. On drug repurposing most of the evidence, for every path method, ran through known indications. Held-out compounds kept most of their accuracy through similar compounds, but held-out diseases did not, and for them a model trained without the target-relation metapaths was more than three times as accurate. For explainable clinical decision support, effort is better spent on how much each fact counts, how paths are combined, attribution to facts and tests of what the evidence rests on than on learning the operator that composes it.",
+ "EXCL_NOTE": "only one excluded metapath contains the treats relation (compound–causes–side effect–causes–compound–treats–disease), and on the training graph of every split it still had 9.9 to 10.2 million paths, so counting per split would have excluded the same metapaths (Supplementary Section S8.8). For PrimeKG we did not repeat this check.",
+ "NEW_REFS": {
+  "47": "S. Kim, J.-H. Won, D.S.U. Lee, R. Luo, L. Wu, Y. Xia, T. Qin, H. Lee, Revisiting machine-learning based drug repurposing: drug indications are not a right prediction target, in: Proceedings of the Conference on Health, Inference, and Learning (CHIL 2023), PMLR 209, 2023, pp. 100–116.",
+  "48": "G. Brière, T. Stosskopf, B. Loire, A. Baudot, Benchmarking the impact of data leakage on the performance of knowledge graph embedding models for biomedical link prediction, bioRxiv (2025). https://doi.org/10.1101/2025.01.23.634511",
+  "49": "D. Bang, S. Lim, S. Lee, S. Kim, Biomedical knowledge graph learning for drug repurposing by extending guilt-by-association to multiple layers, Nat. Commun. 14 (2023) 3570. https://doi.org/10.1038/s41467-023-39301-y"
+ },
+ "TAB_S21": {
+  "caption": "**Table S21.** Chain envelope of the converged profiles over a fixed shared p (Figure 2). For each graph, split and p: the number of converged warm-start chains, the lowest loss in excess of the split's minimum, the second-best and the worst chain minus the best (×10⁻³ nat), whether the point is resolved (two best chains within 10⁻⁴ nat), and validation and test MRR of the best chain.",
+  "header": [
+   "Graph",
+   "Split",
+   "p",
+   "Chains",
+   "Excess ×10⁻³",
+   "2nd − best ×10⁻³",
+   "Worst − best ×10⁻³",
+   "Resolved",
+   "Valid MRR",
+   "Test MRR"
+  ],
+  "rows": [
+   [
+    "Graded",
+    "0",
+    "−5",
+    "4",
+    "0.37",
+    "0.00",
+    "4.39",
+    "yes",
+    "0.356",
+    "0.325"
+   ],
+   [
+    "Graded",
+    "0",
+    "−4",
+    "4",
+    "0.40",
+    "0.00",
+    "4.36",
+    "yes",
+    "0.355",
+    "0.325"
+   ],
+   [
+    "Graded",
+    "0",
+    "−3",
+    "4",
+    "0.47",
+    "0.00",
+    "4.29",
+    "yes",
+    "0.357",
+    "0.327"
+   ],
+   [
+    "Graded",
+    "0",
+    "−2.5",
+    "4",
+    "0.55",
+    "0.00",
+    "0.12",
+    "yes",
+    "0.358",
+    "0.327"
+   ],
+   [
+    "Graded",
+    "0",
+    "−2",
+    "4",
+    "0.73",
+    "0.08",
+    "0.08",
+    "yes",
+    "0.358",
+    "0.329"
+   ],
+   [
+    "Graded",
+    "0",
+    "−1.5",
+    "4",
+    "1.16",
+    "0.06",
+    "0.06",
+    "yes",
+    "0.358",
+    "0.328"
+   ],
+   [
+    "Graded",
+    "0",
+    "−1",
+    "6",
+    "2.17",
+    "0.01",
+    "0.07",
+    "yes",
+    "0.358",
+    "0.328"
+   ],
+   [
+    "Graded",
+    "0",
+    "−0.75",
+    "4",
+    "3.09",
+    "0.01",
+    "0.02",
+    "yes",
+    "0.357",
+    "0.324"
+   ],
+   [
+    "Graded",
+    "0",
+    "−0.5",
+    "6",
+    "4.32",
+    "0.00",
+    "0.05",
+    "yes",
+    "0.356",
+    "0.322"
+   ],
+   [
+    "Graded",
+    "0",
+    "−0.25",
+    "6",
+    "5.06",
+    "0.00",
+    "0.93",
+    "yes",
+    "0.348",
+    "0.327"
+   ],
+   [
+    "Graded",
+    "0",
+    "0",
+    "8",
+    "1.21",
+    "0.00",
+    "6.69",
+    "yes",
+    "0.346",
+    "0.314"
+   ],
+   [
+    "Graded",
+    "0",
+    "0.1",
+    "2",
+    "0.00",
+    "0.01",
+    "0.01",
+    "yes",
+    "0.343",
+    "0.310"
+   ],
+   [
+    "Graded",
+    "0",
+    "0.25",
+    "4",
+    "0.06",
+    "0.00",
+    "0.01",
+    "yes",
+    "0.340",
+    "0.313"
+   ],
+   [
+    "Graded",
+    "0",
+    "0.5",
+    "4",
+    "1.58",
+    "0.00",
+    "0.05",
+    "yes",
+    "0.337",
+    "0.310"
+   ],
+   [
+    "Graded",
+    "0",
+    "0.75",
+    "2",
+    "2.32",
+    "0.00",
+    "0.00",
+    "yes",
+    "0.330",
+    "0.311"
+   ],
+   [
+    "Graded",
+    "0",
+    "1",
+    "2",
+    "2.62",
+    "0.00",
+    "0.00",
+    "yes",
+    "0.333",
+    "0.312"
+   ],
+   [
+    "Graded",
+    "1",
+    "−5",
+    "4",
+    "2.03",
+    "0.07",
+    "0.07",
+    "yes",
+    "0.337",
+    "0.360"
+   ],
+   [
+    "Graded",
+    "1",
+    "−4",
+    "4",
+    "2.03",
+    "0.01",
+    "0.06",
+    "yes",
+    "0.336",
+    "0.359"
+   ],
+   [
+    "Graded",
+    "1",
+    "−3",
+    "4",
+    "1.98",
+    "0.00",
+    "0.04",
+    "yes",
+    "0.335",
+    "0.360"
+   ],
+   [
+    "Graded",
+    "1",
+    "−2.5",
+    "4",
+    "1.92",
+    "0.01",
+    "0.04",
+    "yes",
+    "0.337",
+    "0.358"
+   ],
+   [
+    "Graded",
+    "1",
+    "−2",
+    "4",
+    "1.86",
+    "0.02",
+    "0.05",
+    "yes",
+    "0.340",
+    "0.357"
+   ],
+   [
+    "Graded",
+    "1",
+    "−1.5",
+    "4",
+    "1.78",
+    "0.01",
+    "0.05",
+    "yes",
+    "0.334",
+    "0.354"
+   ],
+   [
+    "Graded",
+    "1",
+    "−1",
+    "6",
+    "1.57",
+    "0.01",
+    "0.09",
+    "yes",
+    "0.332",
+    "0.352"
+   ],
+   [
+    "Graded",
+    "1",
+    "−0.75",
+    "4",
+    "1.12",
+    "0.03",
+    "0.29",
+    "yes",
+    "0.328",
+    "0.350"
+   ],
+   [
+    "Graded",
+    "1",
+    "−0.5",
+    "6",
+    "0.45",
+    "0.00",
+    "0.53",
+    "yes",
+    "0.323",
+    "0.353"
+   ],
+   [
+    "Graded",
+    "1",
+    "−0.25",
+    "6",
+    "0.00",
+    "0.01",
+    "0.79",
+    "yes",
+    "0.322",
+    "0.349"
+   ],
+   [
+    "Graded",
+    "1",
+    "0",
+    "8",
+    "1.55",
+    "0.01",
+    "2.58",
+    "yes",
+    "0.321",
+    "0.350"
+   ],
+   [
+    "Graded",
+    "1",
+    "0.1",
+    "2",
+    "6.28",
+    "0.00",
+    "0.00",
+    "yes",
+    "0.316",
+    "0.345"
+   ],
+   [
+    "Graded",
+    "1",
+    "0.25",
+    "4",
+    "4.40",
+    "0.00",
+    "2.23",
+    "yes",
+    "0.313",
+    "0.341"
+   ],
+   [
+    "Graded",
+    "1",
+    "0.5",
+    "4",
+    "5.07",
+    "0.03",
+    "0.78",
+    "yes",
+    "0.313",
+    "0.334"
+   ],
+   [
+    "Graded",
+    "1",
+    "0.75",
+    "2",
+    "6.02",
+    "0.49",
+    "0.49",
+    "no",
+    "0.312",
+    "0.334"
+   ],
+   [
+    "Graded",
+    "1",
+    "1",
+    "2",
+    "9.04",
+    "0.00",
+    "0.00",
+    "yes",
+    "0.311",
+    "0.333"
+   ],
+   [
+    "Graded",
+    "2",
+    "−5",
+    "4",
+    "4.95",
+    "0.00",
+    "0.01",
+    "yes",
+    "0.338",
+    "0.323"
+   ],
+   [
+    "Graded",
+    "2",
+    "−4",
+    "4",
+    "4.93",
+    "0.00",
+    "0.01",
+    "yes",
+    "0.336",
+    "0.322"
+   ],
+   [
+    "Graded",
+    "2",
+    "−3",
+    "4",
+    "4.89",
+    "0.00",
+    "0.01",
+    "yes",
+    "0.338",
+    "0.324"
+   ],
+   [
+    "Graded",
+    "2",
+    "−2.5",
+    "4",
+    "4.87",
+    "0.01",
+    "0.01",
+    "yes",
+    "0.338",
+    "0.324"
+   ],
+   [
+    "Graded",
+    "2",
+    "−2",
+    "4",
+    "4.92",
+    "0.00",
+    "0.01",
+    "yes",
+    "0.337",
+    "0.326"
+   ],
+   [
+    "Graded",
+    "2",
+    "−1.5",
+    "4",
+    "5.18",
+    "0.01",
+    "0.04",
+    "yes",
+    "0.339",
+    "0.324"
+   ],
+   [
+    "Graded",
+    "2",
+    "−1",
+    "6",
+    "5.93",
+    "0.01",
+    "0.10",
+    "yes",
+    "0.336",
+    "0.326"
+   ],
+   [
+    "Graded",
+    "2",
+    "−0.75",
+    "4",
+    "6.51",
+    "0.00",
+    "0.01",
+    "yes",
+    "0.331",
+    "0.325"
+   ],
+   [
+    "Graded",
+    "2",
+    "−0.5",
+    "6",
+    "6.98",
+    "0.00",
+    "0.09",
+    "yes",
+    "0.330",
+    "0.322"
+   ],
+   [
+    "Graded",
+    "2",
+    "−0.25",
+    "6",
+    "6.36",
+    "0.00",
+    "0.06",
+    "yes",
+    "0.318",
+    "0.319"
+   ],
+   [
+    "Graded",
+    "2",
+    "0",
+    "8",
+    "4.20",
+    "0.00",
+    "0.15",
+    "yes",
+    "0.321",
+    "0.309"
+   ],
+   [
+    "Graded",
+    "2",
+    "0.1",
+    "2",
+    "3.18",
+    "0.00",
+    "0.00",
+    "yes",
+    "0.320",
+    "0.301"
+   ],
+   [
+    "Graded",
+    "2",
+    "0.25",
+    "4",
+    "0.87",
+    "0.00",
+    "0.02",
+    "yes",
+    "0.320",
+    "0.299"
+   ],
+   [
+    "Graded",
+    "2",
+    "0.5",
+    "4",
+    "0.00",
+    "0.05",
+    "0.06",
+    "yes",
+    "0.315",
+    "0.297"
+   ],
+   [
+    "Graded",
+    "2",
+    "0.75",
+    "2",
+    "1.84",
+    "0.37",
+    "0.37",
+    "no",
+    "0.313",
+    "0.290"
+   ],
+   [
+    "Graded",
+    "2",
+    "1",
+    "2",
+    "1.93",
+    "0.00",
+    "0.00",
+    "yes",
+    "0.305",
+    "0.290"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "−20",
+    "4",
+    "0.00",
+    "0.16",
+    "1.33",
+    "no",
+    "0.225",
+    "0.240"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "−10",
+    "4",
+    "0.35",
+    "0.10",
+    "1.34",
+    "yes",
+    "0.224",
+    "0.241"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "−5",
+    "6",
+    "0.82",
+    "0.07",
+    "31.44",
+    "yes",
+    "0.224",
+    "0.242"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "−2",
+    "4",
+    "2.08",
+    "0.01",
+    "30.93",
+    "yes",
+    "0.223",
+    "0.244"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "−1",
+    "4",
+    "3.34",
+    "0.02",
+    "31.15",
+    "yes",
+    "0.223",
+    "0.240"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "−0.5",
+    "4",
+    "4.01",
+    "0.01",
+    "30.94",
+    "yes",
+    "0.224",
+    "0.240"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "−0.25",
+    "4",
+    "4.22",
+    "0.00",
+    "31.36",
+    "yes",
+    "0.221",
+    "0.241"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "0",
+    "4",
+    "4.50",
+    "0.00",
+    "31.89",
+    "yes",
+    "0.221",
+    "0.245"
+   ],
+   [
+    "Hetionet DpS",
+    "0",
+    "0.25",
+    "4",
+    "5.30",
+    "0.00",
+    "32.12",
+    "yes",
+    "0.220",
+    "0.243"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "−20",
+    "4",
+    "0.00",
+    "11.09",
+    "11.38",
+    "no",
+    "0.238",
+    "0.261"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "−10",
+    "4",
+    "0.29",
+    "10.81",
+    "10.88",
+    "no",
+    "0.240",
+    "0.261"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "−5",
+    "6",
+    "0.61",
+    "3.96",
+    "13.09",
+    "no",
+    "0.241",
+    "0.262"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "−2",
+    "4",
+    "1.66",
+    "3.97",
+    "11.60",
+    "no",
+    "0.240",
+    "0.269"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "−1",
+    "4",
+    "3.36",
+    "3.54",
+    "10.27",
+    "no",
+    "0.243",
+    "0.268"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "−0.5",
+    "4",
+    "4.23",
+    "3.24",
+    "10.05",
+    "no",
+    "0.243",
+    "0.267"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "−0.25",
+    "4",
+    "3.92",
+    "2.98",
+    "11.13",
+    "no",
+    "0.247",
+    "0.268"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "0",
+    "4",
+    "3.10",
+    "3.00",
+    "9.09",
+    "no",
+    "0.251",
+    "0.269"
+   ],
+   [
+    "Hetionet DpS",
+    "1",
+    "0.25",
+    "4",
+    "3.69",
+    "0.00",
+    "3.53",
+    "yes",
+    "0.248",
+    "0.269"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "−20",
+    "4",
+    "2.82",
+    "0.38",
+    "3.51",
+    "no",
+    "0.198",
+    "0.224"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "−10",
+    "4",
+    "3.28",
+    "0.01",
+    "0.86",
+    "yes",
+    "0.198",
+    "0.223"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "−5",
+    "6",
+    "0.48",
+    "0.03",
+    "4.38",
+    "yes",
+    "0.204",
+    "0.208"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "−2",
+    "4",
+    "0.00",
+    "0.01",
+    "6.07",
+    "yes",
+    "0.207",
+    "0.211"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "−1",
+    "4",
+    "0.33",
+    "0.01",
+    "7.52",
+    "yes",
+    "0.207",
+    "0.211"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "−0.5",
+    "4",
+    "0.73",
+    "0.02",
+    "7.68",
+    "yes",
+    "0.210",
+    "0.212"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "−0.25",
+    "4",
+    "0.96",
+    "0.01",
+    "8.27",
+    "yes",
+    "0.208",
+    "0.212"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "0",
+    "4",
+    "1.03",
+    "0.03",
+    "8.66",
+    "yes",
+    "0.209",
+    "0.210"
+   ],
+   [
+    "Hetionet DpS",
+    "2",
+    "0.25",
+    "4",
+    "0.86",
+    "0.00",
+    "8.75",
+    "yes",
+    "0.208",
+    "0.211"
+   ]
+  ],
+  "widths": [
+   1100,
+   600,
+   700,
+   700,
+   900,
+   1000,
+   1000,
+   900,
+   1000,
+   1000
+  ]
+ },
+ "TAB_S22": {
+  "caption": "**Table S22.** Converged profiles of single metapaths on Hetionet disease–symptom (split 0): the t-norm parameter of one metapath fixed on a grid, the parameters of the other 15 metapaths, the memberships, reliabilities and leak re-fitted by L-BFGS, all p kept in the non-nilpotent range [−20, 0]. Share: mean share of DNFR's evidence over its correct top-10 test predictions. Excess: lowest loss minus the minimum of that profile; Gap: the two sweeps' difference (×10⁻³ nat).",
+  "header": [
+   "Metapath",
+   "Share",
+   "p",
+   "Chains",
+   "Excess ×10⁻³",
+   "Gap ×10⁻³",
+   "Valid MRR",
+   "Test MRR"
+  ],
+  "rows": [
+   [
+    "disease–resembles–disease–presents–symptom",
+    "57.2%",
+    "−5",
+    "2",
+    "0.00",
+    "0.00",
+    "0.220",
+    "0.246"
+   ],
+   [
+    "disease–resembles–disease–presents–symptom",
+    "57.2%",
+    "−2",
+    "2",
+    "0.70",
+    "0.01",
+    "0.223",
+    "0.247"
+   ],
+   [
+    "disease–resembles–disease–presents–symptom",
+    "57.2%",
+    "−1",
+    "2",
+    "1.32",
+    "0.00",
+    "0.224",
+    "0.246"
+   ],
+   [
+    "disease–resembles–disease–presents–symptom",
+    "57.2%",
+    "−0.5",
+    "2",
+    "1.85",
+    "0.01",
+    "0.223",
+    "0.246"
+   ],
+   [
+    "disease–resembles–disease–presents–symptom",
+    "57.2%",
+    "−0.25",
+    "2",
+    "2.20",
+    "0.00",
+    "0.225",
+    "0.245"
+   ],
+   [
+    "disease–resembles–disease–presents–symptom",
+    "57.2%",
+    "0",
+    "2",
+    "2.62",
+    "0.00",
+    "0.225",
+    "0.245"
+   ],
+   [
+    "disease–localizes–anatomy–localizes–disease–presents–symptom",
+    "32.8%",
+    "−5",
+    "2",
+    "0.00",
+    "11.44",
+    "0.222",
+    "0.252"
+   ],
+   [
+    "disease–localizes–anatomy–localizes–disease–presents–symptom",
+    "32.8%",
+    "−2",
+    "2",
+    "0.22",
+    "0.00",
+    "0.222",
+    "0.254"
+   ],
+   [
+    "disease–localizes–anatomy–localizes–disease–presents–symptom",
+    "32.8%",
+    "−1",
+    "2",
+    "0.41",
+    "0.00",
+    "0.222",
+    "0.254"
+   ],
+   [
+    "disease–localizes–anatomy–localizes–disease–presents–symptom",
+    "32.8%",
+    "−0.5",
+    "2",
+    "0.61",
+    "0.00",
+    "0.222",
+    "0.255"
+   ],
+   [
+    "disease–localizes–anatomy–localizes–disease–presents–symptom",
+    "32.8%",
+    "−0.25",
+    "2",
+    "0.76",
+    "0.00",
+    "0.223",
+    "0.255"
+   ],
+   [
+    "disease–localizes–anatomy–localizes–disease–presents–symptom",
+    "32.8%",
+    "0",
+    "2",
+    "0.99",
+    "0.00",
+    "0.223",
+    "0.253"
+   ]
+  ],
+  "widths": [
+   2600,
+   700,
+   600,
+   700,
+   1000,
+   900,
+   1000,
+   1000
+  ]
+ },
+ "TAB_S23": {
+  "caption": "**Table S23.** DWPC models that separate the model from the objective (ten random splits). Upper part: test MRR (mean ± SD) and Hits@10. Lower part: paired differences with 95% bootstrap interval, splits positive and verdict (Holm adjustment within the five comparisons of each task). On the graded graph, with one metapath, every DWPC model ranks the candidates identically. Coefficients: the softmax-trained asinh model had 41% negative coefficients on Hetionet disease–symptom; the non-negative models set 44% and 38% of them to zero.",
+  "header": [
+   "Model or comparison",
+   "Hetionet DpS MRR / Δ",
+   "Hetionet DpS H@10 / test",
+   "Graded MRR / Δ",
+   "Graded H@10"
+  ],
+  "rows": [
+   [
+    "DNFR",
+    "0.224 ± 0.021",
+    "0.417",
+    "0.311 ± 0.018",
+    "0.527"
+   ],
+   [
+    "Product t-norm (fixed)",
+    "0.220 ± 0.028",
+    "0.415",
+    "0.305 ± 0.015",
+    "0.517"
+   ],
+   [
+    "DWPC-LR (asinh, sampled logistic)",
+    "0.240 ± 0.017",
+    "0.449",
+    "0.331 ± 0.013",
+    "0.554"
+   ],
+   [
+    "DWPC, asinh, filtered softmax",
+    "0.245 ± 0.015",
+    "0.452",
+    "0.331 ± 0.013",
+    "0.554"
+   ],
+   [
+    "Linear DWPC ≥ 0, filtered softmax",
+    "0.249 ± 0.018",
+    "0.456",
+    "0.331 ± 0.013",
+    "0.554"
+   ],
+   [
+    "Linear DWPC ≥ 0, sampled logistic",
+    "0.247 ± 0.018",
+    "0.457",
+    "0.331 ± 0.013",
+    "0.554"
+   ],
+   [
+    "DWPC softmax − DWPC-LR",
+    "+0.005 [+0.000, +0.008] 8/10≈",
+    "p_Holm = 0.091",
+    "identical ranks",
+    ""
+   ],
+   [
+    "Linear ≥ 0 softmax − DWPC-LR",
+    "+0.009 [+0.004, +0.013] 9/10",
+    "p_Holm = 0.091",
+    "identical ranks",
+    ""
+   ],
+   [
+    "Linear ≥ 0 logistic − DWPC-LR",
+    "+0.007 [+0.003, +0.011] 9/10†",
+    "p_Holm = 0.045",
+    "identical ranks",
+    ""
+   ],
+   [
+    "DNFR − DWPC softmax",
+    "−0.021 [−0.027, −0.014] 0/10†",
+    "p_Holm = 0.038",
+    "−0.021 [−0.029, −0.013] 1/10",
+    ""
+   ],
+   [
+    "DNFR − linear ≥ 0 softmax",
+    "−0.025 [−0.031, −0.019] 0/10†",
+    "p_Holm = 0.001",
+    "−0.021 [−0.029, −0.013] 1/10",
+    ""
+   ]
+  ],
+  "widths": [
+   2800,
+   2000,
+   1500,
+   1700,
+   1000
+  ]
+ },
+ "S81": "Each point of the converged profiles (Section 4.4) was fitted by two to eight warm-start chains: sweeps up and down the grid and, at selected points, chains started from the product or from the far end of the grid. Table S21 gives, for every point, the excess loss of the best chain, the gap to the second-best and to the worst chain, and whether the two best chains agree within 10⁻⁴ nat. The largest spreads of Tables S8 and S16 come from single chains that settled in a poorer basin over the whole grid; on the graded graph and on splits 0 and 2 of Hetionet disease–symptom the two best chains agree closely, whereas on split 1 of Hetionet they do not, and we do not interpret that profile. The code is dnfr/rev6_stats.py (function envelope); Figure 2 is drawn by figures/make_fig2_rev6.py.",
+ "S82": "The two metapaths with the largest mean share of DNFR's evidence over its correct top-10 test predictions on split 0 of Hetionet disease–symptom were profiled one at a time (dnfr/profile_permp.py). With the parameter of the profiled metapath fixed, the other 15 parameters were free but kept in [−20, 0]: in a first attempt that allowed p up to 1, the free parameters of other metapaths drifted to the nilpotent range, where their paths reach strength zero and stop passing gradient, and the fits stalled at a higher loss. The other parameters ended at the product end of the range (median 0). The two profiles were fitted from separate cold starts and settle at losses about 6 × 10⁻³ nat apart, another sign that the full objective has several basins; within each profile the two sweeps agree to 10⁻⁵ nat except at the cold-started point. Both profiles fall monotonically towards p = −5 and stay within the threshold over a range of several units, while validation MRR varies by at most 0.005 (Table S22).",
+ "S83": "Three DWPC models were added to DWPC-LR (dnfr/run_task.py, functions fit_linear_softmax and fit_nonneg_logistic). (i) The asinh-transformed features of DWPC-LR with a linear scorer trained by DNFR's exact filtered softmax over all candidate tails; pairs without paths score zero, which is exact because the intercept cancels within a query. (ii) A linear scorer in the untransformed DWPC, divided by the mean of each metapath as in DWPC-LR, with coefficients w = softplus(u) ≥ 0, trained by the same softmax. (iii) The same non-negative model trained with DWPC-LR's objective (20 sampled negatives per positive, balanced class weights). The L2 penalty of each was chosen from {10⁻⁴, 10⁻³, 10⁻², 10⁻¹} by validation MRR, and every model was fitted by L-BFGS. The score of model (ii) is a sum over paths of w_m w_π / mean_m with w_π ≥ 0 the degree-damped path weight; removing any fact of a path removes the path when degrees are held fixed, so each path term is a unanimity game over its facts and the Shapley value of a fact is exactly the sum of the terms of its paths divided by their lengths, as for DNFR (dnfr/explain_dwpc_nn.py). DWPC-LR was recomputed for the same splits and reproduced the released ranks exactly. The controls were run on the two disease–symptom tasks, as requested; on compound–treats–disease they were stopped for time.",
+ "S86": "The rule of Section 3.6 applied to the validation-selected fixed p against the fixed product on the graded graph (Table 4, last row). The ten per-split differences in MRR were −0.005, +0.018, +0.023, +0.021, +0.023, +0.015, +0.025, +0.021, +0.029 and +0.025, with mean +0.0195 and 9 of 10 positive. The corrected resampled t-test [44], with test-to-training ratio 1/8, gave p = 0.0021; its 90% interval was [+0.011, +0.028] and its 95% interval [+0.009, +0.030]. The stratified paired bootstrap over test queries gave a 90% interval of [+0.015, +0.024] and a 95% interval of [+0.014, +0.025]. Equivalence requires both 90% intervals inside (−0.01, +0.01); neither is, so the comparison is not equivalent. The comparison belongs to the family of 14 refinement comparisons of this task; with the smallest p of the family, its Holm-adjusted p-value is 14 × 0.0021 = 0.030 < 0.05, and the 95% bootstrap interval excludes zero on the side of the mean difference, so the verdict is different (†).",
+ "TAB_S24": {
+  "caption": "**Table S24.** The clinical pilot with 95% confidence intervals: Wilson intervals for proportions, stratified bootstrap (5000 resamples of pairs within each class) for the AUCs, and bootstrap over items for Cohen's κ (dnfr/rev6_stats.py).",
+  "header": [
+   "Quantity",
+   "Estimate [95% CI]",
+   "Items"
+  ],
+  "rows": [
+   [
+    "First rater, Hetionet DpS: all relations correct",
+    "53% [42–64%]",
+    "75 paths"
+   ],
+   [
+    "First rater, Hetionet DpS: a relation wrong",
+    "12% [6–21%]",
+    "75 paths"
+   ],
+   [
+    "First rater, Hetionet DpS: could not judge",
+    "35% [25–46%]",
+    "75 paths"
+   ],
+   [
+    "First rater, graded: all relations correct",
+    "60% [49–70%]",
+    "75 paths"
+   ],
+   [
+    "First rater, graded: a relation wrong",
+    "13% [7–23%]",
+    "75 paths"
+   ],
+   [
+    "First rater, graded: could not judge",
+    "27% [18–38%]",
+    "75 paths"
+   ],
+   [
+    "Physician: correct predictions judged plausible",
+    "100% [84–100%]",
+    "20 pairs"
+   ],
+   [
+    "Physician: incorrect predictions judged plausible",
+    "50% [30–70%]",
+    "20 pairs"
+   ],
+   [
+    "Physician: relations correct, correct predictions",
+    "80% [68–88%]",
+    "60 paths"
+   ],
+   [
+    "Physician: relations correct, incorrect predictions",
+    "55% [42–67%]",
+    "60 paths"
+   ],
+   [
+    "AUC of usefulness, correct vs incorrect",
+    "0.67 [0.49–0.83]",
+    "20 + 20 pairs"
+   ],
+   [
+    "AUC of plausibility, correct vs incorrect",
+    "0.75 [0.65–0.85]",
+    "20 + 20 pairs"
+   ],
+   [
+    "Cohen's κ, relations correct (two raters)",
+    "0.40 [0.23–0.57]",
+    "60 paths"
+   ],
+   [
+    "Cohen's κ, kind of rationale (two raters)",
+    "0.46 [0.26–0.64]",
+    "60 paths"
+   ]
+  ],
+  "widths": [
+   4800,
+   2600,
+   1600
+  ]
+ },
+ "S87": "The clinical assessment is a pilot: it was not pre-registered, the first rater is a co-author trained in clinical psychology who knew the aims of the study, and the second rater, a physician who is not an author, knows the authors. Table S24 gives every proportion with its interval. With 20 correct and 20 incorrect predictions, the interval for the AUC of usefulness includes 0.5, and the agreement between the raters is moderate with wide intervals.",
+ "S88": "Metapaths with more than five million paths from the query heads were excluded for all path methods. The counts were computed once on the full graph (dnfr/paths.py). On compound–treats–disease four metapaths were excluded: compound–causes–side effect–causes–compound–palliates–disease (7.6 million), compound–causes–side effect–causes–compound–treats–disease (12.7 million), compound–downregulates–gene–expressed in–anatomy–localizes–disease (5.8 million) and compound–upregulates–gene–expressed in–anatomy–localizes–disease (5.5 million). Only the second contains the treats relation; with the validation and test pairs of each split removed it still had 9.9 to 10.2 million paths on every one of the ten splits, so per-split counting would have excluded the same four metapaths. The other three contain no held-out edge type, so their counts do not depend on the split. On PrimeKG we did not repeat the check.",
+ "RESP_M1A": "We agree that the earlier wording claimed too much, and we examined where the chain disagreement came from. Each profile point had been fitted by two to eight warm-start chains, and Table S16 reported the largest difference between any two of them. Most of that spread came from single chains that settled in a poorer basin over the whole grid. The two best chains agreed within 0.08 × 10⁻³ nat at 46 of 48 points on the graded graph and within 0.10 × 10⁻³ nat at 16 of 4 points on splits 0 and 2 of Hetionet disease–symptom, well below the threshold χ²(0.95, 1)/(2N) of about 0.7 × 10⁻³ nat. On split 1 of Hetionet the two best chains also disagreed (3 to 11 × 10⁻³ nat at 8 of 9 points), and for that split we now say exactly what you propose: the profile could not be resolved at the precision attained. The new Figure 2 shows every profile with its chain envelope and marks unresolved points, and Table S21 lists all points.",
+ "RESP_M1B": "On the resolved profiles the training loss does locate p within a split, but loosely: on the graded graph the points within the threshold are [−0.5, −0.25] on split 1, {0.5} on split 2 and, on split 0, two disjoint ranges (p ≤ −2.5 and 0.1–0.25; Table S8 previously showed their hull [−5, 0.25], which we have corrected); on Hetionet they are [−20, −10] and [−5, −1]. The minimiser moves between splits (0.1, −0.25, 0.5 and −20, −2), which we now call sampling variability rather than non-identifiability. The Abstract now reads: \"Within a split the converged training loss located the t-norm parameter only within wide or disjoint intervals, its minimiser moved between splits, and it did not coincide with the value that maximised validation MRR.\"",
+ "RESP_M1C": "Thank you; the converged profile supports your reading. On the graded graph the mean excess loss peaks between p = −0.5 and −0.25 (Table S7) and, on split 0, a ridge of 5.1 × 10⁻³ nat at p = −0.25 separates a flat region at p ≤ −2.5 from a second basin near 0.1–0.25. Restarts without the penalty that start on either side of the ridge move away from it (from −2 to −3.51, from 0.5 to 0.91), as a ridge with lower ground on both sides would produce. Section 4.4 now says this and points to Figure 2A; it also says that the default penalty λ‖θ − θ₀‖² keeps learned values near their start by construction (minor comment 2).",
+ "RESP_M1D": "We profiled the two metapaths that carry most of DNFR's evidence on Hetionet disease–symptom, disease–resembles–disease–presents–symptom (57%) and disease–localizes–anatomy–localizes–disease–presents–symptom (33%), one at a time with the other 15 parameters, the memberships, reliabilities and leak re-fitted (Table S22, Section S8.2). Both profiles were resolved (sweeps within 10⁻⁵ nat except at one cold-started point) and fall monotonically towards p = −5: the loss rose by 2.6 and 1.0 × 10⁻³ nat from −5 to the product, the points within the threshold were [−5, −2] and [−5, −0.5], and validation MRR changed by at most 0.005. Per metapath, then, the loss gives a direction but not a value. We kept all parameters in the non-nilpotent range p ≤ 0 for these fits, because in a first attempt the free parameters of other metapaths drifted to p > 0, where paths reach strength zero and stop passing gradient. The claim in Section 4.4 is now restricted accordingly: we no longer say that no learned value carries information, only that learned per-metapath values should not be interpreted, given the weak correlation between restarts and these one-sided profiles.",
+ "RESP_M1E": "We agree, and Section 4.4 now frames the result as a mismatch between the surrogate loss and the metric. At the values where validation MRR peaked (−1.5, −2, −1.5), the training loss lay 1.2, 1.9 and 5.2 × 10⁻³ nat above its minimum, outside the threshold on every split, so the data do carry information about p that the loss does not register. Figure 2C now shows validation MRR along every profile, which is the ranking-aware criterion we could compute at every converged fit. We did not add a validation log-likelihood profile: it is the same filtered softmax on another set of queries and would inherit the insensitivity to the top of the ranking that the comparison with MRR exposes.",
+ "RESP_M2A": "Done (Section 4.1, Table 2, Table S23). With the same asinh features and DNFR's exact filtered softmax, DWPC changed by +0.005 [+0.000, +0.008] on Hetionet disease–symptom (8/10 splits; equivalent within ±0.01 under our rule) and remained ahead of DNFR by 0.021 (different). On the graded graph, which has a single metapath, every increasing function of the single DWPC feature ranks the candidates identically, so DWPC-LR, its softmax version and the non-negative linear model give the same ranks and the same MRR (0.331); the objective cannot matter there. DNFR's deficit on the disease–symptom tasks therefore comes from the model, not from the loss. We ran the controls on the two tasks you named; on compound–treats–disease we stopped them for time, and on PrimeKG they were not feasible.",
+ "RESP_M2B": "You are right, and the result removes the claim. The linear DWPC model with non-negative coefficients (no asinh, trained with the filtered softmax) reached 0.249 ± 0.018 on Hetionet disease–symptom against 0.224 for DNFR (+0.025 [+0.019, +0.031], 10/10 splits, different), and its attribution to facts is exact and non-negative by the same unanimity-game argument. In Table 6, its leading fact carried 8% of its attribution, half lay on 24 facts, and removing the leading fact left 57% of its correct top-10 predictions in the top 10, against 99% for a random fact (DNFR: 12%, 6 facts, 60% against 99%). On the graded graph it coincides with DWPC-LR. Section 4.6, Section 5.1, the Abstract, Highlight 4 and the Conclusion now say that exact, non-negative attribution to facts is a property of additive path models with non-negative terms, not an advantage of fuzzy composition, and the phrase \"difference in kind\" is gone.",
+ "RESP_M5B": "The counts were computed once on the full graph, before splitting. We checked what per-split counting would have changed (Section 3.5, Section S8.8). On compound–treats–disease only one of the four excluded metapaths contains the treats relation (compound–causes–side effect–causes–compound–treats–disease, 12.7 million paths); with the validation and test pairs removed it still had 9.9 to 10.2 million paths on each of the ten splits, so the same metapaths would have been excluded. The other three contain no held-out edge type. We did not repeat the check on PrimeKG and say so. We also note in Section 5.3 that the exclusion may lead us to underestimate the effect of hub discounting.",
+ "RESP_M6": "We chose option (b). A study with at least three physicians who are not authors was not possible within the revision period, and we did not want to present the current data as more than they are. The assessment is now called a pilot in Sections 3.6 and 5.3; Section 4.6 keeps two sentences, with confidence intervals; and the details are in Supplementary Sections S6.2, S7 and S8.7, with every proportion, the two AUCs and both κ values given with 95% intervals (Table S24). The AUC of usefulness is 0.67 with a 95% interval of 0.49–0.83, which includes 0.5, and κ for the correctness of relations is 0.40 (0.23–0.57). The Acknowledgements no longer call the second rater independent; they now say that he is not an author but is acquainted with the authors, as Section S7 does. Section 5.3 describes the design you outline (several non-author physicians, a pre-specified protocol, blinding to the model, DNFR and DWPC explanations side by side) as the next step.",
+ "RESP_MINOR14": "14. The GitHub release and the Zenodo record of this revision are public (release <<VER>>; Section 7). We checked the rating sheets: they contain the raters' qualifications, specialty and years of practice, as the raters agreed, and the name and workplace fields of the second rater are withheld; the free-text comments contain no names.",
+ "P_45_TAIL": "When every indication of a test disease was held out (Table 5A), the fixed product fell to 0.078 from 0.602 and DWPC-LR to 0.084 from 0.594 over 10 splits, and DNFR to 0.079 on the 4 splits on which it was run, about twice the chance level of 0.041. Completion, popularity and the edge prior (0.015, 0.010 and 0.013) fell to or below chance: every held-out disease has no training positive, so all of them tie at the bottom of a ranking by popularity. Degree and prior features hurt DWPC-LR (0.032 against 0.084). DNFR without degree terms reached 0.103 (+0.025 [+0.009, +0.041], 4/4 splits, inconclusive), a plausible reversal, since hubs are the diseases with many known treatments. Hits@10 separated the methods more than MRR did: at similar MRR, on the same four splits, the Hamacher product and DNFR without degree terms placed the true compound in the top 10 for 0.229 and 0.268 of test pairs, against 0.144 for DNFR. Because a clinician inspects a short list, Hits@10 is the more practical criterion here, but with about ten test diseases per split these differences are not established.",
+ "P_45_TREATS": "On random splits, the 33 metapaths that contain the treats relation carried 99% of DNFR's evidence for its correct top-10 predictions, against 0.5% for metapaths through a gene that the compound targets. Without them (Table 5B), DNFR fell from 0.599 to 0.289 (−0.310 [−0.343, −0.277], different), DWPC-LR from 0.594 to 0.235 and the fixed product from 0.602 to 0.281. Removing the palliates metapaths too (Table 5C) changed DNFR by a further −0.012, and gene-only metapaths then carried 46.5% of its evidence. On the disease-centred split the picture reversed (Table 5D). Trained without the treats metapaths, the fixed product reached 0.273 and DWPC-LR 0.196 for held-out diseases, against 0.078 and 0.084 with them (+0.195 [+0.176, +0.215] and +0.113 [+0.097, +0.129], 10/10 and 10/10 splits, both different), close to their random-split accuracy without those metapaths (0.281 and 0.235) and about six times the chance level. With the treats metapaths available in training, both models presumably came to rest on known indications and gave little weight to the rest of the graph, which is all that a disease without indications has; without them, the same graph supported a useful zero-shot ranking. Known indications thus act as a shortcut that raises random-split accuracy and lowers accuracy for new diseases. When every indication of a test compound was held out instead (Table 5E, 10 splits), the fixed product reached 0.568 and DWPC-LR 0.555, against 0.210 for popularity and 0.041 for chance, far above the disease-centred level. A new compound loses its own indications but not those of similar compounds or compounds of its pharmacologic class, so this accuracy presumably still rests on the same association; we did not ablate the treats metapaths on this split. Random-split accuracy on curated drug repurposing thus comes largely from guilt by association, for DWPC-LR as much as for DNFR: a compound ranks high because similar compounds, or compounds of its pharmacologic class, treat the disease. The evidence outside the treats relation supports a lower random-split accuracy, but it is what carries over to a disease without known treatments, provided the model is trained on it alone.",
+ "RESP_M3C": "We added the chance level for every task (Section 3.4 gives the formula; Table 2 and Table 5): 0.041 for compound–treats–disease, 0.016 for Hetionet disease–symptom, 0.021 for the graded graph and about 0.0006 for PrimeKG. As you note, popularity falls below chance on the disease-centred split because all test diseases tie at zero, and the text now says so. The disease-centred split now has 10 splits (splits 4–9 added) for the fixed product, DWPC-LR and all baselines, and 4 for DNFR and DNFR without degree terms; DNFR's MRR there is 0.079. Leave-one-disease-out on the 97–137 diseases with indications would need one DNFR fit per disease (about ten minutes each on our CPU), which we could not afford; ten random disease-centred splits hold out each disease about once on average. A compound-centred split was added (Table 5E, 10 splits): the fixed product reached 0.568, DWPC-LR 0.555 and popularity 0.210.",
+ "RESP_M3D": "Done (Table 5D, 10 splits), and the result was the most surprising of the revision. Without the treats metapaths the disease-centred MRR rose, from 0.078 to 0.273 for the fixed product and from 0.084 to 0.196 for DWPC-LR (10/10 splits each, different under our rule), close to their random-split accuracy without those metapaths (0.281 and 0.235) and far above chance (0.041). So the mechanistic and associative evidence outside the treats relation does have zero-shot value, but only when the model is not trained to lean on known indications. Sections 4.5, 5.2 and 6 and the Abstract now report this. We ran the fixed product rather than DNFR, which did not differ from it on this task (Table 3), to fit the runs into the time available.",
+ "RESP_MINOR5": "5. Hits@10 on the disease-centred split: Section 4.5 now comments on it. With ten splits, the Hamacher product (0.229) and DNFR without degree terms (0.268) still placed the true compound in the top 10 more often than DNFR (0.144) at similar MRR; since clinicians inspect short lists, we call Hits@10 the more practical criterion there, while noting that with about ten test diseases per split the differences are not established.",
+ "S84": "The disease-centred split (dnfr/run_task.py, split_by_tail) holds out 10% of the diseases with at least one indication, with all their indications; splits 0–3 were run first and splits 4–9 for this revision with the same code. The compound-centred split (split_by_head) holds out 10% of the compounds with at least one indication, with all their indications, the setting of a drug without known uses. Without the treats metapaths (DNFR_DROP_TARGET_MPS=1), the disease-centred split was run for the fixed product and DWPC-LR. Table 5 gives the results; every comparison uses the per-query ranks released in results_rev6/.",
+ "ANYBURL_1000": "; ten times the rule-learning budget left it unchanged (the graded graph, 1 split: MRR 0.276 with 1000 s and 0.276 with 100 s, with identical ranks; Supplementary Section S8.5)",
+ "S85": "AnyBURL 23-1 was re-run with 1000 s of rule learning instead of 100 s, on the same splits and with the same application settings (top 200 candidates per query): the graded graph, 1 split: MRR 0.276 with 1000 s and 0.276 with 100 s, with identical ranks. On this graph, with a single relation, the rules found within 100 s already gave the final ranking. The longer run on compound–treats–disease did not fit into the time available. Result files: results_rev6/anyburl1000/.",
+ "RESP_M4C": "We kept 100 s for the main tables and added a run with 1000 s on the splits we could afford (Section S8.5): the graded graph, 1 split: MRR 0.276 with 1000 s and 0.276 with 100 s, with identical ranks. On the graded graph the rules found within 100 s already gave the final ranking. We could not afford the longer run on compound–treats–disease, and Section 5.3 notes that the rule sets there may not have saturated, so AnyBURL's accuracy on that task is a lower bound."
+}

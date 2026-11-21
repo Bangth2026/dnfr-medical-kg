@@ -98,6 +98,17 @@ def split_by_tail(pos, seed, frac=(0.8, 0.1, 0.1)):
     return pos[g == 0], pos[g == 1], pos[g == 2]
 
 
+def split_by_head(pos, seed, frac=(0.8, 0.1, 0.1)):
+    """Head-centred split (revision 6, reviewer M3): every positive of a held-out head (e.g. a new compound) is held
+    out together, the cold-start setting of repurposing a drug with no known indication."""
+    rng = np.random.default_rng(seed)
+    heads = rng.permutation(np.unique(pos[:, 0]))
+    a, b = int(frac[0] * len(heads)), int((frac[0] + frac[1]) * len(heads))
+    grp = {int(h): (0 if i < a else 1 if i < b else 2) for i, h in enumerate(heads)}
+    g = np.array([grp[int(h)] for h in pos[:, 0]])
+    return pos[g == 0], pos[g == 1], pos[g == 2]
+
+
 def split(pos, seed, frac=(0.8, 0.1, 0.1)):
     rng = np.random.default_rng(seed)
     idx = rng.permutation(len(pos))
@@ -105,7 +116,7 @@ def split(pos, seed, frac=(0.8, 0.1, 0.1)):
     return pos[idx[:a]], pos[idx[a:b]], pos[idx[b:]]
 
 
-def dwpc_features(P, sd_mask, kg_split, n_pairs, pair_id, damp=0.4):
+def dwpc_features(P, sd_mask, kg_split, n_pairs, pair_id, damp=0.4, asinh=True):
     """Degree-weighted path counts per (pair, metapath), Himmelstein et al. (2017)."""
     from scipy.sparse import coo_matrix
     rows, cols, vals = [], [], []
@@ -128,8 +139,89 @@ def dwpc_features(P, sd_mask, kg_split, n_pairs, pair_id, damp=0.4):
                    shape=(n_pairs, len(P["mps"]))).tocsr()
     mean = np.asarray(X.sum(0)).ravel() / np.maximum(np.diff(X.tocsc().indptr), 1)
     X = X.multiply(1 / np.maximum(mean, 1e-12)).tocsr()
-    X.data = np.arcsinh(X.data)
+    if asinh:
+        X.data = np.arcsinh(X.data)
     return X
+
+
+def fit_linear_softmax(X, ranker, tr_q, va_q, known, n_src, nonneg=False, lams=(1e-4, 1e-3, 1e-2, 1e-1)):
+    """Linear scorer z = X w trained with the filtered softmax of DNFR (exact, over all candidate tails).
+    Pairs without paths score 0 (the intercept cancels within a query). With nonneg=True, w = softplus(u) >= 0.
+    The L2 penalty on w is chosen from lams by validation MRR. Returns (valid MRR, lambda, z, w)."""
+    from dnfr import metrics as _m
+    Xc = X.tocoo()
+    Xt = torch.sparse_coo_tensor(np.vstack([Xc.row, Xc.col]), Xc.data, Xc.shape, dtype=torch.float64).coalesce()
+    pair_src = torch.from_numpy(ranker.pair_src.astype(np.int64))
+    key = {(int(s), int(t)): i for i, (s, t) in enumerate(zip(ranker.pair_src, ranker.pair_tgt))}
+    pos_pair = torch.tensor([key.get((int(s), int(t)), -1) for s, t in tr_q])
+    pos_src = torch.from_numpy(tr_q[:, 0].astype(np.int64))
+    n_pairs = X.shape[0]
+    is_pos = torch.zeros(n_pairs, dtype=torch.bool); is_pos[pos_pair[pos_pair >= 0]] = True
+    n_pos_src = torch.zeros(n_src, dtype=torch.float64).index_add_(0, pos_src, torch.ones(len(pos_src), dtype=torch.float64))
+    n_pairs_src = torch.zeros(n_src, dtype=torch.float64).index_add_(0, pair_src, torch.ones(n_pairs, dtype=torch.float64))
+    n_pwp = torch.zeros(n_src, dtype=torch.float64).index_add_(0, pair_src[is_pos], torch.ones(int(is_pos.sum()), dtype=torch.float64))
+    n0 = ranker.n_tgt - n_pairs_src - (n_pos_src - n_pwp)
+    best = None
+    for lam in lams:
+        u = torch.zeros(X.shape[1], dtype=torch.float64, requires_grad=True)
+        if nonneg:
+            with torch.no_grad(): u.fill_(-2.0)
+        opt = torch.optim.LBFGS([u], lr=1, max_iter=500, tolerance_grad=1e-9, tolerance_change=1e-12,
+                                history_size=20, line_search_fn="strong_wolfe")
+        def wfun():
+            return torch.nn.functional.softplus(u) if nonneg else u
+        def closure():
+            opt.zero_grad()
+            w = wfun()
+            z = torch.clamp(torch.sparse.mm(Xt, w[:, None]).squeeze(1), -50, 50)
+            ez = torch.exp(z) * (~is_pos)
+            A = torch.zeros(n_src, dtype=torch.float64).index_add(0, pair_src, ez) + n0
+            zp = torch.where(pos_pair >= 0, z[pos_pair.clamp(min=0)], torch.zeros((), dtype=torch.float64))
+            loss = (-zp + torch.log(A[pos_src] + torch.exp(zp))).mean() + lam * (w ** 2).sum()
+            loss.backward()
+            return loss
+        for _ in range(3):
+            opt.step(closure)
+        with torch.no_grad():
+            w = wfun().numpy().copy()
+        z = np.asarray(X @ w).ravel()
+        mv = _m(ranker.ranks(z, 0.0, va_q, known))["MRR"]
+        if best is None or mv > best[0]:
+            best = (mv, lam, z, w)
+    return best
+
+
+def fit_nonneg_logistic(Xtr, ytr, X, ranker, va_q, known, lams=(1e-4, 1e-3, 1e-2, 1e-1)):
+    """Logistic regression with balanced class weights as DWPC-LR, but with coefficients constrained >= 0
+    (w = softplus(u)) and an unconstrained intercept; L2 penalty chosen by validation MRR."""
+    from dnfr import metrics as _m
+    Xc = Xtr.tocoo()
+    Xt = torch.sparse_coo_tensor(np.vstack([Xc.row, Xc.col]), Xc.data, Xc.shape, dtype=torch.float64).coalesce()
+    y = torch.from_numpy(ytr)
+    npos, nneg = float(ytr.sum()), float(len(ytr) - ytr.sum())
+    sw = torch.where(y > 0, len(ytr) / (2 * npos), len(ytr) / (2 * nneg))
+    best = None
+    for lam in lams:
+        u = torch.full((X.shape[1],), -2.0, dtype=torch.float64, requires_grad=True)
+        b = torch.zeros(1, dtype=torch.float64, requires_grad=True)
+        opt = torch.optim.LBFGS([u, b], lr=1, max_iter=500, tolerance_grad=1e-9, tolerance_change=1e-12,
+                                history_size=20, line_search_fn="strong_wolfe")
+        def closure():
+            opt.zero_grad()
+            w = torch.nn.functional.softplus(u)
+            z = torch.sparse.mm(Xt, w[:, None]).squeeze(1) + b
+            loss = (sw * torch.nn.functional.binary_cross_entropy_with_logits(z, y, reduction="none")).mean() \
+                + lam * (w ** 2).sum()
+            loss.backward(); return loss
+        for _ in range(3):
+            opt.step(closure)
+        with torch.no_grad():
+            w = torch.nn.functional.softplus(u).numpy().copy(); b0 = float(b)
+        z = np.asarray(X @ w).ravel() + b0
+        mv = _m(ranker.ranks(z, b0, va_q, known))["MRR"]
+        if best is None or mv > best[0]:
+            best = (mv, lam, z, w, b0)
+    return best
 
 
 def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, tag="", split_mode="random",
@@ -175,7 +267,7 @@ def run(task, seeds, variants, budget, epochs, do_baselines=True, sparsity=1.0, 
     else:
         PREV_SEED = {}
     for seed in seeds:
-        tr_q, va_q, te_q = (split_by_tail if split_mode == "tail" else split)(posl, seed)
+        tr_q, va_q, te_q = {"tail": split_by_tail, "head": split_by_head}.get(split_mode, split)(posl, seed)
         if sparsity < 1.0:
             # training positives must exist in the thinned graph
             present = set(map(tuple, np.stack([[src_loc[s] for s in positives(kg, spec)[:, 0]], positives(kg, spec)[:, 1]], 1).tolist()))
@@ -316,6 +408,32 @@ def baselines(P, mask, kg_split, n_pairs, pair_id, pair_src, pair_tgt, ranker, t
     out["dwpc_lr"] = m; RANKS["dwpc_lr"] = ranker.ranks(best[2], best[3], te_q, known).tolist()
     m["n_params"] = int(X.shape[1] + 1)
     print("   dwpc_lr", m, flush=True)
+    # ---- revision 6 (reviewer M2): separate the model from the objective ----
+    if "dwpc_sm" in which:      # same asinh features, trained with DNFR's filtered softmax
+        t0 = time.time()
+        b6 = fit_linear_softmax(X, ranker, tr_q, va_q, known, n_src)
+        rr = ranker.ranks(b6[2], 0.0, te_q, known); RANKS["dwpc_sm"] = rr.tolist()
+        out["dwpc_sm"] = metrics(rr) | dict(valid_MRR=b6[0], lam=b6[1], time_s=time.time() - t0,
+                                            neg_coef_share=float((b6[3] < 0).mean()), coef=b6[3].tolist())
+        print("   dwpc_sm", {k: v for k, v in out["dwpc_sm"].items() if k != "coef"}, flush=True)
+    if "dwpc_nn_sm" in which or "dwpc_nn_lr" in which:
+        Xr = dwpc_features(P, mask, kg_split, n_pairs, pair_id, asinh=False)
+    if "dwpc_nn_sm" in which:   # linear in raw DWPC, non-negative coefficients, filtered softmax
+        t0 = time.time()
+        b6 = fit_linear_softmax(Xr, ranker, tr_q, va_q, known, n_src, nonneg=True)
+        rr = ranker.ranks(b6[2], 0.0, te_q, known); RANKS["dwpc_nn_sm"] = rr.tolist()
+        out["dwpc_nn_sm"] = metrics(rr) | dict(valid_MRR=b6[0], lam=b6[1], time_s=time.time() - t0, coef=b6[3].tolist())
+        print("   dwpc_nn_sm", {k: v for k, v in out["dwpc_nn_sm"].items() if k != "coef"}, flush=True)
+    if "dwpc_nn_lr" in which:   # linear in raw DWPC, non-negative coefficients, DWPC-LR's sampled logistic objective
+        t0 = time.time()
+        def rows_r(lst):
+            lst = np.array(lst); ok = lst >= 0
+            return Xr[np.where(ok, lst, 0)].multiply(ok[:, None]).tocsr()
+        Xtr_r = vstack([rows_r(pos_rows), rows_r(neg_rows)]).tocsr()
+        b6 = fit_nonneg_logistic(Xtr_r, ytr, Xr, ranker, va_q, known)
+        rr = ranker.ranks(b6[2], b6[4], te_q, known); RANKS["dwpc_nn_lr"] = rr.tolist()
+        out["dwpc_nn_lr"] = metrics(rr) | dict(valid_MRR=b6[0], lam=b6[1], time_s=time.time() - t0, coef=b6[3].tolist())
+        print("   dwpc_nn_lr", {k: v for k, v in out["dwpc_nn_lr"].items() if k != "coef"}, flush=True)
     if "dwpc_lr_full" in which:
         # Rephetio-style model: DWPC features plus the degrees of source and target in the training target
         # relation and the logit of the permutation prior; scored densely over all (source, tail) pairs.
@@ -440,7 +558,7 @@ if __name__ == "__main__":
     ap.add_argument("--variants", default=",".join(VARIANTS)); ap.add_argument("--budget", type=float, default=5e6)
     ap.add_argument("--epochs", type=int, default=400); ap.add_argument("--no_baselines", action="store_true")
     ap.add_argument("--sparsity", type=float, default=1.0); ap.add_argument("--tag", default="")
-    ap.add_argument("--split", default="random", choices=["random", "tail"])
+    ap.add_argument("--split", default="random", choices=["random", "tail", "head"])
     ap.add_argument("--baselines", default="dwpc_lr,svd,softimpute,popularity,prior,dwpc_lr_full")
     a = ap.parse_args()
     run(a.task, [int(s) for s in a.seeds.split(",")], [v for v in a.variants.split(",") if v], a.budget, a.epochs,
