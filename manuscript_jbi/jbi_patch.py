@@ -154,8 +154,7 @@ NEW = {
  "counterfactuals were similarly faithful (87%, 55% and 82% against 100%, 99% and 96%). The difference is one of kind: "
  "DNFR's attribution is exact and non-negative, whereas on compound–treats–disease 31% of DWPC-LR's positive attribution "
  "was offset by metapaths with negative coefficients (median). On drug repurposing the leading metapath was associative "
- "for 100% of correct top-10 predictions; for doxorubicin and breast cancer, 22,225 paths ran mainly through "
- "topoisomerase inhibitors and anthracyclines known to treat the disease (Supplementary Table S19).",
+ "for 100% of correct top-10 predictions (examples in Supplementary Table S19).",
 73: "In the clinical assessment, every relation on a path agreed with biomedical knowledge for 53% of paths on Hetionet "
  "and 60% on the graded graph; at least one was judged wrong for 12% and 13%, and 35% and 27% could not be judged. On "
  "Hetionet, 7 of the 9 paths judged wrong ran from the disease to an anatomical structure and back to another disease, "
@@ -208,7 +207,7 @@ NEW.update({
  "epochs without early stopping made p converge (Supplementary Table S6).",
 66: "When every indication of a test disease was held out (Table 5A), DNFR fell to 0.079 from 0.599. Path methods stayed "
  "ahead of completion, popularity and the edge prior (0.015, 0.010 and 0.012), and degree and prior features hurt DWPC-LR "
- "(0.028 against 0.074), since a held-out disease has degree zero. DNFR without degree terms reached 0.103 (+0.025 "
+ "(0.028 against 0.074). DNFR without degree terms reached 0.103 (+0.025 "
  "[+0.009, +0.041], 4/4 splits), a plausible reversal, but one the corrected interval [−0.003, +0.052] does not establish.",
 68: "Thinning every relation favoured path methods over completion (25% of edges: DNFR 0.342, Soft-Impute 0.082 on "
  "compound–treats–disease), but with the target relation intact completion was level with the best path method on "
@@ -225,3 +224,41 @@ NEW.update({
  "so discounting them may not help for unseen diseases.",
 })
 DROP = [74]
+NEW.update({
+43: "**Clinical assessment.** On each disease–symptom task, 25 held-out pairs that DNFR ranked in its top 10 were drawn "
+ "with their three leading paths. The second author, a doctoral candidate in clinical psychology, rated them blind to "
+ "ranks, scores and shares: agreement of each relation with biomedical knowledge, the kind of rationale (mechanistic, "
+ "associative, none), clinical plausibility of the pair and usefulness of the paths (1 to 5). A second rater, an "
+ "internal-medicine physician with seven years of clinical practice who is not an author but knows the authors, rated a "
+ "second sheet of 40 pairs: on each task, 10 of the first rater's pairs and 10 incorrect top-10 predictions (symptoms not "
+ "recorded for the disease), shuffled, with correctness and scores hidden. Sheets, keys and ratings are released.",
+73: "In the clinical assessment, the first rater judged every relation on a path to agree with biomedical knowledge for "
+ "53% of paths on Hetionet and 60% on the graded graph; at least one relation was judged wrong for 12% and 13%, and 35% "
+ "and 27% could not be judged. On Hetionet, 7 of the 9 paths judged wrong ran from the disease to an anatomical structure "
+ "and back to another disease, and the model had already given that edge a low membership (median 0.14, against 0.46 for "
+ "paths judged correct). She judged 88% and 80% of pairs clinically plausible, with a median usefulness of 3 of 5. The "
+ "physician agreed with her on 68% of paths for the correctness of relations (Cohen's κ = 0.40) and 65% for the kind of "
+ "rationale (κ = 0.46). He judged all 20 correct predictions plausible but only 50% of the 20 incorrect ones, found every "
+ "relation correct on 80% and 55% of their paths, and rated usefulness 2.9 and 2.25 on average (AUC 0.67 for separating "
+ "correct from incorrect predictions). Some \"incorrect\" pairs may be true links missing from the graphs, so "
+ "discrimination against truly false links may be higher. The explanations were often a reason to look further rather "
+ "than a reason to believe.",
+88: "**Clinical evaluation.** The first rater, a co-author trained in clinical psychology rather than medicine, knew the "
+ "aims of the study; the second, a physician, rated only 40 pairs and knew the authors, and their agreement was moderate. "
+ "Drug repurposing was not rated. A study with several physicians, on more pairs and comparing DNFR's and DWPC-LR's "
+ "explanations, is the next step.",
+89: "**Scope of the evidence.** Scores are rankings, not calibrated probabilities; edges were thinned uniformly "
+ "(Supplementary Section S6.1), whereas less-studied entities lose more; and paths combine curated, text-mined and "
+ "co-occurrence evidence, so a high-scoring path is a reason to look, not evidence of a causal mechanism.",
+})
+DROP = [74, 68]
+NEW.update({
+83: "Two features of medical graphs shaped these results: curated graphs mix text-mined and curated evidence under one "
+ "relation type [1], which a single membership per relation cannot separate, and hubs reflect uneven research attention "
+ "as well as biology [3], so discounting them may not help for unseen diseases.",
+5: "The contribution is methodological and concerns any learned operator in a path-based clinical reasoner: a controlled "
+ "component analysis under one protocol and decision rule; an identifiability analysis that separates structural "
+ "redundancy between memberships and operator from practical non-identifiability by the loss; an ablation of the "
+ "metapaths through the target relation; and an exact edge-level Shapley attribution with fact-level counterfactuals, "
+ "compared with degree-weighted path counts. Code, tests and all result files are released.",
+})

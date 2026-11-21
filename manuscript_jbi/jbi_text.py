@@ -516,6 +516,8 @@ DECLARATIONS = [
  "clinician check); Validation (agreement of the relations on explanation paths with biomedical knowledge); Investigation "
  "(the clinical assessment of explanations); Writing – original draft (clinical interpretation in Section 5); Writing – "
  "review and editing. All authors approved the final manuscript."),
+("Acknowledgements", "We thank Dr Do Kim Phuc, MSc, MD (Pham Ngoc Thach University of Medicine, Ho Chi Minh City), "
+ "for rating the explanation paths as the second, independent clinical rater."),
 ("Independent verification", "Without the AI system, the corresponding author checked every result reported in this "
  "article and its supplementary material against the released result files. A re-run of DNFR, DNFR with the strongest "
  "path only and DNFR without degree terms on the first split of the graded graph from a clean clone of the repository, in a "

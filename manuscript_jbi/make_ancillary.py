@@ -32,7 +32,7 @@ for t in [
  "indications, so claims of mechanistic reasoning need an ablation of the target relation or disease-centred splits; and "
  "an exact edge-level Shapley attribution shows what a noisy-OR path model adds over degree-weighted path counts, which "
  "were at least as accurate on three of four tasks. Several findings are negative, and we report them as such.",
- "The manuscript follows the journal's format: a structured abstract of 290 words, a body of about 5,950 words including "
+ "The manuscript follows the journal's format: a structured abstract of 290 words, a body of about 5,980 words including "
  "the Statement of Significance, and two figures and six tables; further material is in the Supplementary material. The "
  "code, result files and a script that checks every number in the manuscript against the result files are released "
  "under the MIT licence as release v6.0-jbi of https://github.com/Bangth2026/dnfr-medical-kg and archived at Zenodo "
@@ -73,7 +73,7 @@ P(d, "¹ Faculty of Engineering and Computer Science, Saigon International Unive
 P(d, "² VNU University of Education, Vietnam National University, Hanoi, G7 Building, No. 144 Xuan Thuy Street, Cau Giay "
      "District, Hanoi, Vietnam. Email: phanthivanantlls@gmail.com. ORCID: https://orcid.org/0009-0005-4135-5689")
 P(d, "* Corresponding author: Hai Bang Truong, truonghaibang@siu.edu.vn")
-P(d, "Word counts: abstract 290; body (Introduction to Conclusion, including the Statement of Significance) about 5,950. "
+P(d, "Word counts: abstract 290; body (Introduction to Conclusion, including the Statement of Significance) about 5,980. "
      "Figures and tables: 2 figures, 6 tables.")
 for k, v in J.DECLARATIONS:
     if k in ("Funding", "Declaration of competing interest"):

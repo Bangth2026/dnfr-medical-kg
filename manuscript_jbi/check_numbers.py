@@ -4,6 +4,8 @@ Usage: python3 check_numbers.py JBI.docx [JBI_supp.docx] -- V5_manuscript.docx V
 import re, sys
 from docx import Document
 def text(path):
+    if not path.endswith(".docx"):
+        return open(path).read().replace("−", "-")
     d = Document(path)
     t = [p.text for p in d.paragraphs] + [c.text for tb in d.tables for r in tb.rows for c in r.cells]
     return "\n".join(t).replace("−", "-").replace(" ", " ")

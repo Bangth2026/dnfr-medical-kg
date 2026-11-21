@@ -45,7 +45,7 @@ def main():
     from openpyxl import load_workbook
     key = json.load(open(f"{OUT}/expert_review2_key.json"))
     R2 = rows_of(f2); R1 = rows_of(f"{OUT}/expert_review_filled.xlsx")
-    rater = {str(r[0]): r[1] for r in load_workbook(f2, data_only=True)["Rater"].iter_rows(values_only=True) if r[0]}
+    rater = {str(r[0]): (r[1] if len(r) > 1 else None) for r in load_workbook(f2, data_only=True)["Rater"].iter_rows(values_only=True) if r[0]}
     pairs = [k for k in key if "-p" not in k]
     paths = [k for k in key if "-p" in k]
     ov_pairs = [k for k in pairs if key[k]["correct"] and key[k]["first_rater_id"]]
