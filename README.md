@@ -2,11 +2,11 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23879352.svg)](https://doi.org/10.5281/zenodo.23879352)
 
-Concept DOI (all versions, resolves to the latest): [10.5281/zenodo.23879352](https://doi.org/10.5281/zenodo.23879352). Version 1.0.0: [10.5281/zenodo.23879353](https://doi.org/10.5281/zenodo.23879353). Version 1.1.0: [10.5281/zenodo.23948874](https://doi.org/10.5281/zenodo.23948874). Version v3.0-rev3: [10.5281/zenodo.23949261](https://doi.org/10.5281/zenodo.23949261).
+Concept DOI (all versions, resolves to the latest): [10.5281/zenodo.23879352](https://doi.org/10.5281/zenodo.23879352). Version 1.0.0: [10.5281/zenodo.23879353](https://doi.org/10.5281/zenodo.23879353). Version 1.1.0: [10.5281/zenodo.23948874](https://doi.org/10.5281/zenodo.23948874). Version v3.0-rev3: [10.5281/zenodo.23949261](https://doi.org/10.5281/zenodo.23949261). Version v5.0: [10.5281/zenodo.23998418](https://doi.org/10.5281/zenodo.23998418).
 
 Code, derived data and result files for the manuscript
 
-> Truong Hai Bang, Van An Phan Thi. *Which parts of a neuro-fuzzy path reasoner should be learned? A controlled component analysis on medical knowledge graphs.* Submitted to *Artificial Intelligence in Medicine* (fourth revision, release v4.0 of this repository).
+> Truong Hai Bang, Van An Phan Thi. *Which parts of a neuro-fuzzy path reasoner should be learned? A controlled component analysis on medical knowledge graphs.* Submitted to the *Journal of Biomedical Informatics* (release v6.0-jbi of this repository).
 
 DNFR scores a pair of entities by a noisy-OR over metapath-instantiated paths of length two and three. Each edge receives a learned membership (degree-aware, and reading graded evidence where the graph has it), each path is composed with a Schweizer–Sklar t-norm whose parameter is learned per metapath, and each metapath has a learned reliability. Every score decomposes exactly into the contributions of its paths.
 
@@ -83,6 +83,9 @@ python3 dnfr/aggregate.py && python3 dnfr/extra.py && python3 dnfr/revision_stat
 ```
 
 ## Versions
+
+- **v6.0-jbi** (Journal of Biomedical Informatics): the article shortened to the journal's format (structured abstract, body of about 5,950 words, two figures and six tables; the full methods, Algorithm S1, Table S19 and Figure S4 move to Supplementary Sections S5–S6). `manuscript_jbi/build_jbi.py` and `build_supp.py` build the journal version from the v5.0 manuscript and supplement (output of `manuscript3/build_manuscript.py`); `manuscript_jbi/check_numbers.py` verifies that every number in the journal version occurs in those generated documents; `manuscript_jbi/make_ga.py` draws the graphical abstract. Code, data and results are unchanged from v5.0.
+- **v5.0** (fifth revision): converged profile chains merged, final statistics, figures and submission files (`manuscript3/`).
 
 - **v4.0** (fourth revision): 10 splits on Hetionet compound–treats–disease for the fixed Hamacher product, fixed degree terms, annealing, frozen memberships, DNFR 2.0, the shared and fixed t-norm parameters and AnyBURL (`scripts/queue_rev4.py`); an ablation without metapaths that contain the target relation (`DNFR_DROP_TARGET_MPS=1`); fact-level attribution of DWPC-LR and evidence share by metapath class (`dnfr/explain_dwpc.py`); an information-content check with matched spread (`dnfr_ic_sd`); a profile of the t-norm parameter extended to p > 0 and run on Hetionet disease–symptom; an NBFNet tuning grid; statistics in `dnfr/rev4_stats.py`; a clean-checkout re-run of a key result (`scripts/verify_clean.sh`); the clinical assessment of explanations (`dnfr/expert_sheet.py` builds the rating sheet, `dnfr/expert_summary.py` summarises the returned ratings). The secondary NHANES test is no longer part of the article.
 - **v3.0-rev3** (third revision): DNFR 2.0 and its four refinements, each added alone and removed from the combination (overlap-aware aggregation, Gumbel-softmax operator choice, information-content hub discount, membership annealing); a fixed t-norm selected on validation data; a converged L-BFGS profile of the t-norm parameter and an unbounded parameterisation; a compact NBFNet (`dnfr/nbfnet.py`); an exact edge-level Shapley attribution and a mechanistic classification of explanations (`dnfr/explain_eval3.py`); a sparsity variant that keeps the target relation; 10 splits for the main comparisons on Hetionet CtD, Hetionet DpS and the graded graph; manuscript build in `manuscript3/`.
